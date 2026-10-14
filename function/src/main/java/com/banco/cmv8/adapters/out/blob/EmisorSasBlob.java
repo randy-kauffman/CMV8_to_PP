@@ -87,7 +87,9 @@ public class EmisorSasBlob implements EmisorSas {
                 .setProtocol(SasProtocol.HTTPS_ONLY);
         Optional<UUID> solicitudId = PoliticaSas.solicitudDeRuta(rutaBlob);
         solicitudId.ifPresent(id -> valores.setCorrelationId(id.toString()));
-        llamador.objectId().ifPresent(valores::setPreauthorizedAgentObjectId);
+        // NO se usa saoid: Storage exige que la identidad firmante tenga runAsSuperUser (Blob Data Owner) para
+        // aceptarlo, y rompería el mínimo privilegio (Contributor en el contenedor). Verificado en S2/S7: 403
+        // AuthorizationPermissionMismatch. La correlación de auditoría va por scid + traza del llamador.
         if (ligar) {
             valores.setDelegatedUserObjectId(llamador.objectId().get());
         }

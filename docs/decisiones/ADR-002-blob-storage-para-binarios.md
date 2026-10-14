@@ -183,3 +183,10 @@ Nota sobre el PCF: la SAS vinculada al usuario exige que el navegador mande un t
 - Se agrega un componente pro-code en la canvas app (PCF) y hay que habilitar "Power Apps component framework para canvas apps" en el entorno.
 - Se agrega un modelo de gobierno de Storage reutilizable por otras soluciones del Banco.
 - Costo: Blob hot ~$0,02/GB/mes aprox.; Defender for Storage por cuenta más escaneo por GB (precios a confirmar en la calculadora); Event Grid despreciable a este volumen.
+
+
+## Nota posterior (2026-10-14, spikes S2/S7)
+
+- `saoid` / `suoid` en la SAS **no se usan**: Storage exige que la identidad que pide la clave de delegación tenga `Microsoft.Storage/storageAccounts/blobServices/containers/blobs/runAsSuperUser/action` (Storage Blob Data Owner) para aceptarlos, lo que rompe el mínimo privilegio de Contributor en el contenedor. Sin ese rol, toda operación devuelve 403 `AuthorizationPermissionMismatch`. Son campos pensados para Hadoop/Ranger sobre Data Lake. La correlación de auditoría se hace con `scid` (= solicitudId) en los logs de Storage y con la traza del llamador (oid) en App Insights. `sduoid` (SAS ligada a usuario) es independiente y sigue en el plan para S1b.
+- CORS en Storage y en la Function queda en `*`: Power Apps ejecuta las apps desde hosts regionales variables (`*.gateway.prod.island.powerapps.com`) que no se pueden enumerar y ninguno de los dos servicios admite comodines de subdominio. CORS no es un control de seguridad; la autorización la dan la SAS y Entra ID.
+- OpenCMIS 1.1.0 (2017) funciona en Java 21 con Browser binding y envía siempre `Transfer-Encoding: chunked` (64 KB). Riesgo a validar en S4a: un proxy o IHS delante de CM V8 que rechace chunked. La librería no tiene mantenimiento activo; se acepta el riesgo porque el binding Browser es JSON puro y el código de cliente es pequeño.
