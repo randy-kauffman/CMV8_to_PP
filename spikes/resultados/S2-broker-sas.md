@@ -30,7 +30,7 @@ Con Shared Key deshabilitado en la cuenta, la identidad administrada de la Funct
 - Confirmado: la SAS es de un solo blob y la firma incluye la ruta. Cambiar el nombre del blob o intentar listar devuelve 403. Coincide con el análisis de ADR-002.
 - Confirmado: Shared Key apagado no impide emitir SAS de delegación de usuario; ninguna clave de cuenta intervino.
 - Confirmado: Contributor scoped al contenedor + Delegator a nivel de cuenta alcanza para `getUserDelegationKey` y para la escritura.
-- Pendiente para cerrar S2: pasar a `AUTORIZACION_MODO=dataverse`, crear una fila en `cmv8_solicitudingesta`, pedir SAS con un usuario con acceso (200) y con uno sin acceso (403). El usuario de aplicación de la Function ya existe con el rol CMV8 Worker.
+- Parte Dataverse cerrada el mismo día: ver la sección «Parte Dataverse» más abajo (200 con acceso, 403 sin rol, 403 fila inexistente, 409 en Subido).
 
 ## Costo
 

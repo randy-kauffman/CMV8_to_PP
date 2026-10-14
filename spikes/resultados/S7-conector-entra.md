@@ -41,4 +41,4 @@ Un custom connector generado del OpenAPI de la Function, con autenticación Entr
 
 ## Pendiente
 
-- Mover la fila a Subido desde la app al terminar (`Patch` con el `OnChange` del componente cuando `estado = "completado"`), para que el 409 proteja contra dobles subidas en el flujo real.
+- ~~Mover la fila a Subido desde la app al terminar~~ Hecho el 2026-10-14 12:30 UTC (ver S1b, «Prueba desde Studio»): el `OnChange` con `Patch` pasó la fila a Subido en el mismo segundo del `PutBlockList`.
