@@ -7,9 +7,15 @@
   },
   "host": "cmv8-func-supfcopn.azurewebsites.net",
   "basePath": "/api",
-  "schemes": ["https"],
-  "consumes": ["application/json"],
-  "produces": ["application/json"],
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
   "paths": {
     "/salud": {
       "get": {
@@ -17,7 +23,12 @@
         "summary": "Consultar estado del broker",
         "description": "Sonda de vida del broker. No requiere token (ruta excluida de la autenticación de App Service).",
         "responses": {
-          "200": { "description": "El broker responde.", "schema": { "$ref": "#/definitions/Salud" } }
+          "200": {
+            "description": "El broker responde.",
+            "schema": {
+              "$ref": "#/definitions/Salud"
+            }
+          }
         }
       }
     },
@@ -33,16 +44,45 @@
             "required": true,
             "x-ms-summary": "Datos del archivo",
             "description": "Solicitud y archivo a subir.",
-            "schema": { "$ref": "#/definitions/PedidoSasSubida" }
+            "schema": {
+              "$ref": "#/definitions/PedidoSasSubida"
+            }
           }
         ],
         "responses": {
-          "200": { "description": "URL de subida emitida.", "schema": { "$ref": "#/definitions/SasSubida" } },
-          "400": { "description": "Datos inválidos.", "schema": { "$ref": "#/definitions/Error" } },
-          "401": { "description": "Falta el token o no es válido." },
-          "403": { "description": "El usuario no tiene acceso a la solicitud.", "schema": { "$ref": "#/definitions/Error" } },
-          "404": { "description": "La solicitud no existe.", "schema": { "$ref": "#/definitions/Error" } },
-          "409": { "description": "La solicitud no está en un estado que permita subir.", "schema": { "$ref": "#/definitions/Error" } }
+          "200": {
+            "description": "URL de subida emitida.",
+            "schema": {
+              "$ref": "#/definitions/SasSubida"
+            }
+          },
+          "400": {
+            "description": "Datos inválidos.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido."
+          },
+          "403": {
+            "description": "El usuario no tiene acceso a la solicitud.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "La solicitud no existe.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "La solicitud no está en un estado que permita subir.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
         }
       }
     },
@@ -63,11 +103,33 @@
           }
         ],
         "responses": {
-          "200": { "description": "URL de lectura emitida.", "schema": { "$ref": "#/definitions/SasLectura" } },
-          "400": { "description": "El id no es un GUID.", "schema": { "$ref": "#/definitions/Error" } },
-          "401": { "description": "Falta el token o no es válido." },
-          "403": { "description": "El usuario no tiene acceso a la solicitud.", "schema": { "$ref": "#/definitions/Error" } },
-          "404": { "description": "La solicitud no existe o no tiene adjunto.", "schema": { "$ref": "#/definitions/Error" } }
+          "200": {
+            "description": "URL de lectura emitida.",
+            "schema": {
+              "$ref": "#/definitions/SasLectura"
+            }
+          },
+          "400": {
+            "description": "El id no es un GUID.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido."
+          },
+          "403": {
+            "description": "El usuario no tiene acceso a la solicitud.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "La solicitud no existe o no tiene adjunto.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
         }
       }
     },
@@ -83,14 +145,33 @@
             "required": true,
             "x-ms-summary": "Cliente a buscar",
             "description": "Identificador del cliente.",
-            "schema": { "$ref": "#/definitions/PedidoResolverCliente" }
+            "schema": {
+              "$ref": "#/definitions/PedidoResolverCliente"
+            }
           }
         ],
         "responses": {
-          "200": { "description": "Cliente encontrado.", "schema": { "$ref": "#/definitions/Cliente" } },
-          "400": { "description": "Id de cliente vacío o demasiado largo.", "schema": { "$ref": "#/definitions/Error" } },
-          "401": { "description": "Falta el token o no es válido." },
-          "404": { "description": "Cliente no encontrado.", "schema": { "$ref": "#/definitions/Error" } }
+          "200": {
+            "description": "Cliente encontrado.",
+            "schema": {
+              "$ref": "#/definitions/Cliente"
+            }
+          },
+          "400": {
+            "description": "Id de cliente vacío o demasiado largo.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido."
+          },
+          "404": {
+            "description": "Cliente no encontrado.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
         }
       }
     }
@@ -99,58 +180,169 @@
     "Salud": {
       "type": "object",
       "properties": {
-        "estado": { "type": "string", "x-ms-summary": "Estado", "description": "ok si el broker responde." },
-        "version": { "type": "string", "x-ms-summary": "Versión", "description": "Versión desplegada del broker." }
+        "estado": {
+          "type": "string",
+          "x-ms-summary": "Estado",
+          "description": "ok si el broker responde."
+        },
+        "version": {
+          "type": "string",
+          "x-ms-summary": "Versión",
+          "description": "Versión desplegada del broker."
+        }
       }
     },
     "PedidoSasSubida": {
       "type": "object",
-      "required": ["solicitudId", "nombreArchivo", "tamanoBytes", "contentType"],
+      "required": [
+        "solicitudId",
+        "nombreArchivo",
+        "tamanoBytes",
+        "contentType"
+      ],
       "properties": {
-        "solicitudId": { "type": "string", "format": "uuid", "x-ms-summary": "Id de solicitud", "description": "GUID del registro cmv8_solicitudingesta." },
-        "nombreArchivo": { "type": "string", "x-ms-summary": "Nombre del archivo", "description": "Nombre original del archivo, con extensión." },
-        "tamanoBytes": { "type": "integer", "format": "int64", "x-ms-summary": "Tamaño en bytes", "description": "Tamaño total del archivo." },
-        "contentType": { "type": "string", "x-ms-summary": "Tipo MIME", "description": "Tipo de contenido, por ejemplo application/pdf." }
+        "solicitudId": {
+          "type": "string",
+          "format": "uuid",
+          "x-ms-summary": "Id de solicitud",
+          "description": "GUID del registro cmv8_solicitudingesta."
+        },
+        "nombreArchivo": {
+          "type": "string",
+          "x-ms-summary": "Nombre del archivo",
+          "description": "Nombre original del archivo, con extensión."
+        },
+        "tamanoBytes": {
+          "type": "integer",
+          "format": "int64",
+          "x-ms-summary": "Tamaño en bytes",
+          "description": "Tamaño total del archivo."
+        },
+        "contentType": {
+          "type": "string",
+          "x-ms-summary": "Tipo MIME",
+          "description": "Tipo de contenido, por ejemplo application/pdf."
+        }
       }
     },
     "SasSubida": {
       "type": "object",
       "properties": {
-        "uploadUrl": { "type": "string", "format": "uri", "x-ms-summary": "URL de subida", "description": "URL SAS de escritura para un solo blob. No guardarla." },
-        "rutaBlob": { "type": "string", "x-ms-summary": "Ruta del blob", "description": "Ruta sin firmar {solicitudId}/{archivo}." },
-        "expiraUtc": { "type": "string", "format": "date-time", "x-ms-summary": "Expira (UTC)", "description": "Vencimiento de la URL." },
-        "bloqueBytes": { "type": "integer", "format": "int64", "x-ms-summary": "Tamaño de bloque", "description": "Tamaño de bloque recomendado para Put Block." },
-        "versionServicio": { "type": "string", "x-ms-summary": "Versión de servicio", "description": "Valor para el encabezado x-ms-version." }
+        "uploadUrl": {
+          "type": "string",
+          "format": "uri",
+          "x-ms-summary": "URL de subida",
+          "description": "URL SAS de escritura para un solo blob. No guardarla."
+        },
+        "rutaBlob": {
+          "type": "string",
+          "x-ms-summary": "Ruta del blob",
+          "description": "Ruta sin firmar {solicitudId}/{archivo}."
+        },
+        "expiraUtc": {
+          "type": "string",
+          "format": "date-time",
+          "x-ms-summary": "Expira (UTC)",
+          "description": "Vencimiento de la URL."
+        },
+        "bloqueBytes": {
+          "type": "integer",
+          "format": "int64",
+          "x-ms-summary": "Tamaño de bloque",
+          "description": "Tamaño de bloque recomendado para Put Block."
+        },
+        "versionServicio": {
+          "type": "string",
+          "x-ms-summary": "Versión de servicio",
+          "description": "Valor para el encabezado x-ms-version."
+        },
+        "tokenStorage": {
+          "type": "string",
+          "x-ms-summary": "Token de Storage",
+          "description": "S1b: token Entra de Azure Storage del usuario (OBO). Pasarlo a la entrada tokenStorage del PCF; se envía como Authorization: Bearer junto con la SAS ligada (sduoid). Secreto: no guardarlo ni mostrarlo. Solo viene si el broker emite SAS ligadas al usuario."
+        },
+        "tokenStorageExpiraUtc": {
+          "type": "string",
+          "format": "date-time",
+          "x-ms-summary": "Token de Storage expira (UTC)",
+          "description": "Vencimiento del token de Storage."
+        }
       }
     },
     "SasLectura": {
       "type": "object",
       "properties": {
-        "downloadUrl": { "type": "string", "format": "uri", "x-ms-summary": "URL de descarga", "description": "URL SAS de lectura para un solo blob. No guardarla." },
-        "expiraUtc": { "type": "string", "format": "date-time", "x-ms-summary": "Expira (UTC)", "description": "Vencimiento de la URL." }
+        "downloadUrl": {
+          "type": "string",
+          "format": "uri",
+          "x-ms-summary": "URL de descarga",
+          "description": "URL SAS de lectura para un solo blob. No guardarla."
+        },
+        "expiraUtc": {
+          "type": "string",
+          "format": "date-time",
+          "x-ms-summary": "Expira (UTC)",
+          "description": "Vencimiento de la URL."
+        },
+        "tokenStorage": {
+          "type": "string",
+          "x-ms-summary": "Token de Storage",
+          "description": "S1b: token Entra de Azure Storage del usuario (OBO) para usar como Authorization: Bearer junto con la SAS ligada. Secreto: no guardarlo."
+        },
+        "tokenStorageExpiraUtc": {
+          "type": "string",
+          "format": "date-time",
+          "x-ms-summary": "Token de Storage expira (UTC)",
+          "description": "Vencimiento del token de Storage."
+        }
       }
     },
     "PedidoResolverCliente": {
       "type": "object",
-      "required": ["id"],
+      "required": [
+        "id"
+      ],
       "properties": {
-        "id": { "type": "string", "x-ms-summary": "Id de cliente", "description": "Identificador del cliente en AS400 (máximo 50 caracteres)." }
+        "id": {
+          "type": "string",
+          "x-ms-summary": "Id de cliente",
+          "description": "Identificador del cliente en AS400 (máximo 50 caracteres)."
+        }
       }
     },
     "Cliente": {
       "type": "object",
       "properties": {
-        "idCliente": { "type": "string", "x-ms-summary": "Id de cliente" },
-        "idCliente2": { "type": "string", "x-ms-summary": "Id de cliente 2" },
-        "nombre": { "type": "string", "x-ms-summary": "Nombre" },
-        "afiliadoPadre": { "type": "string", "x-ms-summary": "Afiliado padre" },
-        "idDueno": { "type": "string", "x-ms-summary": "Id de dueño" }
+        "idCliente": {
+          "type": "string",
+          "x-ms-summary": "Id de cliente"
+        },
+        "idCliente2": {
+          "type": "string",
+          "x-ms-summary": "Id de cliente 2"
+        },
+        "nombre": {
+          "type": "string",
+          "x-ms-summary": "Nombre"
+        },
+        "afiliadoPadre": {
+          "type": "string",
+          "x-ms-summary": "Afiliado padre"
+        },
+        "idDueno": {
+          "type": "string",
+          "x-ms-summary": "Id de dueño"
+        }
       }
     },
     "Error": {
       "type": "object",
       "properties": {
-        "error": { "type": "string", "x-ms-summary": "Error", "description": "Mensaje de error." }
+        "error": {
+          "type": "string",
+          "x-ms-summary": "Error",
+          "description": "Mensaje de error."
+        }
       }
     }
   },
@@ -160,8 +352,16 @@
       "flow": "accessCode",
       "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/authorize",
       "tokenUrl": "https://login.microsoftonline.com/common/oauth2/token",
-      "scopes": { "user_impersonation": "Acceder a CMV8 Broker en nombre del usuario" }
+      "scopes": {
+        "user_impersonation": "Acceder a CMV8 Broker en nombre del usuario"
+      }
     }
   },
-  "security": [ { "oauth2_auth": ["user_impersonation"] } ]
+  "security": [
+    {
+      "oauth2_auth": [
+        "user_impersonation"
+      ]
+    }
+  ]
 }

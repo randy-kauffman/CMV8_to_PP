@@ -190,3 +190,17 @@ Nota sobre el PCF: la SAS vinculada al usuario exige que el navegador mande un t
 - `saoid` / `suoid` en la SAS **no se usan**: Storage exige que la identidad que pide la clave de delegación tenga `Microsoft.Storage/storageAccounts/blobServices/containers/blobs/runAsSuperUser/action` (Storage Blob Data Owner) para aceptarlos, lo que rompe el mínimo privilegio de Contributor en el contenedor. Sin ese rol, toda operación devuelve 403 `AuthorizationPermissionMismatch`. Son campos pensados para Hadoop/Ranger sobre Data Lake. La correlación de auditoría se hace con `scid` (= solicitudId) en los logs de Storage y con la traza del llamador (oid) en App Insights. `sduoid` (SAS ligada a usuario) es independiente y sigue en el plan para S1b.
 - CORS en Storage y en la Function queda en `*`: Power Apps ejecuta las apps desde hosts regionales variables (`*.gateway.prod.island.powerapps.com`) que no se pueden enumerar y ninguno de los dos servicios admite comodines de subdominio. CORS no es un control de seguridad; la autorización la dan la SAS y Entra ID.
 - OpenCMIS 1.1.0 (2017) funciona en Java 21 con Browser binding y envía siempre `Transfer-Encoding: chunked` (64 KB). Riesgo a validar en S4a: un proxy o IHS delante de CM V8 que rechace chunked. La librería no tiene mantenimiento activo; se acepta el riesgo porque el binding Browser es JSON puro y el código de cliente es pequeño.
+
+## Nota posterior (2026-10-14, spike S1b)
+
+- La SAS ligada al usuario (`sduoid`) **se adopta**, pero el token de Storage **no lo obtiene el PCF con MSAL** (orígenes
+  `*.island.powerapps.com` variables, no registrables como redirect de SPA): lo obtiene el broker con **On-Behalf-Of**
+  (MSAL4J) a partir del token con el que el usuario llama al conector, y lo devuelve como `tokenStorage` junto con la SAS.
+  El PCF (0.0.5, entrada `tokenStorage`) lo manda como `Authorization: Bearer` en Put Block / Put Block List.
+  Esto reemplaza la nota sobre MSAL en el PCF de la sección "Autorización por archivo".
+- Verificado: SAS sola → 403 `AuthenticationFailed`; bearer solo → 403 `AuthorizationPermissionMismatch`; SAS + bearer de otro
+  principal → 403; SAS + bearer del usuario → 201. En StorageBlobLogs el usuario delegado aparece en `RequesterUpn`.
+- Costo: la app del broker necesita el permiso delegado Azure Storage / `user_impersonation` con consentimiento de administrador y
+  una credencial propia (secreto en el spike; Key Vault o certificado en el Banco); el OBO queda sujeto al acceso condicional.
+- Abierto: `requireUserBoundUserDelegationSas=true` + `Block` quedó configurado pero no se observó que bloquee SAS no ligadas.
+  Detalle y comandos en `spikes/resultados/S1b-sas-ligada-usuario.md`.

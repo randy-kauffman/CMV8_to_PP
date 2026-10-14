@@ -2,6 +2,8 @@ package com.banco.cmv8.adapters.in;
 
 import com.banco.cmv8.application.AccesoDenegadoException;
 import com.banco.cmv8.application.EstadoInvalidoException;
+import com.banco.cmv8.application.IntercambioTokenException;
+import com.banco.cmv8.application.NoAutenticadoException;
 import com.banco.cmv8.application.SolicitudNoEncontradaException;
 import com.banco.cmv8.config.Json;
 import com.banco.cmv8.domain.ValidacionException;
@@ -43,6 +45,14 @@ final class RespuestasHttp {
     static HttpResponseMessage desdeExcepcion(HttpRequestMessage<?> req, RuntimeException e, Logger log) {
         if (e instanceof ValidacionException) {
             return error(req, HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+        if (e instanceof NoAutenticadoException) {
+            return error(req, HttpStatus.UNAUTHORIZED, e.getMessage());
+        }
+        if (e instanceof IntercambioTokenException ite) {
+            // Solo el código de Entra (nunca el token). 502: falla una dependencia (Entra), no el llamador.
+            log.warning(() -> "OBO hacia Storage fallido. codigoEntra=" + ite.codigoEntra());
+            return error(req, HttpStatus.BAD_GATEWAY, e.getMessage() + " (" + ite.codigoEntra() + ")");
         }
         if (e instanceof AccesoDenegadoException) {
             return error(req, HttpStatus.FORBIDDEN, e.getMessage());

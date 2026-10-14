@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="Banco" constructor="CargaAdjuntoBlob" version="0.0.4" display-name-key="CargaAdjuntoBlob_Display" description-key="CargaAdjuntoBlob_Desc" control-type="standard">
+  <control namespace="Banco" constructor="CargaAdjuntoBlob" version="0.0.5" display-name-key="CargaAdjuntoBlob_Display" description-key="CargaAdjuntoBlob_Desc" control-type="standard">
     <!-- El control llama por fetch al broker (Function) y a Blob Storage: se declara servicio externo.
          Ojo: esto lo clasifica como componente premium (licenciamiento). Ajustar los dominios reales al desplegar. -->
     <external-service-usage enabled="true">
@@ -10,6 +10,8 @@
 
     <!-- Entradas -->
     <property name="uploadUrl" display-name-key="uploadUrl_Display" description-key="uploadUrl_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <!-- S1b: token Entra de Storage del usuario (OBO en el broker). Se envía como Authorization: Bearer en cada PUT. -->
+    <property name="tokenStorage" display-name-key="tokenStorage_Display" description-key="tokenStorage_Desc" of-type="SingleLine.Text" usage="input" required="false" />
     <property name="bloqueBytes" display-name-key="bloqueBytes_Display" description-key="bloqueBytes_Desc" of-type="Whole.None" usage="input" required="false" />
     <property name="urlBroker" display-name-key="urlBroker_Display" description-key="urlBroker_Desc" of-type="SingleLine.Text" usage="input" required="false" />
     <property name="tokenBroker" display-name-key="tokenBroker_Display" description-key="tokenBroker_Desc" of-type="SingleLine.Text" usage="input" required="false" />

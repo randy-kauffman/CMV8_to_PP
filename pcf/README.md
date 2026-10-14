@@ -1,14 +1,15 @@
 # CargaAdjuntoBlob (PCF para canvas apps)
 
-Componente PCF (namespace `Banco`, versión 0.0.1) que sube un archivo (videos de hasta 250 MB) directo desde el navegador a Azure Blob Storage, sin Power Automate ni conectores. Spikes S1 / S1b del plan (ver `docs/decisiones/ADR-002-blob-storage-para-binarios.md`).
+Componente PCF (namespace `Banco`, versión 0.0.5) que sube un archivo (videos de hasta 250 MB) directo desde el navegador a Azure Blob Storage, sin Power Automate ni conectores. Spikes S1 / S1b del plan (ver `docs/decisiones/ADR-002-blob-storage-para-binarios.md`).
 
 ## Flujo
 
 1. El usuario elige un archivo y presiona **Subir**.
 2. El componente valida tamaño (<= `tamanoMaximoMB`) y que `solicitudId` sea un GUID.
-3. `POST {urlBroker}/api/sas/subida` con `{ solicitudId, nombreArchivo, tamanoBytes, contentType }` y, si hay `tokenBroker`, `Authorization: Bearer ...`. Respuesta: `{ uploadUrl, rutaBlob, expiraUtc, bloqueBytes, versionServicio }`.
+3. `POST {urlBroker}/api/sas/subida` con `{ solicitudId, nombreArchivo, tamanoBytes, contentType }` y, si hay `tokenBroker`, `Authorization: Bearer ...`. Respuesta: `{ uploadUrl, rutaBlob, expiraUtc, bloqueBytes, versionServicio }` y, con SAS ligada al usuario (S1b), `tokenStorage` y `tokenStorageExpiraUtc`. En el camino preferido la app obtiene todo eso por el conector y lo pasa en `uploadUrl` y `tokenStorage`.
 4. Subida con la API REST de bloques, con `fetch` y sin SDK:
-   - `PUT {uploadUrl}&comp=block&blockid=<base64 del índice de 6 dígitos>` con `x-ms-version` (2025-07-05 o `versionServicio`).
+   - `PUT {uploadUrl}&comp=block&blockid=<base64 del índice de 6 dígitos>` con `x-ms-version` (2025-07-05 o `versionServicio`; 2025-07-05 es el mínimo para SAS ligada al usuario).
+   - Si hay `tokenStorage` (S1b), cada Put Block y el Put Block List llevan además `Authorization: Bearer <tokenStorage>`. La SAS ligada (`sduoid`) sin ese bearer da 403 `AuthenticationFailed`; el bearer solo, sin SAS, da 403 `AuthorizationPermissionMismatch` (el usuario no tiene RBAC en el contenedor).
    - Bloques de `bloqueBytes` (4 MiB por defecto), hasta `paralelismo` en vuelo (4 por defecto, máximo 8).
    - 3 reintentos por bloque con espera de 500 ms, 1 s y 2 s ante error de red, 5xx o 429. Ante 403 corta de inmediato.
    - `PUT {uploadUrl}&comp=blocklist` con el `BlockList` XML (`<Latest>` por bloque, en orden), `x-ms-blob-content-type` y `Content-Type: application/xml`.
@@ -20,6 +21,9 @@ Componente PCF (namespace `Banco`, versión 0.0.1) que sube un archivo (videos d
 |---|---|---|---|---|
 | `urlBroker` | entrada | SingleLine.Text | Sí | URL base de la Function, p. ej. `https://xxx.azurewebsites.net` |
 | `tokenBroker` | entrada | SingleLine.Text | No | Token Bearer para el broker (S7). Nunca se registra en consola |
+| `uploadUrl` | entrada | SingleLine.Text | No | URL del blob con SAS obtenida por el conector (`EmitirSasSubida().uploadUrl`). Si se informa, no se llama al broker |
+| `tokenStorage` | entrada | SingleLine.Text | No | S1b: token de Storage del usuario (`EmitirSasSubida().tokenStorage`). Se envía como `Authorization: Bearer` a Storage. Obligatorio cuando el broker emite SAS ligadas (`SAS_LIGADA_USUARIO=true`). Nunca se registra |
+| `bloqueBytes` | entrada | Whole.None | No | Tamaño de bloque recomendado por el broker (`bloqueBytes` de la respuesta) |
 | `solicitudId` | entrada | SingleLine.Text | Sí | GUID de la fila SolicitudIngesta |
 | `tiposAceptados` | entrada | SingleLine.Text | No | Atributo `accept`. Por defecto `video/*,application/pdf` |
 | `tamanoMaximoMB` | entrada | Whole.None | No | Por defecto 250 |
@@ -59,7 +63,7 @@ npm install
 npm start watch
 ```
 
-El harness corre en `http://localhost:8181`. Ese origen debe estar en el CORS de la cuenta de Storage (ya está en `infra/spikes.bicepparam`). El CORS debe permitir `PUT`, `OPTIONS` y los headers `x-ms-version`, `x-ms-blob-content-type` y `Content-Type`. El CORS del broker también debe permitir ese origen.
+El harness corre en `http://localhost:8181`. Ese origen debe estar en el CORS de la cuenta de Storage (ya está en `infra/spikes.bicepparam`). El CORS debe permitir `PUT`, `OPTIONS` y los headers `x-ms-version`, `x-ms-blob-content-type`, `Content-Type` y `Authorization` (S1b; hoy `allowedHeaders: *`). El CORS del broker también debe permitir ese origen.
 
 ## Empaquetar en una solución (solo documentación, no ejecutar todavía)
 
@@ -80,5 +84,5 @@ El zip queda en `solucion/bin/Release/`. Importarlo en el entorno de desarrollo 
 
 ## Pendiente
 
-- S1b: token Entra (MSAL) para SAS vinculada al usuario (`sduoid`). No está implementado.
+- S1b resuelto sin MSAL en el navegador: el broker hace OBO y devuelve `tokenStorage` (ver `spikes/resultados/S1b-sas-ligada-usuario.md`). Si el token vence a mitad de una subida larga (vive 60-90 min), la app debe pedir otra SAS y reiniciar.
 - El estado `confirmando` cubre hoy solo un instante: el `blocklist` se envía dentro de `subirEnBloques`. Si se necesita reflejarlo, agregar un callback de fase.

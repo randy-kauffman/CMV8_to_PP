@@ -13,6 +13,10 @@
     "SAS_READ_MINUTOS": "5",
     "SAS_BLOQUE_MB": "4",
     "SAS_LIGADA_USUARIO": "false",
+
+    "BROKER_CLIENT_ID": "fe2f40d6-cac3-451b-b24d-ab9e93c80482",
+    "BROKER_TENANT_ID": "00000000-0000-0000-0000-000000000000",
+    "BROKER_CLIENT_SECRET": "NO-PONER-AQUI: en Azure se fija fuera de banda (spike) o como @Microsoft.KeyVault(SecretUri=https://<kv>.vault.azure.net/secrets/broker-client-secret/) en el Banco",
     "TAMANO_MAXIMO_BYTES": "1073741824",
 
     "DATAVERSE_URL": "https://ORG.crm.dynamics.com",

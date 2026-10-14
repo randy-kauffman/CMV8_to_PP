@@ -40,6 +40,8 @@
   <data name="velocidadMbps_Desc" xml:space="preserve"><value>Velocidad de subida instantanea en megabits por segundo (ventana de 3 s).</value></data>
   <data name="velocidadPromedioMbps_Display" xml:space="preserve"><value>Velocidad promedio (Mbps)</value></data>
   <data name="velocidadPromedioMbps_Desc" xml:space="preserve"><value>Velocidad de subida promedio desde el inicio, en megabits por segundo.</value></data>
+  <data name="tokenStorage_Display" xml:space="preserve"><value>Token de Storage (SAS ligada)</value></data>
+  <data name="tokenStorage_Desc" xml:space="preserve"><value>Token de Storage del usuario (respuesta tokenStorage del conector). Se envía como Authorization: Bearer en cada Put Block y Put Block List; obligatorio si la SAS está ligada al usuario (sduoid).</value></data>
   <data name="uploadUrl_Display" xml:space="preserve"><value>URL de subida (SAS)</value></data>
   <data name="uploadUrl_Desc" xml:space="preserve"><value>URL del blob con SAS obtenida por la app via el conector. Si se informa, el componente no llama al broker.</value></data>
   <data name="bloqueBytes_Display" xml:space="preserve"><value>Tamano de bloque (bytes)</value></data>

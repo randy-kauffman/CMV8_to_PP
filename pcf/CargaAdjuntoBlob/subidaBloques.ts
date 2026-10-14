@@ -10,8 +10,13 @@ export interface OpcionesSubida {
     bloqueBytes?: number;
     /** Cantidad de bloques en vuelo. Por defecto 4. */
     paralelismo?: number;
-    /** x-ms-version. Por defecto 2025-07-05. */
+    /** x-ms-version. Por defecto 2025-07-05 (minimo para SAS ligada al usuario). */
     versionServicio?: string;
+    /**
+     * S1b: token Entra de Storage del usuario. Si viene, se envia como Authorization: Bearer en Put Block y
+     * Put Block List: la SAS ligada (sduoid) exige un bearer cuyo oid coincida. Nunca se registra.
+     */
+    tokenStorage?: string;
 }
 
 export type CausaError = "sas" | "red" | "servidor" | "cancelado";
@@ -82,7 +87,7 @@ async function putConReintentos(
             if (resp.ok) return;
             if (resp.status === 403) {
                 throw new ErrorSubida(
-                    "Storage rechazo la SAS (403): vencio o no corresponde al blob.",
+                    "Storage rechazo la SAS (403): vencio, no corresponde al blob o falta el token del usuario.",
                     "sas",
                     403
                 );
@@ -133,6 +138,8 @@ export async function subirEnBloques(
         opciones.bloqueBytes && opciones.bloqueBytes > 0 ? opciones.bloqueBytes : BLOQUE_BYTES_DEFECTO;
     const paralelismo = Math.max(1, Math.floor(opciones.paralelismo ?? 4));
     const version = opciones.versionServicio || VERSION_SERVICIO_DEFECTO;
+    const token = (opciones.tokenStorage ?? "").trim();
+    const autorizacion: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
     const total = file.size;
     const cantidad = Math.max(1, Math.ceil(total / bloqueBytes));
     const ids: string[] = [];
@@ -161,7 +168,7 @@ export async function subirEnBloques(
             try {
                 await putConReintentos(
                     url,
-                    { headers: { "x-ms-version": version }, body: file.slice(inicio, fin) },
+                    { headers: { "x-ms-version": version, ...autorizacion }, body: file.slice(inicio, fin) },
                     interno.signal
                 );
             } catch (e) {
@@ -188,6 +195,7 @@ export async function subirEnBloques(
             {
                 headers: {
                     "x-ms-version": version,
+                    ...autorizacion,
                     "x-ms-blob-content-type": (file as File).type || "application/octet-stream",
                     "Content-Type": "application/xml",
                 },

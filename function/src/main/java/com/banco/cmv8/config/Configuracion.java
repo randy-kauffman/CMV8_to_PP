@@ -75,6 +75,22 @@ public final class Configuracion {
         return opcional("AZURE_CLIENT_ID");
     }
 
+    // ---------------------------------------------------------------- app del broker (OBO, S1b)
+
+    /** Client id de la app registration del broker (la misma audiencia que valida Easy Auth). */
+    public String brokerClientId() {
+        return requerido("BROKER_CLIENT_ID");
+    }
+
+    public String brokerTenantId() {
+        return requerido("BROKER_TENANT_ID");
+    }
+
+    /** Secreto de la app del broker para el OBO. En el Banco: referencia a Key Vault (o certificado). Nunca loguear. */
+    public String brokerClientSecret() {
+        return requerido("BROKER_CLIENT_SECRET");
+    }
+
     // ---------------------------------------------------------------- storage de adjuntos
 
     /** Termina en '/'. */

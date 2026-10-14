@@ -53,6 +53,15 @@ class EntradasHttpTest {
     }
 
     @Test
+    void sinAuthorizationUsaElTokenDelTokenStoreDeEasyAuth() {
+        String jwt = b64url("{}") + "." + b64url("{\"oid\":\"o-3\",\"tid\":\"t-3\"}") + ".x";
+        ContextoLlamador c = LectorLlamador.desde(Map.of("x-ms-token-aad-access-token", jwt));
+
+        assertEquals(Optional.of(jwt), c.bearerToken());
+        assertEquals(Optional.of("o-3"), c.objectId());
+    }
+
+    @Test
     void ipv6EntreCorchetes() {
         assertEquals("2001:db8::1", LectorLlamador.primeraIp("[2001:db8::1]:443"));
         assertEquals("2001:db8::1", LectorLlamador.primeraIp("2001:db8::1"));

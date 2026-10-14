@@ -29,7 +29,10 @@ public final class LectorLlamador {
         Optional<String> bearer = encabezado(encabezados, "Authorization")
                 .filter(v -> v.regionMatches(true, 0, "Bearer ", 0, 7))
                 .map(v -> v.substring(7).trim())
-                .filter(v -> !v.isEmpty());
+                .filter(v -> !v.isEmpty())
+                // Con Easy Auth el Authorization original llega al código; si no llegara, el token store
+                // de App Service lo inyecta en X-MS-TOKEN-AAD-ACCESS-TOKEN (S1b, assertion del OBO).
+                .or(() -> encabezado(encabezados, "X-MS-TOKEN-AAD-ACCESS-TOKEN"));
         Optional<JsonNode> claimsJwt = bearer.flatMap(LectorLlamador::payloadJwt);
         Optional<JsonNode> principal = encabezado(encabezados, "X-MS-CLIENT-PRINCIPAL")
                 .flatMap(LectorLlamador::decodificarPrincipal);

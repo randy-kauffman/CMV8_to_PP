@@ -90,7 +90,10 @@ Nuevas (agregar a Bicep o a la configuración de la Function App):
 | --- | --- | --- |
 | `COLA_INGESTA` | `ingesta-pendiente` | Nombre de la cola. **Obligatoria como app setting**: las anotaciones usan `%COLA_INGESTA%` y el host no arranca esas funciones si no existe |
 | `AUTORIZACION_MODO` | `dataverse` | `dataverse` = suplantación con `CallerObjectId` + `RetrievePrincipalAccess`. `ninguna` = permite todo (solo spike S1; si además falta `DATAVERSE_URL`, usa un repositorio sustituto) |
-| `SAS_LIGADA_USUARIO` | `false` | `true` = SAS ligada al usuario (`sduoid`, S1b) cuando llega el `oid` |
+| `SAS_LIGADA_USUARIO` | `false` | `true` = SAS ligada al usuario (`sduoid`, S1b). Exige `oid` + bearer del llamador (si faltan, 401) y devuelve `tokenStorage` / `tokenStorageExpiraUtc` obtenidos por OBO |
+| `BROKER_CLIENT_ID` | — | Client id de la app registration del broker (audiencia de Easy Auth). Obligatoria con `SAS_LIGADA_USUARIO=true` |
+| `BROKER_TENANT_ID` | — | Tenant Entra del broker (autoridad del OBO). Obligatoria con `SAS_LIGADA_USUARIO=true` |
+| `BROKER_CLIENT_SECRET` | — | Secreto de la app del broker para el OBO hacia `https://storage.azure.com/user_impersonation`. **Nunca en archivos ni en Bicep**: en el spike se fija fuera de banda con `az functionapp config appsettings set` (y `infra/desplegar.sh` lo preserva); en el Banco, referencia `@Microsoft.KeyVault(...)` o, mejor, certificado |
 | `TAMANO_MAXIMO_BYTES` | `1073741824` | Límite de tamaño declarado (1 GB) |
 | `ESTANCADA_MINUTOS` | `15` | Antigüedad para el watchdog |
 | `ESCANEO_REQUERIDO` | `false` | `true` = el worker exige la etiqueta de Defender `Malware Scanning scan result = No threats found` antes de archivar. Activar cuando Defender esté habilitado |
@@ -113,7 +116,7 @@ prefijo (`<id>_<archivo>`) para que dos archivos homónimos de solicitudes disti
 | Spike | Qué parte del código |
 | --- | --- |
 | S1 | `SasSubida` con `AUTORIZACION_MODO=ninguna` (sin Dataverse) + PCF |
-| S1b | `SAS_LIGADA_USUARIO=true`: `EmisorSasBlob` agrega `sduoid` y pide la clave de delegación con el tenant del usuario |
+| S1b | `SAS_LIGADA_USUARIO=true`: `EmisorSasBlob` agrega `sduoid` y pide la clave de delegación con el tenant del usuario; `IntercambiadorTokenObo` (MSAL4J, OBO) devuelve el token de Storage del usuario que el PCF envía como `Authorization: Bearer`. Ver `spikes/resultados/S1b-sas-ligada-usuario.md` |
 | S2 | `SasSubida`/`SasLectura` con `AUTORIZACION_MODO=dataverse`: identidad administrada, Shared Key apagado, 403 a quien no tiene acceso (`AutorizadorSolicitudDataverse`) |
 | S3 | `OnScanResult` (EICAR → Rechazado y blob borrado) y `ESCANEO_REQUERIDO=true` |
 | S4b | `ProcesarIngesta` contra un servidor CMIS de prueba: `AlmacenAdjuntosBlob.abrir` lee por rangos de 4 MiB y OpenCMIS envía con chunked streaming de 64 KiB; medir heap con 100 MB |

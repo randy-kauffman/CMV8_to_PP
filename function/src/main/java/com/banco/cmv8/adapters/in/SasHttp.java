@@ -26,7 +26,7 @@ import java.util.logging.Logger;
 
 /**
  * Broker de SAS. ANONYMOUS a nivel de Functions: la autenticación Entra la impone la autenticación
- * integrada de App Service (S7). Nunca se loguea la URL con SAS ni el bearer.
+ * integrada de App Service (S7). Nunca se loguea la URL con SAS, el bearer ni el tokenStorage (S1b).
  */
 public class SasHttp {
 
@@ -50,6 +50,11 @@ public class SasHttp {
             cuerpo.put("expiraUtc", iso(r.expiraUtc()));
             cuerpo.put("bloqueBytes", r.bloqueBytes());
             cuerpo.put("versionServicio", r.versionServicio());
+            // S1b: solo con SAS ligada al usuario. El PCF lo manda como Authorization: Bearer a Storage.
+            if (r.tokenStorage() != null) {
+                cuerpo.put("tokenStorage", r.tokenStorage());
+                cuerpo.put("tokenStorageExpiraUtc", iso(r.tokenStorageExpiraUtc()));
+            }
             return RespuestasHttp.json(req, HttpStatus.OK, cuerpo);
         } catch (RuntimeException e) {
             return RespuestasHttp.desdeExcepcion(req, e, log);
@@ -76,6 +81,10 @@ public class SasHttp {
             Map<String, Object> cuerpo = new LinkedHashMap<>();
             cuerpo.put("downloadUrl", r.downloadUrl());
             cuerpo.put("expiraUtc", iso(r.expiraUtc()));
+            if (r.tokenStorage() != null) {
+                cuerpo.put("tokenStorage", r.tokenStorage());
+                cuerpo.put("tokenStorageExpiraUtc", iso(r.tokenStorageExpiraUtc()));
+            }
             return RespuestasHttp.json(req, HttpStatus.OK, cuerpo);
         } catch (RuntimeException e) {
             return RespuestasHttp.desdeExcepcion(req, e, log);

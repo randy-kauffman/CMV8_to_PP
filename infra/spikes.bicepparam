@@ -16,9 +16,14 @@ param autorizacionModo = 'dataverse'
 // Sin firewall IP en el spike S1/S2. Para S1b/S3 agregar la IP pública propia.
 param ipsPermitidas = []
 
-// S1b: pasar a true con accionSasNoLigada = 'Block' una vez que el PCF envíe el bearer del usuario.
-param requerirSasLigadaAUsuario = false
-param accionSasNoLigada = 'Log'
+// S1b: SAS ligada al usuario (sduoid) + token de Storage por OBO que el PCF manda como Bearer.
+// Rollout: primero 'Log' (se registran las SAS no ligadas), después 'Block' (2026-10-14, S1b verificado).
+param requerirSasLigadaAUsuario = true
+param accionSasNoLigada = 'Block'
+
+// App del broker (Easy Auth + OBO). El secreto BROKER_CLIENT_SECRET NO va acá: fuera de banda (spike) o Key Vault (el Banco).
+param brokerClientId = 'fe2f40d6-cac3-451b-b24d-ab9e93c80482'
+param brokerTenantId = '7bcfee03-896e-4ad3-947b-8a2d9ce17974'
 
 // S3: pasar a true. Requiere el plan Defender for Storage disponible en la suscripción.
 param habilitarDefender = false

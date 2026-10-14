@@ -14,6 +14,7 @@ import com.banco.cmv8.adapters.out.dataverse.AutorizadorPermisivo;
 import com.banco.cmv8.adapters.out.dataverse.AutorizadorSolicitudDataverse;
 import com.banco.cmv8.adapters.out.dataverse.ClienteDataverse;
 import com.banco.cmv8.adapters.out.dataverse.RepositorioSolicitudesDataverse;
+import com.banco.cmv8.adapters.out.entra.IntercambiadorTokenObo;
 import com.banco.cmv8.adapters.out.memoria.RepositorioSinDataverse;
 import com.banco.cmv8.application.EmitirSasLectura;
 import com.banco.cmv8.application.EmitirSasSubida;
@@ -21,6 +22,7 @@ import com.banco.cmv8.application.ProcesarIngesta;
 import com.banco.cmv8.application.ReencolarEstancadas;
 import com.banco.cmv8.application.RegistrarResultadoEscaneo;
 import com.banco.cmv8.application.ResolverCliente;
+import com.banco.cmv8.application.VinculoUsuario;
 import com.banco.cmv8.domain.PoliticaSas;
 import com.banco.cmv8.domain.port.AlmacenAdjuntos;
 import com.banco.cmv8.domain.port.ArchivoDocumental;
@@ -30,6 +32,7 @@ import com.banco.cmv8.domain.port.RepositorioSolicitudes;
 import com.banco.cmv8.domain.port.ResolutorCliente;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
@@ -89,6 +92,7 @@ public final class Fabrica {
     private final Perezoso<AlmacenAdjuntos> almacen;
     private final Perezoso<ArchivoDocumental> archivo;
     private final Perezoso<ResolutorCliente> resolutor;
+    private final Perezoso<VinculoUsuario> vinculoUsuario;
 
     // ------------------------------------------------------------------ casos de uso
     private final Perezoso<EmitirSasSubida> emitirSasSubida;
@@ -127,10 +131,13 @@ public final class Fabrica {
                 new ResolutorClienteJt400.ParametrosAs400(config.as400Host(), config.as400Usuario(),
                         config.as400Clave(), config.as400Seguro(), config.as400SqlCliente())));
 
+        vinculoUsuario = new Perezoso<>(this::crearVinculoUsuario);
+
         emitirSasSubida = new Perezoso<>(() -> new EmitirSasSubida(politica.get(), autorizador.get(),
-                repositorio.get(), emisorSas.get(), config.vigenciaSasSubida(), config.bloqueBytes()));
+                repositorio.get(), emisorSas.get(), config.vigenciaSasSubida(), config.bloqueBytes(),
+                vinculoUsuario.get()));
         emitirSasLectura = new Perezoso<>(() -> new EmitirSasLectura(autorizador.get(), repositorio.get(),
-                almacen.get(), emisorSas.get(), config.vigenciaSasLectura()));
+                almacen.get(), emisorSas.get(), config.vigenciaSasLectura(), vinculoUsuario.get()));
         procesarIngesta = new Perezoso<>(() -> new ProcesarIngesta(repositorio.get(), almacen.get(), archivo.get(),
                 resolutor.get(), config.escaneoRequerido()));
         reencolarEstancadas = new Perezoso<>(() -> new ReencolarEstancadas(repositorio.get(),
@@ -147,6 +154,18 @@ public final class Fabrica {
             return new RepositorioSinDataverse();
         }
         return new RepositorioSolicitudesDataverse(clienteDataverse.get());
+    }
+
+    /** S1b: con SAS_LIGADA_USUARIO=true el broker devuelve también el token de Storage del usuario (OBO). */
+    private VinculoUsuario crearVinculoUsuario() {
+        if (!config.sasLigadaUsuario()) {
+            return VinculoUsuario.desactivado();
+        }
+        // El token debe sobrevivir a la SAS más larga que acompaña, con 5 min de margen.
+        Duration vigenciaMinima = (config.vigenciaSasSubida().compareTo(config.vigenciaSasLectura()) >= 0
+                ? config.vigenciaSasSubida() : config.vigenciaSasLectura()).plusMinutes(5);
+        return VinculoUsuario.activo(new IntercambiadorTokenObo(config.brokerClientId(), config.brokerTenantId(),
+                config.brokerClientSecret(), vigenciaMinima));
     }
 
     private AutorizadorSolicitud crearAutorizador() {

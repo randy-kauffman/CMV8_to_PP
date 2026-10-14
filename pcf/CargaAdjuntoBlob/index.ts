@@ -258,6 +258,7 @@ export class CargaAdjuntoBlob implements ComponentFramework.StandardControl<IInp
                     uploadUrl: uploadUrlEntrada,
                     rutaBlob: rutaDesdeUploadUrl(uploadUrlEntrada),
                     bloqueBytes: p.bloqueBytes.raw ?? undefined,
+                    tokenStorage: (p.tokenStorage.raw ?? "").trim() || undefined,
                 };
             } else {
                 this.cambiarEstado("solicitandoSas");
@@ -285,6 +286,8 @@ export class CargaAdjuntoBlob implements ComponentFramework.StandardControl<IInp
                     bloqueBytes: sas.bloqueBytes,
                     paralelismo: Math.min(Math.max(p.paralelismo.raw ?? 4, 1), 8),
                     versionServicio: sas.versionServicio,
+                    // S1b: entrada tokenStorage (camino conector) o el que devolvió el broker (camino directo).
+                    tokenStorage: sas.tokenStorage ?? ((p.tokenStorage.raw ?? "").trim() || undefined),
                 },
                 (hecho, total) => {
                     this.medirVelocidad(hecho);

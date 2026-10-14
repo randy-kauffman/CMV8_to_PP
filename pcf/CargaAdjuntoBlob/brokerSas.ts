@@ -13,6 +13,9 @@ export interface RespuestaSas {
     expiraUtc?: string;
     bloqueBytes?: number;
     versionServicio?: string;
+    /** S1b: token Entra de Storage del usuario (SAS ligada con sduoid). Secreto: nunca registrarlo. */
+    tokenStorage?: string;
+    tokenStorageExpiraUtc?: string;
 }
 
 export class ErrorBroker extends Error {
