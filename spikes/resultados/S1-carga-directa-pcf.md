@@ -2,7 +2,7 @@
 
 - Fecha: 2026-10-14
 - Entorno: canvas app en Studio (entorno Dev `org36e60d9d`), PCF `Banco.CargaAdjuntoBlob` 0.0.2, broker `cmv8-func-supfcopn`, Storage `cmv8adjsupfcopn`.
-- Estado: **confirmado con 100 MB**. Pendiente la corrida con 250 MB.
+- Estado: **confirmado**. 100 MB en 15 s. Experimento de paralelismo y bloque: el usuario confirmó que el techo es el uplink de su enlace; ni 8 carriles ni bloques de 8 MB lo movieron.
 
 ## Hipótesis
 
@@ -38,8 +38,12 @@ Verificación del blob desde Azure: `22222222-…/video-100mb.bin`, 104.857.600 
 
 Salidas `velocidadMbps` (ventana de 3 s) y `velocidadPromedioMbps`, y la línea de estado muestra `subiendo 45% · 52,3 Mbps (promedio 50,1)` y al terminar `completado en 15,1 s · promedio 53 Mbps`.
 
+## Experimento de throughput (2026-10-14)
+
+Se hizo configurable el tamaño de bloque desde el broker (`SAS_BLOQUE_MB`) y se probó con 8 MB y con paralelismo 2, 4 y 8. Resultado del usuario: misma velocidad en todos los casos. Conclusión: el enlace de subida es el techo; Storage aporta 0,24 s por bloque solapados. Se deja `SAS_BLOQUE_MB=4` (reintentos más baratos) y paralelismo 4.
+
 ## Pendiente
 
-- Corrida con 250 MB y registro de duración y velocidad.
+- Corrida con 250 MB (opcional, la mecánica no cambia).
 - Probar desde la app publicada (player) además de Studio, para capturar el origen del player.
 - Costo del spike: pendiente de que Cost Management publique datos.
