@@ -1,6 +1,16 @@
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
-import { solicitarSasSubida, ErrorBroker } from "./brokerSas";
+import { solicitarSasSubida, ErrorBroker, RespuestaSas } from "./brokerSas";
 import { subirEnBloques, ErrorSubida } from "./subidaBloques";
+
+/** Ruta relativa al contenedor a partir de una URL de blob con SAS: /contenedor/a/b.bin?sas → a/b.bin */
+function rutaDesdeUploadUrl(url: string): string {
+    try {
+        const partes = new URL(url).pathname.split("/").filter((s) => s.length > 0);
+        return decodeURIComponent(partes.slice(1).join("/"));
+    } catch {
+        return "";
+    }
+}
 
 type Estado =
     | "inactivo"
@@ -218,8 +228,14 @@ export class CargaAdjuntoBlob implements ComponentFramework.StandardControl<IInp
             this.fallar("El id de la solicitud no es un GUID válido.");
             return;
         }
-        if (!urlBroker) {
-            this.fallar("Falta la URL del broker.");
+        // Camino preferido: la app ya obtuvo la SAS por el conector (autenticado con Entra) y la pasa acá.
+        const uploadUrlEntrada = (p.uploadUrl.raw ?? "").trim();
+        if (!uploadUrlEntrada && !urlBroker) {
+            this.fallar("Falta la URL de subida (SAS) o la URL del broker.");
+            return;
+        }
+        if (uploadUrlEntrada && !/^https:\/\//i.test(uploadUrlEntrada)) {
+            this.fallar("La URL de subida debe ser HTTPS.");
             return;
         }
         const maxMB = p.tamanoMaximoMB.raw ?? 250;
@@ -236,18 +252,27 @@ export class CargaAdjuntoBlob implements ComponentFramework.StandardControl<IInp
         this._abort = abort;
 
         try {
-            this.cambiarEstado("solicitandoSas");
-            const sas = await solicitarSasSubida(
-                urlBroker,
-                p.tokenBroker.raw,
-                {
-                    solicitudId: solicitudId.replace(/[{}]/g, ""),
-                    nombreArchivo: archivo.name,
-                    tamanoBytes: archivo.size,
-                    contentType: this._contentType,
-                },
-                abort.signal
-            );
+            let sas: RespuestaSas;
+            if (uploadUrlEntrada) {
+                sas = {
+                    uploadUrl: uploadUrlEntrada,
+                    rutaBlob: rutaDesdeUploadUrl(uploadUrlEntrada),
+                    bloqueBytes: p.bloqueBytes.raw ?? undefined,
+                };
+            } else {
+                this.cambiarEstado("solicitandoSas");
+                sas = await solicitarSasSubida(
+                    urlBroker,
+                    p.tokenBroker.raw,
+                    {
+                        solicitudId: solicitudId.replace(/[{}]/g, ""),
+                        nombreArchivo: archivo.name,
+                        tamanoBytes: archivo.size,
+                        contentType: this._contentType,
+                    },
+                    abort.signal
+                );
+            }
             this._rutaBlob = sas.rutaBlob;
 
             this.cambiarEstado("subiendo");

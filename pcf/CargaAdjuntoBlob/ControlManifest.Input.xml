@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="Banco" constructor="CargaAdjuntoBlob" version="0.0.3" display-name-key="CargaAdjuntoBlob_Display" description-key="CargaAdjuntoBlob_Desc" control-type="standard">
+  <control namespace="Banco" constructor="CargaAdjuntoBlob" version="0.0.4" display-name-key="CargaAdjuntoBlob_Display" description-key="CargaAdjuntoBlob_Desc" control-type="standard">
     <!-- El control llama por fetch al broker (Function) y a Blob Storage: se declara servicio externo.
          Ojo: esto lo clasifica como componente premium (licenciamiento). Ajustar los dominios reales al desplegar. -->
     <external-service-usage enabled="true">
@@ -9,7 +9,9 @@
     </external-service-usage>
 
     <!-- Entradas -->
-    <property name="urlBroker" display-name-key="urlBroker_Display" description-key="urlBroker_Desc" of-type="SingleLine.Text" usage="input" required="true" />
+    <property name="uploadUrl" display-name-key="uploadUrl_Display" description-key="uploadUrl_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="bloqueBytes" display-name-key="bloqueBytes_Display" description-key="bloqueBytes_Desc" of-type="Whole.None" usage="input" required="false" />
+    <property name="urlBroker" display-name-key="urlBroker_Display" description-key="urlBroker_Desc" of-type="SingleLine.Text" usage="input" required="false" />
     <property name="tokenBroker" display-name-key="tokenBroker_Display" description-key="tokenBroker_Desc" of-type="SingleLine.Text" usage="input" required="false" />
     <property name="solicitudId" display-name-key="solicitudId_Display" description-key="solicitudId_Desc" of-type="SingleLine.Text" usage="input" required="true" />
     <property name="tiposAceptados" display-name-key="tiposAceptados_Display" description-key="tiposAceptados_Desc" of-type="SingleLine.Text" usage="input" required="false" default-value="video/*,application/pdf" />
