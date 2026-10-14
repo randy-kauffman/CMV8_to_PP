@@ -2,7 +2,7 @@
 
 - Fecha: 2026-10-14
 - Entorno: suscripción CM8_TO_PP, `rg-cmv8-spikes`, `eastus2`. Function `cmv8-func-supfcopn`, Storage `cmv8adjsupfcopn`, contenedor `cmv8-ingesta`.
-- Estado: **confirmado** (Storage y Dataverse). Pendiente solo el caso negativo 403 con un usuario sin rol, que requiere un segundo usuario en el tenant.
+- Estado: **confirmado** (Storage y Dataverse), incluido el 403 con un usuario sin rol.
 
 ## Hipótesis
 
@@ -55,6 +55,7 @@ Con `AUTORIZACION_MODO=dataverse`, la identidad de la Function como usuario de a
 | Fila inexistente | 403. El autorizador corre antes que la búsqueda y no distingue "no existe" de "sin acceso": no revela existencia de filas. Correcto, y se documenta como comportamiento esperado |
 | Fila ya en Subido | 409 |
 | Tamaño 0 y nombre con `..` | 400 |
-| Usuario sin rol sobre la fila | **pendiente**: hace falta un segundo usuario en el tenant |
+| Usuario sin rol sobre la fila (`user1@55xljh`, oid `381bb2b4-…`, roles Basic User + uno ajeno, sin CMV8 Solicitante) pide SAS de subida sobre la fila del admin | **403** `No tiene permiso de escritura sobre la solicitud` |
+| Mismo usuario pide SAS de lectura | **403** `No tiene permiso de lectura sobre la solicitud` |
 
 Hallazgo: `saoid` en la SAS exige que la identidad firmante tenga `runAsSuperUser` (Blob Data Owner); con Contributor en el contenedor Storage responde 403 `AuthorizationPermissionMismatch` en cada bloque. Se eliminó `saoid`; la auditoría sigue por `scid` y la traza del llamador. Documentado en ADR-002.
