@@ -1,0 +1,38 @@
+{
+  "properties": {
+    "connectionParameters": {
+      "token": {
+        "type": "oauthSetting",
+        "oAuthSettings": {
+          "identityProvider": "aad",
+          "clientId": "72ec6834-cb06-4d9e-a008-bca52f7f41dd",
+          "clientSecret": "<<SECRETO EN EL CONECTOR, NO EN EL REPO>>",
+          "scopes": ["user_impersonation"],
+          "redirectMode": "Global",
+          "redirectUrl": "https://global.consent.azure-apim.net/redirect",
+          "properties": {
+            "IsFirstParty": "False",
+            "AzureActiveDirectoryResourceId": "api://fe2f40d6-cac3-451b-b24d-ab9e93c80482",
+            "IsOnbehalfofLoginSupported": true
+          },
+          "customParameters": {
+            "loginUri": { "value": "https://login.windows.net" },
+            "tenantId": { "value": "7bcfee03-896e-4ad3-947b-8a2d9ce17974" },
+            "resourceUri": { "value": "api://fe2f40d6-cac3-451b-b24d-ab9e93c80482" },
+            "enableOnbehalfOfLogin": { "value": "false" }
+          }
+        }
+      },
+      "token:TenantId": {
+        "type": "string",
+        "metadata": { "sourceType": "AzureActiveDirectoryTenant" },
+        "uiDefinition": { "constraints": { "required": "false", "hidden": "true" } }
+      }
+    },
+    "iconBrandColor": "#0b5394",
+    "capabilities": [],
+    "scriptOperations": null,
+    "publisher": "Banco",
+    "stackOwner": "Banco"
+  }
+}
