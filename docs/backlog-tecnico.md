@@ -8,7 +8,7 @@ Estado al cierre del 2026-10-14:
 | --- | --- |
 | 5, pool jt400 | **Implementado**: `FuenteConexionesAs400` (HikariCP 6.3.0) + `ResolutorClienteJt400` sobre `DataSource`; 56 pruebas unitarias; medido contra PUB400 (S6, sección "Medición con pool"). Pendiente en el Banco: `maxLifetime` real y, si el RTT lo justifica, cache de `PreparedStatement` por conexión |
 | 6a, credencial federada del broker | **Implementado y verificado** en el tenant propio: credencial federada `uami-cmv8-broker` en la app del broker, OBO con aserción de la identidad administrada, `BROKER_CLIENT_SECRET` eliminado de app settings, Bicep y `desplegar.sh`; secreto `obo-storage-s1b` borrado de la app registration. SAS + bearer federado → 201 |
-| 6b, Key Vault para AS400 y CMIS | Pendiente: el Key Vault no existe en la infra de spikes; se hace con el Bicep del Banco |
+| 6b, Key Vault para AS400 y CMIS | **Implementado y verificado**: Key Vault `cmv8-kv-supfcopn` (RBAC) en el Bicep, `keyVaultReferenceIdentity` = UAMI, rol Key Vault Secrets User, `AS400_PASSWORD` y `CMIS_PASSWORD` como referencias sin versión; `infra/cargar-secretos.sh` carga los valores fuera de banda. Referencia resuelta (`Resolved`) y `POST /api/clientes/resolver` desde Azure contra PUB400 → 200 en 7,9 s la primera (pool frío + Key Vault) y ~1,5 s las siguientes |
 | 7, token en el conector | Higiene y prohibición desde flujos: escritas en `docs/checklist-construccion-app.md`. Política de vida de token de 10 min: **no probada**, requiere crear una `tokenLifetimePolicy` y asignarla al service principal de Azure Storage del tenant (cambio a nivel tenant, decisión del administrador) |
 | 10, acceso condicional | El broker responde ahora **401** con `WWW-Authenticate: Bearer error="interaction_required", claims="…"` en vez de 502, según RFC 6750 §3.1 |
 
@@ -93,3 +93,42 @@ Estas contraseñas no desaparecen; lo que se elimina es su presencia en texto pl
 ### Recomendación
 
 Las dos primeras son obligatorias y gratis; se escriben en el checklist de construcción de la app y en el modelo de gobierno. La tercera se prueba en el tenant propio en 30 minutos (crear la política, asignarla al SP de Storage, pedir una SAS y leer `tokenStorageExpiraUtc`); si funciona, se adopta junto con SAS de 10 min y `token ≥ SAS` en el broker. Las dos últimas quedan descartadas con la razón anotada.
+
+## 10. Acceso condicional y el OBO: análisis para el Banco (2026-10-14)
+
+### Cómo funciona un conector, el nuestro incluido
+
+1. La **conexión** se crea con un inicio de sesión interactivo en el navegador (ventana de consentimiento). Ese inicio de sesión es uno normal de Entra: ahí se evalúan MFA, dispositivo (por el PRT del navegador en un equipo unido o registrado) y ubicación del usuario. Power Platform guarda el refresh token de la app del conector.
+2. En cada llamada, el runtime de conectores (APIM de Microsoft) pide con ese refresh token un access token para el recurso del conector. Es un inicio de sesión **no interactivo**: Entra vuelve a evaluar las políticas del recurso con los claims de la sesión (MFA, dispositivo) y con la **IP del runtime de conectores**, no la del usuario. Por eso Microsoft publica los rangos de IP de los conectores y por eso las políticas por ubicación de confianza los deben incluir (Learn: "Managed connectors outbound IP addresses").
+3. Los conectores estándar (SharePoint, Dataverse, Blob) hacen TODO del lado servidor con ese token. Nunca entregan un token al navegador. Esa es la diferencia con nuestro diseño, no la autenticación.
+
+Nuestro conector es idéntico hasta el paso 2 (recurso = app del broker). La diferencia está en el tercer salto: el broker hace **OBO** hacia Azure Storage y devuelve ese token al PCF para la carga directa.
+
+### Qué evalúa Entra en el salto OBO
+
+- Las políticas que apliquen al recurso **Azure Storage** para ese usuario (Learn: en OBO la política se aplica a los usuarios). Los claims de MFA y de dispositivo viajan en la aserción: si el usuario entró con MFA y desde un dispositivo conforme, el OBO los hereda. Si la política pide algo que la aserción no trae, Entra devuelve `interaction_required` con un desafío de claims; el broker ya responde 401 con ese desafío, pero el conector de Power Platform no sabe procesarlo.
+- La **ubicación** es la IP de salida de la Function, no la del usuario ni la del runtime de conectores.
+- Microsoft advierte explícitamente contra entregar a un cliente tokens obtenidos por el intermediario (Learn, OBO: "DO NOT send access tokens that were issued to the middle tier to anywhere except the intended audience"), por tres razones: intercepción, imposibilidad de step-up de claims y **incompatibilidad con políticas basadas en dispositivo o ubicación**. El ADR-002 debe registrar esta desviación como aceptada, con las mitigaciones (el token solo sirve junto con la SAS ligada; el usuario no tiene RBAC; vida corta) o descartarla.
+
+### Qué hacer en el Banco
+
+| Política del Banco | Efecto sobre el OBO | Acción |
+| --- | --- | --- |
+| MFA para todos los usuarios o para Azure Storage | Heredado de la sesión del conector | Ninguna, verificar en la prueba |
+| Dispositivo conforme o unido para todas las apps | Heredado si la conexión se creó desde ese dispositivo con SSO del navegador (Edge, o Chrome con la extensión de cuentas de Microsoft) | Documentar que la conexión se crea desde el equipo corporativo; verificar en la prueba |
+| Ubicaciones de confianza (bloquear fuera de las IP corporativas) | **Falla**: la IP es la de la Function en Azure | Salida de la Function por NAT Gateway con IP pública fija y esa IP en una ubicación con nombre, o excluir Azure Storage de la política de ubicación para el grupo de usuarios de la app |
+| Frecuencia de inicio de sesión | El refresh token del conector la respeta; el OBO toma la sesión vigente | Ninguna |
+| Evaluación continua de acceso (CAE) | Storage y Entra soportan CAE; el token OBO puede ser de 24 h si el cliente es compatible | Considerar `tokenLifetimePolicy` (§7) para acotarlo |
+
+### Prueba antes de salir al Banco (en el tenant propio)
+
+El tenant de desarrollo tiene Entra ID P2 (Microsoft 365 E5 Developer). Prueba de 1 hora, decisión del administrador porque es un cambio a nivel tenant:
+
+1. Política de acceso condicional: usuarios = `user1@55xljh…`, app de destino = Azure Storage, conceder = requerir MFA. Registrar MFA para `user1`.
+2. Desde Studio con `user1`: crear la conexión del conector (MFA en el inicio de sesión) y subir. Esperado: 201 (el OBO hereda MFA).
+3. Variante negativa: misma política pero sobre la app del broker en vez de Storage, y después quitar MFA de la sesión (cerrar sesión, volver a entrar sin MFA registrado): esperado 401 con `interaction_required` en el broker y el error visible en la app.
+4. Variante de ubicación: política de ubicaciones de confianza con solo la IP del usuario: esperado 401; agregar la IP de salida de la Function: esperado 201. Dispositivo conforme no se puede simular sin Intune y un equipo inscrito; queda para el Banco.
+
+### Alternativa si seguridad del Banco rechaza entregar el token al navegador
+
+Carga a través del conector estándar de Azure Blob Storage (autenticación Entra, todo del lado servidor, sin token en el navegador). Cambia la economía del ADR-002: el archivo pasa por el runtime de conectores en vez de ir directo a Storage, con los límites de tamaño por llamada de ese conector, que hay que verificar contra los 100 MB del caso de uso antes de proponerlo.

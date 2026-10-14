@@ -25,6 +25,13 @@ az group create --name "$RG" --location "$LOCATION" --tags proyecto=CMV8_to_PP a
 # config/appsettings de Bicep REEMPLAZA todos los app settings: ningún secreto se fija fuera de banda.
 # El OBO del broker usa la identidad administrada como credencial federada (sin BROKER_CLIENT_SECRET).
 
+# Hallazgo 6b: el usuario de AS400 viene del entorno (spikes.bicepparam usa readEnvironmentVariable) para no dejarlo en el repo.
+LOCAL_SETTINGS="$(dirname "${BASH_SOURCE[0]}")/../function/local.settings.json"
+if [ -z "${AS400_USER:-}" ] && [ -f "$LOCAL_SETTINGS" ]; then
+  AS400_USER="$(jq -r '.Values.AS400_USER // empty' "$LOCAL_SETTINGS")"
+  export AS400_USER
+fi
+
 echo "Validando plantilla..."
 az deployment group validate --resource-group "$RG" --template-file "$TEMPLATE" --parameters "$PARAMS" -o none
 

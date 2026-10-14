@@ -82,6 +82,27 @@ param bloqueMb int = 4
 @description('Días de retención de los adjuntos en Storage antes del borrado automático (red de seguridad).')
 param diasRetencionAdjuntos int = 7
 
+@description('''Secretos en Key Vault (hallazgo 6b). Las contraseñas de AS400 y CMIS NUNCA van en parámetros ni en app settings:
+se cargan fuera de banda con infra/cargar-secretos.sh (secretos as400-password y cmis-password) y la Function las lee
+como referencias @Microsoft.KeyVault(...) con su identidad administrada. true en el spike (sin VNet); en el Banco false + private endpoint.''')
+param keyVaultAccesoPublico bool = true
+
+@description('Object id de la persona que carga los secretos (rol Key Vault Secrets Officer). Vacío: nadie fuera de la Function.')
+param oidOperadorKeyVault string = ''
+
+@description('AS400 (jt400). Vacío: la Function no recibe configuración de AS400. La contraseña viene de Key Vault.')
+param as400Host string = ''
+param as400Usuario string = ''
+@description('SQL con un solo ? que devuelve IDCLIENTE, IDCLIENTE2, NOMBRE, AFILIADOPADRE, IDDUENO.')
+param as400SqlCliente string = ''
+
+@description('CMIS (Content Manager). Vacío: la Function no recibe configuración CMIS. La contraseña viene de Key Vault.')
+param cmisUrl string = ''
+param cmisUsuario string = ''
+param cmisRepositorio string = ''
+param cmisCarpeta string = ''
+param cmisTipo string = ''
+
 // ---------------------------------------------------------------------------
 // Nombres
 // ---------------------------------------------------------------------------
@@ -95,6 +116,7 @@ var nombreLog = '${prefijo}-log-${take(token, 8)}'
 var nombreAppi = '${prefijo}-appi-${take(token, 8)}'
 var nombreTopico = '${prefijo}-egt-scan-${take(token, 8)}'
 var contenedorDespliegue = 'app-package-${take(token, 8)}'
+var nombreKeyVault = '${prefijo}-kv-${take(token, 8)}'
 
 // Roles integrados
 var rolBlobDataOwner = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b')
@@ -103,6 +125,25 @@ var rolBlobDelegator = subscriptionResourceId('Microsoft.Authorization/roleDefin
 var rolQueueDataContributor = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '974c5e8b-45b9-4653-ba55-5f855dd0fb88')
 var rolTableDataContributor = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')
 var rolMonitoringMetricsPublisher = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb')
+var rolKeyVaultSecretsUser = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
+var rolKeyVaultSecretsOfficer = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7')
+
+// Referencias de Key Vault sin versión: la rotación del secreto no requiere redeploy (se refresca en 24 h o al reiniciar).
+var ajustesAs400 = empty(as400Host) ? {} : {
+  AS400_HOST: as400Host
+  AS400_USER: as400Usuario
+  AS400_SECURE: 'true'
+  AS400_SQL_CLIENTE: as400SqlCliente
+  AS400_PASSWORD: '@Microsoft.KeyVault(VaultName=${nombreKeyVault};SecretName=as400-password)'
+}
+var ajustesCmis = empty(cmisUrl) ? {} : {
+  CMIS_URL: cmisUrl
+  CMIS_USER: cmisUsuario
+  CMIS_REPOSITORY_ID: cmisRepositorio
+  CMIS_FOLDER_PATH: cmisCarpeta
+  CMIS_TYPE_ID: cmisTipo
+  CMIS_PASSWORD: '@Microsoft.KeyVault(VaultName=${nombreKeyVault};SecretName=cmis-password)'
+}
 
 var reglasIp = [for ip in ipsPermitidas: { value: ip, action: 'Allow' }]
 
@@ -330,6 +371,49 @@ resource rolAppInsights 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 }
 
 // ---------------------------------------------------------------------------
+// Key Vault: contraseñas de AS400 y CMIS (hallazgo 6b). RBAC, sin access policies.
+// ---------------------------------------------------------------------------
+resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' = {
+  name: nombreKeyVault
+  location: location
+  tags: { proyecto: 'CMV8_to_PP' }
+  properties: {
+    tenantId: tenant().tenantId
+    sku: { family: 'A', name: 'standard' }
+    enableRbacAuthorization: true
+    enableSoftDelete: true
+    softDeleteRetentionInDays: 7
+    publicNetworkAccess: keyVaultAccesoPublico ? 'Enabled' : 'Disabled'
+    networkAcls: {
+      bypass: 'AzureServices'
+      defaultAction: keyVaultAccesoPublico ? 'Allow' : 'Deny'
+    }
+  }
+}
+
+// La Function solo LEE secretos (resuelve las referencias @Microsoft.KeyVault con su identidad).
+resource rolKeyVaultFunction 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(keyVault.id, identidad.id, rolKeyVaultSecretsUser)
+  scope: keyVault
+  properties: {
+    roleDefinitionId: rolKeyVaultSecretsUser
+    principalId: identidad.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Quien carga los secretos (persona o pipeline), fuera de banda.
+resource rolKeyVaultAdministrador 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(oidOperadorKeyVault)) {
+  name: guid(keyVault.id, oidOperadorKeyVault, rolKeyVaultSecretsOfficer)
+  scope: keyVault
+  properties: {
+    roleDefinitionId: rolKeyVaultSecretsOfficer
+    principalId: oidOperadorKeyVault
+    principalType: 'User'
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Function App en Flex Consumption
 // ---------------------------------------------------------------------------
 resource plan 'Microsoft.Web/serverfarms@2024-04-01' = {
@@ -358,6 +442,8 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
   properties: {
     serverFarmId: plan.id
     httpsOnly: true
+    // Las referencias @Microsoft.KeyVault se resuelven con la identidad asignada por el usuario (no hay identidad del sistema).
+    keyVaultReferenceIdentity: identidad.id
     siteConfig: {
       minTlsVersion: '1.2'
       http20Enabled: true
@@ -392,13 +478,15 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
     rolHostOwner
     rolHostQueue
     rolHostTable
+    rolKeyVaultFunction
   ]
 
   resource configuracion 'config' = {
     name: 'appsettings'
     // Sin BROKER_CLIENT_SECRET: el OBO del broker usa la identidad administrada (AZURE_CLIENT_ID) como
     // credencial federada de la app registration. El secreto solo existe en desarrollo local.
-    properties: {
+    // AS400_PASSWORD y CMIS_PASSWORD: referencias a Key Vault, nunca valores.
+    properties: union({
       AzureWebJobsStorage__accountName: storageHost.name
       AzureWebJobsStorage__credential: 'managedidentity'
       AzureWebJobsStorage__clientId: identidad.properties.clientId
@@ -420,7 +508,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       SAS_BLOQUE_MB: string(bloqueMb)
       BROKER_CLIENT_ID: brokerClientId
       BROKER_TENANT_ID: brokerTenantId
-    }
+    }, ajustesAs400, ajustesCmis)
   }
 }
 
@@ -519,4 +607,5 @@ output storageAdjuntosBlobEndpoint string = storageAdjuntos.properties.primaryEn
 output contenedorAdjuntosName string = contenedorAdjuntos
 output storageHostName string = storageHost.name
 output appInsightsName string = appInsights.name
+output keyVaultName string = keyVault.name
 output topicoScanName string = habilitarDefender ? topicoScan.name : ''

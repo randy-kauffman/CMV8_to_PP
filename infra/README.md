@@ -30,7 +30,7 @@ Las salidas (nombre de la Function, client id de la identidad, cuenta y contened
 ## Qué NO está en este Bicep todavía
 
 - VNet integration de la Function y private endpoint del Storage: solo tienen sentido dentro del Banco (S0). Se agregan como módulo opcional cuando crucemos.
-- Key Vault para la credencial de IBM i: lo mismo, pertenece a S6 dentro del Banco.
+- Key Vault (`cmv8-kv-<sufijo>`, RBAC): contraseñas de AS400 y CMIS como referencias `@Microsoft.KeyVault(VaultName=…;SecretName=as400-password)` resueltas con la identidad administrada (`keyVaultReferenceIdentity`). Los valores se cargan fuera de banda: `bash infra/cargar-secretos.sh rg-cmv8-spikes` (lee `function/local.settings.json`, nunca imprime) y después `az functionapp restart`. En el spike el vault es público con RBAC (la Function no tiene VNet); en el Banco `keyVaultAccesoPublico=false` + private endpoint. Estado de resolución: `GET …/sites/<function>/config/configreferences/appsettings?api-version=2023-12-01`.
 - Azure Policy de cumplimiento (HTTPS, TLS 1.2, sin Shared Key): va a nivel de suscripción o management group, no de este RG.
 
 ## Decisiones embebidas

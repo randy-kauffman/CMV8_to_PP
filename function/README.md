@@ -98,12 +98,12 @@ Nuevas (agregar a Bicep o a la configuración de la Function App):
 | `ESTANCADA_MINUTOS` | `15` | Antigüedad para el watchdog |
 | `ESCANEO_REQUERIDO` | `false` | `true` = el worker exige la etiqueta de Defender `Malware Scanning scan result = No threats found` antes de archivar. Activar cuando Defender esté habilitado |
 | `CMIS_URL` | — | URL del Browser binding, por ejemplo `https://cm/cmis/browser` |
-| `CMIS_USER` / `CMIS_PASSWORD` | — | Usuario de servicio de Content Manager (en Azure: referencia a Key Vault) |
+| `CMIS_USER` / `CMIS_PASSWORD` | — | Usuario de servicio de Content Manager. En Azure la contraseña es la referencia `@Microsoft.KeyVault(VaultName=…;SecretName=cmis-password)` que pone el Bicep; el valor se carga con `infra/cargar-secretos.sh` |
 | `CMIS_REPOSITORY_ID` | vacío | Vacío = primer repositorio |
 | `CMIS_FOLDER_PATH` | — | Carpeta destino, por ejemplo `/Ingesta` |
 | `CMIS_TYPE_ID` | `cmis:document` | Tipo de documento de CM |
 | `CMIS_PROPIEDADES_JSON` | `{}` | Mapa `propiedadCM → "${campo}"` o literal. Campos: `idCliente`, `idCliente2`, `nombreCliente`, `afiliadoPadre`, `idDueno`, `solicitudId`, `nombreArchivo`, `contentType` |
-| `AS400_HOST` / `AS400_USER` / `AS400_PASSWORD` | — | Perfil de solo lectura (contraseña en Key Vault) |
+| `AS400_HOST` / `AS400_USER` / `AS400_PASSWORD` | — | Perfil de solo lectura. En Azure la contraseña es la referencia `@Microsoft.KeyVault(VaultName=…;SecretName=as400-password)` que pone el Bicep; el valor se carga con `infra/cargar-secretos.sh`. Verificado el 2026-10-14 contra PUB400 desde la Function |
 | `AS400_SECURE` | `true` | TLS (puertos 9471/9476) |
 | `AS400_POOL_MAX` | `4` | Conexiones máximas del pool HikariCP por instancia (`FuenteConexionesAs400`) |
 | `AS400_POOL_VIDA_MAX_MINUTOS` | `10` | Vida máxima de una conexión del pool; menor que el timeout de inactividad del job QZDASOINIT y del firewall |

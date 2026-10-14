@@ -30,3 +30,12 @@ param habilitarDefender = false
 
 // Pasar a true SOLO después de desplegar el código de la Function (la suscripción valida el endpoint).
 param crearSuscripcionEventGrid = false
+
+// Hallazgo 6b: contraseñas en Key Vault. El usuario de AS400 se toma del entorno (desplegar.sh lo exporta desde
+// function/local.settings.json) para no dejarlo en el repo; la contraseña NUNCA pasa por acá: infra/cargar-secretos.sh.
+param keyVaultAccesoPublico = true
+param oidOperadorKeyVault = 'eab4619b-d1f6-475c-a392-69aa8cf30e4f'
+param as400Host = 'PUB400.COM'
+param as400Usuario = readEnvironmentVariable('AS400_USER', '')
+// Consulta de prueba contra el catálogo de PUB400 (la real la define el Banco): resuelve el nombre de una tabla de QSYS2.
+param as400SqlCliente = 'SELECT TABLE_NAME AS IDCLIENTE, TABLE_SCHEMA AS IDCLIENTE2, TABLE_TEXT AS NOMBRE, TABLE_TYPE AS AFILIADOPADRE, SYSTEM_TABLE_NAME AS IDDUENO FROM QSYS2.SYSTABLES WHERE TABLE_SCHEMA = \'QSYS2\' AND TABLE_NAME = ? FETCH FIRST 1 ROWS ONLY'
