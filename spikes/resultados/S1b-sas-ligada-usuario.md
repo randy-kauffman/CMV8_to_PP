@@ -102,6 +102,10 @@ Detalle de los 403 (cuerpo XML, `AuthenticationErrorDetail`):
 Limpieza: `az storage blob delete --auth-mode login` falló (el admin solo tiene Blob Data Reader). El blob
 `1a39931e-…/s1b.bin` (1 MiB) queda; lo borra la regla de ciclo de vida a los 7 días.
 
+### Re-prueba de la política Block (misma fecha, más de una hora después de aplicarla)
+
+GET con una SAS de delegación de lectura **no ligada** (`az storage blob generate-sas --as-user --permissions r`, sin `sduoid`) sobre un blob del contenedor: **206 Partial Content** (rango de 1 KiB). La política seguía en `true` + `Block` según ARM (api 2025-06-01). Conclusión: el bloqueo no se aplicó en ninguna de las ventanas probadas (minutos y más de una hora). Pendiente reprobar en días y, si persiste, caso con Microsoft.
+
 ## Trade-offs
 
 - **El token de Storage viaja en la respuesta del conector.** Queda en memoria de la app canvas (variable de Power Fx) y en el

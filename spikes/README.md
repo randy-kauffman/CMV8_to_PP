@@ -1,5 +1,7 @@
 # Spikes fuera del Banco
 
+Estado al 2026-10-14: S1, S2, S7, S4b, S1b y S6 confirmados; S3 no se corre por decisión; S5 en lectura. Resultados, hallazgos abiertos y pendientes del Banco en `docs/plan-solucion.md` sección 4c.
+
 Orden recomendado (docs/plan-solucion.md, sección 4b): S1, S2, S7, S4b primero porque producen artefactos; después S1b, S3, S5. S6 solo la mecánica de jt400 contra PUB400.
 
 Cada spike termina con `spikes/resultados/S<n>-<nombre>.md`: hipótesis, pasos ejecutados, evidencia (salidas, capturas, métricas) y veredicto: confirmado / refutado / parcial.
@@ -60,7 +62,7 @@ Hipótesis: OpenCMIS con Browser binding sube 100 MB a un servidor CMIS 1.1 de p
 
 ## S1b. SAS ligada a usuario
 
-`requerirSasLigadaAUsuario=true`, acción Log y luego Block. El PCF debe mandar el bearer del usuario (MSAL). Verificar que la SAS sin bearer del mismo oid → 403.
+`requerirSasLigadaAUsuario=true`, acción Log y luego Block. El token de Storage **no lo obtiene el PCF con MSAL** (orígenes de isla de Power Apps variables, no registrables como redirect): lo obtiene el broker con On-Behalf-Of a partir del token del usuario en el conector y lo devuelve como `tokenStorage` junto con la SAS. El PCF 0.0.5 lo recibe por el input `tokenStorage` y lo manda como `Authorization: Bearer` en cada Put Block y Put Block List. Verificar que la SAS sin bearer → 403, el bearer sin SAS → 403, el bearer de otro principal → 403 y SAS + bearer del usuario → 201. Resultado en `spikes/resultados/S1b-sas-ligada-usuario.md`.
 
 ## S3. Defender for Storage
 
@@ -70,7 +72,7 @@ Plan original: `habilitarDefender=true`. Subir `eicar.com` y el video. Verificar
 
 ## S5. Atribución de requests en el admin center
 
-Correr 50 ingestas con impersonación y 50 con OBO. Al día siguiente, leer el reporte de requests del admin center: a quién se atribuyen. Veredicto: cuál modo elegir en el Banco según el pool.
+Correr 50 ingestas con impersonación (la carga ya se generó el 2026-10-14 07:34 UTC). El reporte de requests del admin center (Microsoft Power Platform requests) **excluye Dataverse**: solo incluye Power Automate, así que no sirve para este spike. Se lee en el análisis de Dataverse del admin center (Administrar → Dataverse → análisis → Usuarios activos), 24 a 48 h después, para ver a qué identidad cuenta Dataverse las operaciones. No prueba a qué pool se descontarían las requests de licenciamiento. Decisión tomada: se mantiene la impersonación y el pool de 25.000 queda como riesgo documentado.
 
 ## S6. jt400 contra PUB400
 

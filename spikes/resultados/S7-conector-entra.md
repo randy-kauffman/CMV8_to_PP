@@ -22,7 +22,7 @@ Un custom connector generado del OpenAPI de la Function, con autenticación Entr
 | --- | --- |
 | `GET /api/salud` (ruta excluida) | 200 |
 | `POST /api/sas/subida` sin token | **401** con `WWW-Authenticate: Bearer realm=…` |
-| `POST /api/sas/subida` con token de Entra del admin (`aud` = broker, `scp` = user_impersonation) | **200**, SAS emitida con `saoid` = oid del usuario |
+| `POST /api/sas/subida` con token de Entra del admin (`aud` = broker, `scp` = user_impersonation) | **200**, SAS emitida con `saoid` = oid del usuario (evidencia histórica: horas después se descubrió que `saoid` exige Blob Data Owner y rompe cada bloque con 403; se eliminó, ver S2 «Parte Dataverse» y ADR-002) |
 | Webhook de Event Grid sin clave | 401 del host de Functions (pide la clave), no de Easy Auth: la exclusión funciona |
 | App Insights | traza `SAS de subida emitida…` para la solicitud 4444…; desde esta versión la traza incluye `llamador=ContextoLlamador[oid=…]` |
 
