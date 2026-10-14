@@ -21,7 +21,7 @@ param ipsPermitidas = []
 param requerirSasLigadaAUsuario = true
 param accionSasNoLigada = 'Block'
 
-// App del broker (Easy Auth + OBO). El secreto BROKER_CLIENT_SECRET NO va acá: fuera de banda (spike) o Key Vault (el Banco).
+// App del broker (Easy Auth + OBO). Sin secreto: la app registration confía en la identidad administrada (credencial federada).
 param brokerClientId = 'fe2f40d6-cac3-451b-b24d-ab9e93c80482'
 param brokerTenantId = '7bcfee03-896e-4ad3-947b-8a2d9ce17974'
 

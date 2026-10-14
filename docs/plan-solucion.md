@@ -161,12 +161,12 @@ Nivel A, problemas abiertos a seguir:
 
 Nivel B, decisiones de diseño a llevar a producción:
 
-5. Pool de conexiones jt400 (HikariCP chico por instancia): hoy una conexión por invocación, 4,5 s con TLS contra ~120 ms por consulta en conexión abierta.
-6. Secreto del broker (OBO) a Key Vault o credencial federada con la identidad administrada; lo mismo `AS400_PASSWORD` y la credencial CMIS.
-7. El token de Storage viaja en la respuesta del conector y vive en una variable Power Fx: nunca persistirlo en Dataverse ni usar la operación desde Power Automate sin salidas seguras. Vida del token 60 a 90 min, SAS 15 min.
+5. Pool de conexiones jt400 (HikariCP chico por instancia). *Implementado el 2026-10-14* (`FuenteConexionesAs400`); medido contra PUB400: la primera invocación paga 5,8 s de conexión, las siguientes ~750 ms dominados por 6 a 7 RTT de 112 ms (S6, «Medición con pool»). Pendiente en el Banco: `maxLifetime` real.
+6. Secreto del broker (OBO): *resuelto el 2026-10-14* con credencial federada de la app registration hacia la identidad administrada (sin secreto; verificado SAS + bearer → 201). `AS400_PASSWORD` y la credencial CMIS: referencias de Key Vault, pendientes hasta que exista el Key Vault (Bicep del Banco). Detalle en `docs/backlog-tecnico.md`.
+7. El token de Storage viaja en la respuesta del conector y vive en una variable Power Fx: nunca persistirlo en Dataverse ni usar la operación desde Power Automate sin salidas seguras. Vida del token 60 a 90 min, SAS 15 min. Reglas en `docs/checklist-construccion-app.md`; política de vida de token de 10 min pendiente de decisión del administrador del tenant (`docs/backlog-tecnico.md` §7).
 8. OpenCMIS `DefaultHttpInvoker` siempre usa `Transfer-Encoding: chunked` (65535) y no tiene modo de largo fijo; si un proxy o IHS delante de CM V8 lo rechaza, solo se verá en el Banco (S4a).
 9. CORS `*` en Storage y Function porque Power Apps corre desde orígenes de isla variables (por ejemplo `https://authoring.us-il301.gateway.prod.island.powerapps.com`). No es frontera de seguridad (la dan la SAS y el bearer). Storage documenta comodín de subdominio en `AllowedOrigins` (`https://*.powerapps.com`, a probar con varios niveles); la Function solo la llama el conector, así que su CORS puede cerrarse. El Banco decide entre el comodín o un proxy.
-10. Acceso condicional: el OBO hereda las políticas del usuario sobre Azure Storage; si piden MFA o dispositivo que el token del conector no satisface, Entra devuelve `interaction_required` y el broker responde 502. Alinear políticas antes de salir.
+10. Acceso condicional: el OBO hereda las políticas del usuario sobre Azure Storage; si piden MFA o dispositivo que el token del conector no satisface, Entra devuelve `interaction_required` y el broker responde 401 con el desafío de claims en `WWW-Authenticate` (desde el 2026-10-14; antes 502). El conector de Power Platform no procesa ese desafío, así que la solución es alinear las políticas de la app del conector y de Azure Storage antes de salir.
 
 Nivel C, solo dentro del Banco:
 

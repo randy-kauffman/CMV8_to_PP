@@ -1,6 +1,16 @@
 # Backlog técnico: cómo resolver los hallazgos 5, 6 y 7 de los spikes
 
-Fecha: 2026-10-14. Fuente de los hallazgos: `docs/plan-solucion.md` §4c. Cada sección cierra con una recomendación y los pasos concretos. Nada de esto está implementado todavía; son decisiones listas para ejecutar.
+Fecha: 2026-10-14. Fuente de los hallazgos: `docs/plan-solucion.md` §4c. Cada sección cierra con una recomendación y los pasos concretos.
+
+Estado al cierre del 2026-10-14:
+
+| Hallazgo | Estado |
+| --- | --- |
+| 5, pool jt400 | **Implementado**: `FuenteConexionesAs400` (HikariCP 6.3.0) + `ResolutorClienteJt400` sobre `DataSource`; 56 pruebas unitarias; medido contra PUB400 (S6, sección "Medición con pool"). Pendiente en el Banco: `maxLifetime` real y, si el RTT lo justifica, cache de `PreparedStatement` por conexión |
+| 6a, credencial federada del broker | **Implementado y verificado** en el tenant propio: credencial federada `uami-cmv8-broker` en la app del broker, OBO con aserción de la identidad administrada, `BROKER_CLIENT_SECRET` eliminado de app settings, Bicep y `desplegar.sh`; secreto `obo-storage-s1b` borrado de la app registration. SAS + bearer federado → 201 |
+| 6b, Key Vault para AS400 y CMIS | Pendiente: el Key Vault no existe en la infra de spikes; se hace con el Bicep del Banco |
+| 7, token en el conector | Higiene y prohibición desde flujos: escritas en `docs/checklist-construccion-app.md`. Política de vida de token de 10 min: **no probada**, requiere crear una `tokenLifetimePolicy` y asignarla al service principal de Azure Storage del tenant (cambio a nivel tenant, decisión del administrador) |
+| 10, acceso condicional | El broker responde ahora **401** con `WWW-Authenticate: Bearer error="interaction_required", claims="…"` en vez de 502, según RFC 6750 §3.1 |
 
 ## 5. Pool de conexiones jt400
 

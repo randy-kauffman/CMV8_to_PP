@@ -205,7 +205,7 @@ Resultados de los spikes fuera del Banco: `spikes/resultados/` y `docs/plan-solu
 | SAS + token del mismo usuario | 201, solo ese blob, solo `cw`, solo hasta `se` |
 
 - Desde Studio (12:30 UTC): 25 `PutBlock` + 1 `PutBlockList`, todos 201, `AuthenticationType=DelegationSas`, `RequesterUpn` del usuario delegado; la fila pasó a Subido en el mismo segundo del `PutBlockList`.
-- Costo del diseño: la app del broker necesita el permiso delegado Azure Storage / `user_impersonation` con consentimiento de administrador y una **credencial propia** (secreto en el spike; Key Vault o credencial federada con la identidad administrada en el Banco). El broker cachea el token por oid y nunca entrega uno que venza antes que la SAS (vida del token 60 a 90 min, SAS de 15 min).
+- Costo del diseño: la app del broker necesita el permiso delegado Azure Storage / `user_impersonation` con consentimiento de administrador y una **credencial propia**: desde el 2026-10-14 es la identidad administrada de la Function, que la app registration acepta como credencial federada (sin secreto que rotar); el secreto del spike se eliminó. El broker cachea el token por oid y nunca entrega uno que venza antes que la SAS (vida del token 60 a 90 min, SAS de 15 min).
 
 ### `saoid` descartado
 

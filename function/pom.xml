@@ -28,6 +28,8 @@
         <jackson.bom.version>2.22.3</jackson.bom.version>
         <opencmis.version>1.1.0</opencmis.version>
         <jt400.version>21.0.7</jt400.version>
+        <!-- 6.3.0: última estable en Maven Central al 2026-10-14 -->
+        <hikari.version>6.3.0</hikari.version>
         <!-- 1.26.0: última estable en Maven Central el 2026-10-14 (1.30.0-beta es beta); la misma que trae azure-identity 1.18.7 -->
         <msal4j.version>1.26.0</msal4j.version>
         <slf4j.version>1.7.36</slf4j.version>
@@ -159,6 +161,12 @@
             <artifactId>jt400</artifactId>
             <version>${jt400.version}</version>
             <classifier>java11</classifier>
+        </dependency>
+        <!-- Pool de conexiones AS400 (hallazgo 5 de los spikes): una conexión TLS cuesta segundos, una consulta ~120 ms -->
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>${hikari.version}</version>
         </dependency>
 
         <!-- Pruebas -->

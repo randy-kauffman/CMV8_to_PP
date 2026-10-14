@@ -3,6 +3,7 @@
 set -eo pipefail  # sin -u: sdkman-init.sh usa variables no definidas
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SETTINGS="${1:-$DIR/../../function/local.settings.json}"
+FASE="${2:-}"   # "pool": solo la fase del pool HikariCP (hallazgo 5)
 # shellcheck disable=SC1091
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 echo "== Red: puertos de host servers IBM i =="
@@ -12,4 +13,4 @@ for p in 446 449 8470 8471 8476 9470 9471 9476; do
 done
 echo "== Java =="
 cd "$DIR"
-mvn -q compile exec:java -Dexec.args="$(realpath "$SETTINGS")"
+mvn -q compile exec:java -Dexec.args="$(realpath "$SETTINGS") $FASE"

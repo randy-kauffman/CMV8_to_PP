@@ -22,14 +22,8 @@ az functionapp list-flexconsumption-runtimes --location "$LOCATION" --runtime ja
 
 az group create --name "$RG" --location "$LOCATION" --tags proyecto=CMV8_to_PP ambiente=spike -o none
 
-# config/appsettings de Bicep REEMPLAZA todos los app settings. BROKER_CLIENT_SECRET (S1b) se fija fuera de banda:
-# se lee antes (solo en memoria, nunca a disco ni a consola) y se vuelve a aplicar después del despliegue.
-FUNC="$(az functionapp list -g "$RG" --query "[?starts_with(name, 'cmv8-func-')].name | [0]" -o tsv 2>/dev/null || true)"
-SECRETO_BROKER=""
-if [ -n "$FUNC" ]; then
-  SECRETO_BROKER="$(az functionapp config appsettings list -g "$RG" -n "$FUNC" \
-    --query "[?name=='BROKER_CLIENT_SECRET'].value | [0]" -o tsv 2>/dev/null || true)"
-fi
+# config/appsettings de Bicep REEMPLAZA todos los app settings: ningún secreto se fija fuera de banda.
+# El OBO del broker usa la identidad administrada como credencial federada (sin BROKER_CLIENT_SECRET).
 
 echo "Validando plantilla..."
 az deployment group validate --resource-group "$RG" --template-file "$TEMPLATE" --parameters "$PARAMS" -o none
@@ -41,15 +35,5 @@ az deployment group create \
   --template-file "$TEMPLATE" \
   --parameters "$PARAMS" \
   --query 'properties.outputs' -o json | tee "$(dirname "${BASH_SOURCE[0]}")/ultimo-despliegue.outputs.json"
-
-if [ -n "$FUNC" ] && [ -n "$SECRETO_BROKER" ]; then
-  ACTUAL="$(az functionapp config appsettings list -g "$RG" -n "$FUNC" \
-    --query "[?name=='BROKER_CLIENT_SECRET'].value | [0]" -o tsv 2>/dev/null || true)"
-  if [ -z "$ACTUAL" ]; then
-    echo "Restaurando BROKER_CLIENT_SECRET (fuera de banda) en $FUNC..."
-    az functionapp config appsettings set -g "$RG" -n "$FUNC" --settings "BROKER_CLIENT_SECRET=$SECRETO_BROKER" -o none
-  fi
-fi
-unset SECRETO_BROKER ACTUAL
 
 echo "Listo. Salidas guardadas en infra/ultimo-despliegue.outputs.json"

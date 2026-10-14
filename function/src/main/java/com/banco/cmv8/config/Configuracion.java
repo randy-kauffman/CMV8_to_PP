@@ -86,9 +86,12 @@ public final class Configuracion {
         return requerido("BROKER_TENANT_ID");
     }
 
-    /** Secreto de la app del broker para el OBO. En el Banco: referencia a Key Vault (o certificado). Nunca loguear. */
-    public String brokerClientSecret() {
-        return requerido("BROKER_CLIENT_SECRET");
+    /**
+     * Secreto de la app del broker para el OBO. SOLO desarrollo local: en Azure la credencial del broker es la
+     * identidad administrada ({@link #azureClientId()}) por credencial federada y este valor no existe. Nunca loguear.
+     */
+    public Optional<String> brokerClientSecret() {
+        return opcional("BROKER_CLIENT_SECRET");
     }
 
     // ---------------------------------------------------------------- storage de adjuntos
@@ -205,6 +208,19 @@ public final class Configuracion {
 
     public boolean as400Seguro() {
         return booleano("AS400_SECURE", true);
+    }
+
+    /** Conexiones máximas del pool por instancia de la Function. */
+    public int as400PoolMaximo() {
+        return (int) entero("AS400_POOL_MAX", 4);
+    }
+
+    /**
+     * Vida máxima de una conexión del pool. Debe ser menor que el timeout de inactividad del job QZDASOINIT
+     * y que el idle timeout del firewall hacia el IBM i, para que el pool recicle antes de que el otro lado corte.
+     */
+    public Duration as400PoolVidaMaxima() {
+        return minutos("AS400_POOL_VIDA_MAX_MINUTOS", 10);
     }
 
     public String as400SqlCliente() {

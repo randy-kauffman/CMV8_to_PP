@@ -93,7 +93,7 @@ Nuevas (agregar a Bicep o a la configuración de la Function App):
 | `SAS_LIGADA_USUARIO` | `false` | `true` = SAS ligada al usuario (`sduoid`, S1b). Exige `oid` + bearer del llamador (si faltan, 401) y devuelve `tokenStorage` / `tokenStorageExpiraUtc` obtenidos por OBO |
 | `BROKER_CLIENT_ID` | — | Client id de la app registration del broker (audiencia de Easy Auth). Obligatoria con `SAS_LIGADA_USUARIO=true` |
 | `BROKER_TENANT_ID` | — | Tenant Entra del broker (autoridad del OBO). Obligatoria con `SAS_LIGADA_USUARIO=true` |
-| `BROKER_CLIENT_SECRET` | — | Secreto de la app del broker para el OBO hacia `https://storage.azure.com/user_impersonation`. **Nunca en archivos ni en Bicep**: en el spike se fija fuera de banda con `az functionapp config appsettings set` (y `infra/desplegar.sh` lo preserva); en el Banco, referencia `@Microsoft.KeyVault(...)` o, mejor, certificado |
+| `BROKER_CLIENT_SECRET` | — | **Solo desarrollo local.** En Azure no existe: la app registration del broker confía en la identidad administrada (`AZURE_CLIENT_ID`) como credencial federada (audiencia `api://AzureADTokenExchange`) y el OBO se firma con un token de esa identidad. Si está presente, la Function lo usa y avisa en el log |
 | `TAMANO_MAXIMO_BYTES` | `1073741824` | Límite de tamaño declarado (1 GB) |
 | `ESTANCADA_MINUTOS` | `15` | Antigüedad para el watchdog |
 | `ESCANEO_REQUERIDO` | `false` | `true` = el worker exige la etiqueta de Defender `Malware Scanning scan result = No threats found` antes de archivar. Activar cuando Defender esté habilitado |
@@ -105,6 +105,8 @@ Nuevas (agregar a Bicep o a la configuración de la Function App):
 | `CMIS_PROPIEDADES_JSON` | `{}` | Mapa `propiedadCM → "${campo}"` o literal. Campos: `idCliente`, `idCliente2`, `nombreCliente`, `afiliadoPadre`, `idDueno`, `solicitudId`, `nombreArchivo`, `contentType` |
 | `AS400_HOST` / `AS400_USER` / `AS400_PASSWORD` | — | Perfil de solo lectura (contraseña en Key Vault) |
 | `AS400_SECURE` | `true` | TLS (puertos 9471/9476) |
+| `AS400_POOL_MAX` | `4` | Conexiones máximas del pool HikariCP por instancia (`FuenteConexionesAs400`) |
+| `AS400_POOL_VIDA_MAX_MINUTOS` | `10` | Vida máxima de una conexión del pool; menor que el timeout de inactividad del job QZDASOINIT y del firewall |
 | `AS400_SQL_CLIENTE` | — | SQL con un solo `?` que devuelve `IDCLIENTE, IDCLIENTE2, NOMBRE, AFILIADOPADRE, IDDUENO` |
 
 Nombre del documento en CM: si `CMIS_PROPIEDADES_JSON` mapea alguna propiedad a `${solicitudId}`, se usa el

@@ -24,7 +24,7 @@ Conector de Power Platform que llama a la Function `cmv8-func-supfcopn` (broker 
 | `requestedAccessTokenVersion` | `2` (tokens v2, consistente con el issuer v2 de Easy Auth) |
 | Clientes pre-autorizados | Azure CLI (`04b07795-8ddb-461a-bbee-02f9e1bf7b46`) para pruebas con `az account get-access-token` |
 | `knownClientApplications` | el app id del conector (`72ec6834-…`) |
-| Secreto | `obo-storage-s1b` (vence 2027-04-14), solo para el OBO hacia Azure Storage (S1b); vive únicamente en el app setting `BROKER_CLIENT_SECRET`. Easy Auth no lo usa |
+| Credencial | Credencial federada `uami-cmv8-broker`: la app confía en la identidad administrada de la Function (subject = principal id de la UAMI, audiencia `api://AzureADTokenExchange`). Sin secretos. Easy Auth no necesita credencial |
 | Permiso delegado | Azure Storage / `user_impersonation`, con consentimiento de administrador (S1b) |
 
 ### 2. CMV8 Conector (Power Platform) — el cliente

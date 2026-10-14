@@ -60,11 +60,6 @@ param brokerClientId string = ''
 @description('Tenant Entra del broker (autoridad del OBO).')
 param brokerTenantId string = tenant().tenantId
 
-@description('''Referencia a Key Vault para BROKER_CLIENT_SECRET, p. ej.
-@Microsoft.KeyVault(SecretUri=https://<kv>.vault.azure.net/secrets/broker-client-secret/). NO es el secreto.
-Vacío (spike): el secreto se fija fuera de banda con az functionapp config appsettings set y desplegar.sh lo
-preserva, porque config/appsettings reemplaza TODOS los settings. En el Banco: Key Vault o certificado.''')
-param referenciaKeyVaultBroker string = ''
 
 @description('Habilitar Defender for Storage con escaneo de malware al subir (S3). Tiene costo.')
 param habilitarDefender bool = false
@@ -401,8 +396,9 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
 
   resource configuracion 'config' = {
     name: 'appsettings'
-    // BROKER_CLIENT_SECRET nunca va en Bicep: solo una referencia a Key Vault, si se pasa.
-    properties: union({
+    // Sin BROKER_CLIENT_SECRET: el OBO del broker usa la identidad administrada (AZURE_CLIENT_ID) como
+    // credencial federada de la app registration. El secreto solo existe en desarrollo local.
+    properties: {
       AzureWebJobsStorage__accountName: storageHost.name
       AzureWebJobsStorage__credential: 'managedidentity'
       AzureWebJobsStorage__clientId: identidad.properties.clientId
@@ -424,9 +420,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       SAS_BLOQUE_MB: string(bloqueMb)
       BROKER_CLIENT_ID: brokerClientId
       BROKER_TENANT_ID: brokerTenantId
-    }, empty(referenciaKeyVaultBroker) ? {} : {
-      BROKER_CLIENT_SECRET: referenciaKeyVaultBroker
-    })
+    }
   }
 }
 

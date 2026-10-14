@@ -5,6 +5,7 @@ import com.azure.identity.DefaultAzureCredentialBuilder;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
+import com.banco.cmv8.adapters.out.as400.FuenteConexionesAs400;
 import com.banco.cmv8.adapters.out.as400.ResolutorClienteJt400;
 import com.banco.cmv8.adapters.out.blob.AlmacenAdjuntosBlob;
 import com.banco.cmv8.adapters.out.blob.EmisorSasBlob;
@@ -33,6 +34,7 @@ import com.banco.cmv8.domain.port.ResolutorCliente;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
@@ -127,9 +129,14 @@ public final class Fabrica {
                 new ArchivoDocumentalCmis.ParametrosCmis(config.cmisUrl(), config.cmisUsuario(), config.cmisClave(),
                         config.cmisRepositorio(), config.cmisCarpeta(), config.cmisTipo()),
                 new MapeoPropiedadesCmis(config.cmisPropiedadesJson())));
+        // Un pool por proceso: el arranque en frío paga una conexión; las invocaciones calientes, ~120 ms por consulta.
         resolutor = new Perezoso<>(() -> new ResolutorClienteJt400(
-                new ResolutorClienteJt400.ParametrosAs400(config.as400Host(), config.as400Usuario(),
-                        config.as400Clave(), config.as400Seguro(), config.as400SqlCliente())));
+                FuenteConexionesAs400.crear(
+                        new FuenteConexionesAs400.ParametrosAs400(config.as400Host(), config.as400Usuario(),
+                                config.as400Clave(), config.as400Seguro()),
+                        new FuenteConexionesAs400.ParametrosPool(config.as400PoolMaximo(), 1,
+                                config.as400PoolVidaMaxima())),
+                config.as400SqlCliente()));
 
         vinculoUsuario = new Perezoso<>(this::crearVinculoUsuario);
 
@@ -164,8 +171,27 @@ public final class Fabrica {
         // El token debe sobrevivir a la SAS más larga que acompaña, con 5 min de margen.
         Duration vigenciaMinima = (config.vigenciaSasSubida().compareTo(config.vigenciaSasLectura()) >= 0
                 ? config.vigenciaSasSubida() : config.vigenciaSasLectura()).plusMinutes(5);
-        return VinculoUsuario.activo(new IntercambiadorTokenObo(config.brokerClientId(), config.brokerTenantId(),
-                config.brokerClientSecret(), vigenciaMinima));
+        return VinculoUsuario.activo(crearIntercambiadorObo(vigenciaMinima));
+    }
+
+    /**
+     * Credencial del broker para el OBO: la identidad administrada (credencial federada en la app registration)
+     * salvo que haya un secreto configurado, que es el camino de desarrollo local.
+     */
+    private IntercambiadorTokenObo crearIntercambiadorObo(Duration vigenciaMinima) {
+        Optional<String> secreto = config.brokerClientSecret();
+        if (secreto.isPresent()) {
+            LOG.warning("BROKER_CLIENT_SECRET presente: OBO con secreto de cliente (solo desarrollo local). "
+                    + "En Azure, quitarlo y usar la credencial federada de la identidad administrada.");
+            return IntercambiadorTokenObo.conSecreto(config.brokerClientId(), config.brokerTenantId(), secreto.get(),
+                    vigenciaMinima);
+        }
+        String identidad = config.azureClientId().orElseThrow(() -> new IllegalStateException(
+                "OBO sin credencial: falta AZURE_CLIENT_ID (identidad administrada con credencial federada en la app "
+                        + "del broker) o, solo en local, BROKER_CLIENT_SECRET"));
+        LOG.info("OBO del broker con la identidad administrada (credencial federada), sin secreto");
+        return IntercambiadorTokenObo.conIdentidadAdministrada(config.brokerClientId(), config.brokerTenantId(),
+                identidad, vigenciaMinima);
     }
 
     private AutorizadorSolicitud crearAutorizador() {

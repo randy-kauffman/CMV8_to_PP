@@ -4,9 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ibm.as400.access.AS400;
+import com.ibm.as400.access.AS400JDBCDataSource;
 import com.ibm.as400.access.AS400JDBCDriver;
 import com.ibm.as400.access.AS400SecurityException;
 import com.ibm.as400.access.SecureAS400;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -48,11 +51,73 @@ public final class SpikeJt400 {
         System.out.println("jt400 (AS400JDBCDriver): " + new AS400JDBCDriver().getMajorVersion() + "."
                 + new AS400JDBCDriver().getMinorVersion() + " / " + versionJt400());
 
+        // "pool" como segundo argumento: solo la fase de pool (hallazgo 5), sin signon ni JDBC crudo.
+        if (args.length > 1 && args[1].equals("pool")) {
+            pool();
+            return;
+        }
+
         signon(true);
         signon(false);
 
         for (boolean secure : new boolean[] {true, false}) {
             jdbc(secure);
+        }
+        pool();
+    }
+
+    // ---------------------------------------------------------------- Pool (HikariCP, hallazgo 5)
+
+    /** Misma configuración que FuenteConexionesAs400 en la Function; mide lo que paga cada "invocación". */
+    private static void pool() throws SQLException {
+        System.out.println("\n== Pool HikariCP (TLS, max 4, min idle 1, VALUES 1, extended dynamic + package cache) ==");
+        AS400JDBCDataSource origen = new AS400JDBCDataSource(host, user, password);
+        origen.setSecure(true);
+        origen.setPrompt(false);
+        origen.setNaming("sql");
+        origen.setLoginTimeout(30);
+        origen.setSocketTimeout(60_000);
+        origen.setAccess("read only");
+        origen.setExtendedDynamic(true);
+        origen.setPackageCache(true);
+        HikariConfig config = new HikariConfig();
+        config.setPoolName("as400");
+        config.setDataSource(origen);
+        config.setMaximumPoolSize(4);
+        config.setMinimumIdle(1);
+        config.setMaxLifetime(600_000);
+        config.setKeepaliveTime(120_000);
+        config.setConnectionTimeout(10_000);
+        config.setValidationTimeout(5_000);
+        config.setConnectionTestQuery("VALUES 1");
+        config.setReadOnly(true);
+        config.setInitializationFailTimeout(-1);
+
+        String sql = "SELECT TABLE_NAME FROM QSYS2.SYSTABLES WHERE TABLE_SCHEMA = ? FETCH FIRST 1 ROWS ONLY";
+        long t0 = System.nanoTime();
+        try (HikariDataSource pool = new HikariDataSource(config)) {
+            System.out.printf("Pool creado (perezoso) en %d ms%n", ms(t0));
+            long[] invocaciones = new long[8];
+            for (int i = 0; i < invocaciones.length; i++) {
+                long t = System.nanoTime();
+                try (Connection c = pool.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+                    ps.setString(1, "QSYS2");
+                    ps.setMaxRows(1);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        rs.next();
+                    }
+                }
+                invocaciones[i] = ms(t);
+            }
+            System.out.printf("Invocación (getConnection+prepare+bind+execute+devolver) x8 (ms): %s%n",
+                    Arrays.toString(invocaciones));
+            System.out.printf("  primera (abre la conexión): %d ms; promedio de la 2.ª a la 8.ª: %.1f ms%n",
+                    invocaciones[0], Arrays.stream(invocaciones).skip(1).average().orElse(0));
+            System.out.printf("  conexiones activas=%d ociosas=%d total=%d%n",
+                    pool.getHikariPoolMXBean().getActiveConnections(), pool.getHikariPoolMXBean().getIdleConnections(),
+                    pool.getHikariPoolMXBean().getTotalConnections());
+        } catch (SQLException e) {
+            System.out.printf("FALLO pool: SQLState=%s code=%d %s%n", e.getSQLState(), e.getErrorCode(), red(e.getMessage()));
         }
     }
 

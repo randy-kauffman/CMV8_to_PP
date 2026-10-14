@@ -124,8 +124,7 @@ GET con una SAS de delegación de lectura **no ligada** (`az storage blob genera
 
 ## Lo que queda para el Banco
 
-1. **Secreto → Key Vault o, mejor, certificado** (o credencial federada con la UAMI: `ClientCredentialFactory.createFromClientAssertion`
-   con un token de la identidad administrada, sin secreto). En Bicep: `referenciaKeyVaultBroker` = `@Microsoft.KeyVault(SecretUri=…)`.
+1. ~~Secreto → Key Vault o certificado~~ **Hecho el 2026-10-14**: la app del broker confía en la identidad administrada de la Function como credencial federada (`uami-cmv8-broker`, audiencia `api://AzureADTokenExchange`); el OBO firma con `ClientCredentialFactory.createFromCallback` y un token de la identidad. `BROKER_CLIENT_SECRET` eliminado de app settings, Bicep y `desplegar.sh`; secreto `obo-storage-s1b` borrado. Verificado: SAS + bearer → 201 sin secreto.
 2. **Acceso condicional.** El OBO hereda las políticas del usuario sobre Azure Storage: si CA pide MFA o dispositivo para
    "Azure Storage" y el token del conector no lo satisface, Entra devuelve `interaction_required` y el broker responde **502**
    con ese código. Hay que alinear las políticas de CA (el conector y Storage en el mismo alcance) o excluir Storage
