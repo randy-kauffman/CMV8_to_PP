@@ -51,18 +51,18 @@ function urlConParametros(uploadUrl: string, parametros: string): string {
 }
 
 function esperar(ms: number, signal?: AbortSignal): Promise<void> {
-    return new Promise((resolver, rechazar) => {
+    return new Promise((resolve, reject) => {
         if (signal?.aborted) {
-            rechazar(new ErrorSubida("Subida cancelada", "cancelado"));
+            reject(new ErrorSubida("Subida cancelada", "cancelado"));
             return;
         }
         const t = setTimeout(() => {
             signal?.removeEventListener("abort", alAbortar);
-            resolver();
+            resolve();
         }, ms);
         const alAbortar = (): void => {
             clearTimeout(t);
-            rechazar(new ErrorSubida("Subida cancelada", "cancelado"));
+            reject(new ErrorSubida("Subida cancelada", "cancelado"));
         };
         signal?.addEventListener("abort", alAbortar, { once: true });
     });
