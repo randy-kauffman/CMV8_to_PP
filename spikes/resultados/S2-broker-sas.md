@@ -2,7 +2,7 @@
 
 - Fecha: 2026-10-14
 - Entorno: suscripción CM8_TO_PP, `rg-cmv8-spikes`, `eastus2`. Function `cmv8-func-supfcopn`, Storage `cmv8adjsupfcopn`, contenedor `cmv8-ingesta`.
-- Estado: **parcial, confirmado en la parte de Storage**. Falta la parte de Dataverse (autorización por fila con impersonación), que corre cuando `AUTORIZACION_MODO=dataverse`.
+- Estado: **confirmado** (Storage y Dataverse). Pendiente solo el caso negativo 403 con un usuario sin rol, que requiere un segundo usuario en el tenant.
 
 ## Hipótesis
 
@@ -41,3 +41,20 @@ Sin dato de Cost Management todavía (suscripción creada el mismo día). Consum
 - `func azure functionapp publish --java` en Flex Consumption reporta éxito pero no despliega funciones. Usar `mvn clean package azure-functions:deploy`.
 - `x-ms-version: 2025-07-05` en el PUT fue aceptado aunque la SAS lleve `sv=2026-10-06`.
 - El SDK de Java expone `setDelegatedUserObjectId` (sduoid), así que S1b no necesita cambios de código, solo configuración y el bearer del usuario.
+
+## Parte Dataverse (2026-10-14, con S7)
+
+Con `AUTORIZACION_MODO=dataverse`, la identidad de la Function como usuario de aplicación con el rol **CMV8 Worker** (sin roles de sistema) y el usuario llamando por el conector con Entra ID:
+
+| Paso | Evidencia |
+| --- | --- |
+| La app crea la fila con `Patch` | fila `c6e17c3c-…` en estado Creada, `createdon` 07:24:05Z |
+| `EmitirSasSubida` por el conector | 200. Traza de App Insights: `SAS de subida emitida… llamador=ContextoLlamador[oid=eab4619b-…, tid=7bcfee03-…, ip=48.211.34.169]`. La IP es la salida de Power Platform: la llamada entró por el conector |
+| El broker registra `cmv8_rutablob` en la fila | `c6e17c3c-…/video-100mb.bin` |
+| Subida con esa SAS | blob de 104.857.600 bytes, 19,3 s, 43,4 Mbps promedio (línea de estado del PCF) |
+| Fila inexistente | 404 |
+| Fila ya en Subido | 409 |
+| Tamaño 0 y nombre con `..` | 400 |
+| Usuario sin rol sobre la fila | **pendiente**: hace falta un segundo usuario en el tenant |
+
+Hallazgo: `saoid` en la SAS exige que la identidad firmante tenga `runAsSuperUser` (Blob Data Owner); con Contributor en el contenedor Storage responde 403 `AuthorizationPermissionMismatch` en cada bloque. Se eliminó `saoid`; la auditoría sigue por `scid` y la traza del llamador. Documentado en ADR-002.

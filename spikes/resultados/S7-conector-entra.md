@@ -1,7 +1,7 @@
 # S7. Conector personalizado con Entra ID y Function protegida
 
 - Fecha: 2026-10-14
-- Estado: **confirmado del lado servidor**. Pendiente la prueba desde canvas (crear la conexión y llamar `EmitirSasSubida`).
+- Estado: **confirmado** de punta a punta: conexión creada desde Studio con consentimiento del usuario, `EmitirSasSubida` llamada por el conector, SAS entregada al PCF 0.0.4 por el input `uploadUrl`, subida de 100 MB completada.
 
 ## Hipótesis
 
@@ -33,7 +33,12 @@ Un custom connector generado del OpenAPI de la Function, con autenticación Entr
 - `pac connector create` falló dos veces con `PessimisticConcurrencyConflict`; a los 5 minutos pasó con los mismos archivos. El nombre interno queda `new_cmv8-20broker`, pac no usa el prefijo del publisher.
 - El secreto del conector vive solo en el conector (y en el scratchpad de esta sesión, fuera del repo). El repo tiene un placeholder.
 
+## Prueba desde canvas (2026-10-14)
+
+- Primer intento de conexión: `AADSTS50011`, la redirect URI es por conector (`…/redirect/new-5fcmv8-20broker-5ff95a98b5516c5717`). Se agregó a la app registration del conector.
+- Fórmula del botón Preparar: `Patch` de la fila + `'CMV8 Broker'.EmitirSasSubida({...})`; el PCF recibe `sas.uploadUrl` y `sas.bloqueBytes`, con `urlBroker` vacío.
+- Resultado: 200 del broker, subida de 100 MB en 19,3 s a 43,4 Mbps. Traza en App Insights con el oid del usuario y la IP de salida de Power Platform.
+
 ## Pendiente
 
-- Desde Studio: agregar el conector, crear la conexión con el usuario, llamar `EmitirSasSubida` y pasar `uploadUrl` al PCF 0.0.4.
-- Con eso, cerrar la mitad Dataverse de S2 (200 con rol, 403 sin rol).
+- Mover la fila a Subido desde la app al terminar (`Patch` con el `OnChange` del componente cuando `estado = "completado"`), para que el 409 proteja contra dobles subidas en el flujo real.
