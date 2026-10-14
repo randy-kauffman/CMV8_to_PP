@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="CargaAdjuntoBlob_Display" xml:space="preserve"><value>Carga de adjunto a Blob</value></data>
+  <data name="CargaAdjuntoBlob_Desc" xml:space="preserve"><value>Sube un archivo directo desde el navegador a Azure Blob Storage usando una SAS emitida por el broker.</value></data>
+  <data name="urlBroker_Display" xml:space="preserve"><value>URL del broker</value></data>
+  <data name="urlBroker_Desc" xml:space="preserve"><value>URL base de la Function app que emite las SAS, por ejemplo https://xxx.azurewebsites.net</value></data>
+  <data name="tokenBroker_Display" xml:space="preserve"><value>Token del broker</value></data>
+  <data name="tokenBroker_Desc" xml:space="preserve"><value>Token Bearer opcional para llamar al broker.</value></data>
+  <data name="solicitudId_Display" xml:space="preserve"><value>Id de la solicitud</value></data>
+  <data name="solicitudId_Desc" xml:space="preserve"><value>GUID de la fila SolicitudIngesta.</value></data>
+  <data name="tiposAceptados_Display" xml:space="preserve"><value>Tipos aceptados</value></data>
+  <data name="tiposAceptados_Desc" xml:space="preserve"><value>Lista separada por comas para el atributo accept del selector de archivos.</value></data>
+  <data name="tamanoMaximoMB_Display" xml:space="preserve"><value>Tamano maximo (MB)</value></data>
+  <data name="tamanoMaximoMB_Desc" xml:space="preserve"><value>Tamano maximo permitido por archivo, en MB. Por defecto 250.</value></data>
+  <data name="paralelismo_Display" xml:space="preserve"><value>Paralelismo</value></data>
+  <data name="paralelismo_Desc" xml:space="preserve"><value>Cantidad de bloques en vuelo al mismo tiempo. Por defecto 4.</value></data>
+  <data name="disparadorReinicio_Display" xml:space="preserve"><value>Disparador de reinicio</value></data>
+  <data name="disparadorReinicio_Desc" xml:space="preserve"><value>Al cambiar su valor, el control vuelve al estado inactivo.</value></data>
+  <data name="estado_Display" xml:space="preserve"><value>Estado</value></data>
+  <data name="estado_Desc" xml:space="preserve"><value>inactivo, solicitandoSas, subiendo, confirmando, completado o error.</value></data>
+  <data name="progreso_Display" xml:space="preserve"><value>Progreso</value></data>
+  <data name="progreso_Desc" xml:space="preserve"><value>Avance de 0 a 100.</value></data>
+  <data name="rutaBlob_Display" xml:space="preserve"><value>Ruta del blob</value></data>
+  <data name="rutaBlob_Desc" xml:space="preserve"><value>Ruta del blob subido dentro del contenedor.</value></data>
+  <data name="nombreArchivo_Display" xml:space="preserve"><value>Nombre del archivo</value></data>
+  <data name="nombreArchivo_Desc" xml:space="preserve"><value>Nombre del archivo elegido.</value></data>
+  <data name="tamanoBytes_Display" xml:space="preserve"><value>Tamano en bytes</value></data>
+  <data name="tamanoBytes_Desc" xml:space="preserve"><value>Tamano del archivo elegido.</value></data>
+  <data name="contentType_Display" xml:space="preserve"><value>Content-Type</value></data>
+  <data name="contentType_Desc" xml:space="preserve"><value>Tipo MIME del archivo elegido.</value></data>
+  <data name="mensajeError_Display" xml:space="preserve"><value>Mensaje de error</value></data>
+  <data name="mensajeError_Desc" xml:space="preserve"><value>Detalle del ultimo error, vacio si no hubo.</value></data>
+  <data name="duracionMs_Display" xml:space="preserve"><value>Duracion (ms)</value></data>
+  <data name="duracionMs_Desc" xml:space="preserve"><value>Duracion total de la subida en milisegundos.</value></data>
+</root>

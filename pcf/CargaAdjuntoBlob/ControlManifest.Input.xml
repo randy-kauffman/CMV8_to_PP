@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="Banco" constructor="CargaAdjuntoBlob" version="0.0.1" display-name-key="CargaAdjuntoBlob_Display" description-key="CargaAdjuntoBlob_Desc" control-type="standard">
+  <control namespace="Banco" constructor="CargaAdjuntoBlob" version="0.0.2" display-name-key="CargaAdjuntoBlob_Display" description-key="CargaAdjuntoBlob_Desc" control-type="standard">
     <!-- El control llama por fetch al broker (Function) y a Blob Storage: se declara servicio externo.
          Ojo: esto lo clasifica como componente premium (licenciamiento). Ajustar los dominios reales al desplegar. -->
     <external-service-usage enabled="true">
-      <domain>*.azurewebsites.net</domain>
-      <domain>*.blob.core.windows.net</domain>
+      <domain>cmv8-func-supfcopn.azurewebsites.net</domain>
+      <domain>cmv8adjsupfcopn.blob.core.windows.net</domain>
     </external-service-usage>
 
     <!-- Entradas -->
@@ -30,6 +30,7 @@
     <resources>
       <code path="index.ts" order="1" />
       <css path="css/CargaAdjuntoBlob.css" order="1" />
+      <resx path="strings/CargaAdjuntoBlob.1033.resx" version="1.0.0" />
       <resx path="strings/CargaAdjuntoBlob.3082.resx" version="1.0.0" />
     </resources>
   </control>
