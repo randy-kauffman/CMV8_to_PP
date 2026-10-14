@@ -351,6 +351,11 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
     siteConfig: {
       minTlsVersion: '1.2'
       http20Enabled: true
+      // El PCF llama al broker desde el navegador: la Function también necesita CORS.
+      cors: {
+        allowedOrigins: origenesCors
+        supportCredentials: false
+      }
     }
     functionAppConfig: {
       deployment: {
