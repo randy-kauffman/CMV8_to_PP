@@ -14,11 +14,26 @@ Las llamadas que el broker hace a Dataverse con el encabezado `CallerObjectId` (
 
 ## Cómo leer el resultado (día siguiente, entre 24 y 48 h después)
 
-1. https://admin.powerplatform.microsoft.com → Recursos → Capacidad → pestaña **Complementos** / **Resumen de solicitudes de Power Platform** (o Analytics → Dataverse → **API calls** por usuario).
-2. Buscar el 14 de octubre: cuántas requests aparecen atribuidas a **CMV8 Function** (usuario de aplicación) y cuántas a **admin**.
-3. Veredicto:
-   - Si ~150 a 200 cuentan para CMV8 Function → la impersonación consume el pool del tenant. Preferir OBO en el Banco si el tenant no tiene Dynamics 365 (pool de 25.000/día).
-   - Si cuentan para admin → la impersonación no consume el pool. Se mantiene impersonación, que es más simple que OBO.
+**Corrección (2026-10-14, verificada en Microsoft Learn):** el reporte descargable de *Microsoft Power Platform requests* del admin center
+(Licencias → Complementos de capacidad → Resumen → Descargar informes) **solo incluye requests de Power Automate**. La documentación dice textual:
+"API requests from Dataverse, Microsoft Copilot Studio, and Power Apps aren't included at this time", y además la aplicación de los límites
+no empieza hasta al menos seis meses después de que ese reporte salga de vista previa
+(https://learn.microsoft.com/power-platform/admin/api-request-limits-allocations#frequently-asked-questions).
+Por lo tanto la atribución *de licenciamiento* de las requests de Dataverse hoy **no se puede leer en ningún reporte**.
+
+Lo que sí se puede leer es a qué identidad le cuenta Dataverse las **operaciones** (Retrieve, RetrieveMultiple, Update) en el análisis
+de Dataverse, que se actualiza cada 24 h:
+
+1. https://admin.powerplatform.microsoft.com → **Administrar** → Productos → **Dataverse** → análisis del entorno `SANIC-ESTUDIO-DEV`.
+2. Panel **Usuarios activos** → *Usuarios más activos que realizan operaciones*, rango que incluya el 14 de octubre.
+3. Seleccionar al usuario para ver *Número de lecturas por entidad* y *Número de actualizaciones por entidad*. Buscar `cmv8_solicitudingesta`
+   y `systemuser`: la carga dejó unas 50 actualizaciones y entre 100 y 150 lecturas.
+4. Veredicto:
+   - Si aparecen bajo **admin** → Dataverse ejecuta y contabiliza las operaciones impersonadas como del usuario final (contexto de ejecución = impersonado).
+   - Si aparecen bajo **CMV8 Function** (usuario de aplicación) → las contabiliza como del impersonador.
+   - Lo que esto NO prueba: a qué pool le descontaría el medidor de requests de licenciamiento, porque ese medidor no se reporta ni se aplica
+     para Dataverse todavía. Queda como riesgo documentado, no como decisión a tomar hoy: impersonación (más simple que OBO) se mantiene,
+     y se revisa cuando Microsoft publique el reporte de requests de Dataverse.
 
 ## Resultado
 
