@@ -124,7 +124,7 @@ Nuestro conector es idéntico hasta el paso 2 (recurso = app del broker). La dif
 
 El tenant de desarrollo tiene Entra ID P2 (Microsoft 365 E5 Developer). Prueba de 1 hora, decisión del administrador porque es un cambio a nivel tenant:
 
-1. Política de acceso condicional: usuarios = `user1@55xljh…`, app de destino = Azure Storage, conceder = requerir MFA. Registrar MFA para `user1`.
+1. Política de acceso condicional: usuarios = `user1@55xljh…`, app de destino = Azure Storage, conceder = requerir MFA. **Creada el 2026-10-14** (`cmv8-prueba-mfa-azure-storage`, id `cb1d6e6a-8a29-47cd-8618-0a6c6c9d08a0`, estado enabled; sin security defaults en el tenant). `user1` recibió el rol CMV8 Solicitante en Dataverse para poder crear filas y pedir SAS. Falta: registrar MFA para `user1` (interactivo) y compartirle la app y el conector.
 2. Desde Studio con `user1`: crear la conexión del conector (MFA en el inicio de sesión) y subir. Esperado: 201 (el OBO hereda MFA).
 3. Variante negativa: misma política pero sobre la app del broker en vez de Storage, y después quitar MFA de la sesión (cerrar sesión, volver a entrar sin MFA registrado): esperado 401 con `interaction_required` en el broker y el error visible en la app.
 4. Variante de ubicación: política de ubicaciones de confianza con solo la IP del usuario: esperado 401; agregar la IP de salida de la Function: esperado 201. Dispositivo conforme no se puede simular sin Intune y un equipo inscrito; queda para el Banco.
