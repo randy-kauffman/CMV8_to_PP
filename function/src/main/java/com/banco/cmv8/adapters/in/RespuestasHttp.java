@@ -54,7 +54,15 @@ final class RespuestasHttp {
             return error(req, HttpStatus.CONFLICT, e.getMessage());
         }
         String incidente = UUID.randomUUID().toString();
-        log.log(Level.SEVERE, "Error no controlado. incidente=" + incidente, e);
+        log.log(Level.SEVERE, "Error no controlado. incidente=" + incidente + " causa=" + causaRaiz(e), e);
         return error(req, HttpStatus.INTERNAL_SERVER_ERROR, "Error interno. Incidente " + incidente);
+    }
+
+    private static String causaRaiz(Throwable e) {
+        Throwable t = e;
+        while (t.getCause() != null && t.getCause() != t) {
+            t = t.getCause();
+        }
+        return e.getClass().getName() + ": " + e.getMessage() + " | raiz=" + t.getClass().getName() + ": " + t.getMessage();
     }
 }

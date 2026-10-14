@@ -141,9 +141,9 @@ public final class Fabrica {
     }
 
     private RepositorioSolicitudes crearRepositorio() {
-        if (config.modoAutorizacion() == Configuracion.ModoAutorizacion.NINGUNA
-                && config.opcional("DATAVERSE_URL").isEmpty()) {
-            LOG.warning("Sin DATAVERSE_URL y AUTORIZACION_MODO=ninguna: repositorio sustituto (solo spike S1)");
+        // "ninguna" significa sin Dataverse en absoluto: ni autorización ni registro de solicitudes.
+        if (config.modoAutorizacion() == Configuracion.ModoAutorizacion.NINGUNA) {
+            LOG.warning("AUTORIZACION_MODO=ninguna: repositorio sustituto en memoria, Dataverse no se consulta (solo spike S1)");
             return new RepositorioSinDataverse();
         }
         return new RepositorioSolicitudesDataverse(clienteDataverse.get());
