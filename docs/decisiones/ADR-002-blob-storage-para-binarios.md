@@ -213,7 +213,7 @@ Resultados de los spikes fuera del Banco: `spikes/resultados/` y `docs/plan-solu
 
 ### CORS `*` en Storage y en la Function
 
-Power Apps ejecuta las apps desde hosts regionales variables (por ejemplo `https://authoring.us-il301.gateway.prod.island.powerapps.com`), que no se pueden enumerar, y ninguno de los dos servicios admite comodines de subdominio. CORS no es frontera de seguridad: la dan la SAS y el bearer. El Banco debe decidir si lo acepta o lo restringe con un proxy delante.
+Power Apps ejecuta las apps desde hosts regionales variables (por ejemplo `https://authoring.us-il301.gateway.prod.island.powerapps.com`), que no se pueden enumerar. La documentación de Storage (*Set Blob Service Properties*) sí admite un comodín de subdominio en `AllowedOrigins` (por ejemplo `https://*.powerapps.com`); falta probar que cubra varios niveles de subdominio. App Service (la Function) solo admite orígenes exactos o `*`, pero al broker solo lo llama el conector desde servidores de Microsoft, así que ahí CORS no interviene. CORS no es frontera de seguridad: la dan la SAS y el bearer. El Banco debe decidir si lo acepta o lo restringe con un proxy delante.
 
 ### Política de cuenta y auditoría
 

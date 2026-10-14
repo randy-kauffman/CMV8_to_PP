@@ -165,7 +165,7 @@ Nivel B, decisiones de diseño a llevar a producción:
 6. Secreto del broker (OBO) a Key Vault o credencial federada con la identidad administrada; lo mismo `AS400_PASSWORD` y la credencial CMIS.
 7. El token de Storage viaja en la respuesta del conector y vive en una variable Power Fx: nunca persistirlo en Dataverse ni usar la operación desde Power Automate sin salidas seguras. Vida del token 60 a 90 min, SAS 15 min.
 8. OpenCMIS `DefaultHttpInvoker` siempre usa `Transfer-Encoding: chunked` (65535) y no tiene modo de largo fijo; si un proxy o IHS delante de CM V8 lo rechaza, solo se verá en el Banco (S4a).
-9. CORS `*` en Storage y Function porque Power Apps corre desde orígenes de isla variables (por ejemplo `https://authoring.us-il301.gateway.prod.island.powerapps.com`). No es frontera de seguridad (la dan la SAS y el bearer), pero el Banco debe decidir si lo acepta o lo restringe con un proxy.
+9. CORS `*` en Storage y Function porque Power Apps corre desde orígenes de isla variables (por ejemplo `https://authoring.us-il301.gateway.prod.island.powerapps.com`). No es frontera de seguridad (la dan la SAS y el bearer). Storage documenta comodín de subdominio en `AllowedOrigins` (`https://*.powerapps.com`, a probar con varios niveles); la Function solo la llama el conector, así que su CORS puede cerrarse. El Banco decide entre el comodín o un proxy.
 10. Acceso condicional: el OBO hereda las políticas del usuario sobre Azure Storage; si piden MFA o dispositivo que el token del conector no satisface, Entra devuelve `interaction_required` y el broker responde 502. Alinear políticas antes de salir.
 
 Nivel C, solo dentro del Banco:
