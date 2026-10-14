@@ -80,7 +80,8 @@ public class EmitirSasSubida {
 
         repositorio.registrarRutaBlob(id, ruta);
         SasEmitida sas = emisor.emitirSubida(ruta, vigencia, llamador);
-        log.info(() -> "SAS de subida emitida. solicitudId=" + id + " rutaBlob=" + ruta + " expira=" + sas.expira());
+        log.info(() -> "SAS de subida emitida. solicitudId=" + id + " rutaBlob=" + ruta + " expira=" + sas.expira()
+                + " llamador=" + llamador);
         return new Resultado(sas.url(), ruta, sas.expira(), bloqueBytes, sas.versionServicio());
     }
 }
