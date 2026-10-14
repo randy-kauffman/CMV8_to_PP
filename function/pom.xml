@@ -33,7 +33,38 @@
         <mockito.version>5.24.0</mockito.version>
         <maven.compiler.plugin.version>3.16.0</maven.compiler.plugin.version>
         <maven.surefire.plugin.version>3.6.0</maven.surefire.plugin.version>
+
+        <!-- Por defecto solo pruebas unitarias; el perfil integracion invierte el filtro -->
+        <pruebas.excluidas>integracion</pruebas.excluidas>
+        <pruebas.grupos></pruebas.grupos>
     </properties>
+
+    <profiles>
+        <!--
+            mvn -Pintegracion -Dtest=S4bStreamingCmisIT -DargLine="-Xmx256m" test
+            Requiere el CMIS local (spikes/s4b-cmis-docker.sh) y az login con lectura sobre el contenedor de adjuntos.
+        -->
+        <profile>
+            <id>integracion</id>
+            <properties>
+                <pruebas.excluidas></pruebas.excluidas>
+                <pruebas.grupos>integracion</pruebas.grupos>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>**/*IT.java</include>
+                            </includes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <dependencyManagement>
         <dependencies>
@@ -153,6 +184,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven.surefire.plugin.version}</version>
+                <configuration>
+                    <!-- Las pruebas de integración (spikes contra Azure y un CMIS local) solo corren con -Pintegracion -->
+                    <excludedGroups>${pruebas.excluidas}</excludedGroups>
+                    <groups>${pruebas.grupos}</groups>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>com.microsoft.azure</groupId>
