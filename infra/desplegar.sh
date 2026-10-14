@@ -13,14 +13,14 @@ echo "Suscripción activa:"
 az account show --query '{name:name, id:id, tenant:tenantId}' -o table
 
 echo "Registrando providers necesarios (idempotente)..."
-for ns in Microsoft.Web Microsoft.Storage Microsoft.EventGrid Microsoft.Insights Microsoft.OperationalInsights Microsoft.ManagedIdentity Microsoft.Security; do
+for ns in Microsoft.Web Microsoft.Storage Microsoft.EventGrid Microsoft.Insights Microsoft.OperationalInsights Microsoft.ManagedIdentity Microsoft.Security Microsoft.KeyVault Microsoft.App; do
   az provider register --namespace "$ns" --wait >/dev/null
 done
 
 echo "Verificando que $LOCATION soporte Flex Consumption con Java..."
 az functionapp list-flexconsumption-runtimes --location "$LOCATION" --runtime java --query '[].version' -o tsv
 
-az group create --name "$RG" --location "$LOCATION" --tags proyecto=CMV8_to_PP ambiente=spike -o none
+az group create --name "$RG" --location "$LOCATION" --tags proyecto=CMV8_to_PP "ambiente=${AMBIENTE:-spike}" -o none
 
 # config/appsettings de Bicep REEMPLAZA todos los app settings: ningún secreto se fija fuera de banda.
 # El OBO del broker usa la identidad administrada como credencial federada (sin BROKER_CLIENT_SECRET).

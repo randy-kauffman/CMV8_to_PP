@@ -6,7 +6,7 @@ Ingesta de documentos (incluidos videos de hasta 100 MB) desde Power Apps / Powe
 
 | Carpeta | Contenido |
 | --- | --- |
-| `docs/` | ADRs, plan de solución, costos |
+| `docs/` | ADRs, plan de solución, costos, guía de montaje en el tenant del Banco (`guia-montaje-banco.md`) y guía de spikes adentro (`guia-spikes-banco.md`) |
 | `infra/` | Bicep: Storage endurecido, Function Flex Consumption, Event Grid, Key Vault |
 | `function/` | Azure Function en Java: broker de SAS, resolución de cliente (jt400), worker CMIS (OpenCMIS) |
 | `pcf/` | Componente PCF de carga directa a Blob con SAS |

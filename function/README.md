@@ -150,8 +150,7 @@ La Function App Flex Consumption la crea `infra/main.bicep`; acá solo se public
 mvn clean package
 # Opción 1: plugin de Maven
 mvn azure-functions:deploy -DfunctionAppName=<nombre> -DresourceGroup=<rg>
-# Opción 2: Core Tools, desde function/
-func azure functionapp publish <nombre> --java
+# (func azure functionapp publish no es el camino soportado en Flex Consumption)
 ```
 
 ## host.json

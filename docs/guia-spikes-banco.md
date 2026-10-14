@@ -11,7 +11,7 @@ Fecha: 2026-10-14. Complementa `docs/plan-solucion.md` §4b y §4c, `docs/backlo
 
 ## Fase 0. Cimientos en el tenant del Banco
 
-Reproduce lo que ya funciona en el tenant propio. Equipos: Identidad, Cloud, Power Platform.
+Reproduce lo que ya funciona en el tenant propio. Equipos: Identidad, Cloud, Power Platform. Los comandos exactos de cada paso están en `docs/guia-montaje-banco.md`; acá queda el resumen y la evidencia que cierra la fase.
 
 ### 0.1 Suscripción, región y proveedores
 
