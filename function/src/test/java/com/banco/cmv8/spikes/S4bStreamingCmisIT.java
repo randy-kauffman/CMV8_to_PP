@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * </pre>
  *
  * Parámetros (propiedad de sistema o variable de entorno, con defecto): S4B_BLOB_ENDPOINT, S4B_CONTAINER,
- * S4B_CMIS_URL, S4B_CMIS_REPOSITORY_ID.
+ * S4B_CMIS_URL, S4B_CMIS_REPOSITORY_ID, S4B_CMIS_USER, S4B_CMIS_PASSWORD.
  */
 @Tag("integracion")
 class S4bStreamingCmisIT {
@@ -56,8 +56,9 @@ class S4bStreamingCmisIT {
     private static final String CONTENEDOR = parametro("S4B_CONTAINER", "cmv8-ingesta");
     private static final String CMIS_URL = parametro("S4B_CMIS_URL", "http://127.0.0.1:18080/cmis/browser");
     private static final String CMIS_REPO = parametro("S4B_CMIS_REPOSITORY_ID", "A1");
-    private static final String USUARIO = "test";
-    private static final String CLAVE = "test";
+    // S4a: usuario y clave reales de CM V8 por variable de entorno o -D; el InMemory acepta cualquiera.
+    private static final String USUARIO = parametro("S4B_CMIS_USER", "test");
+    private static final String CLAVE = parametro("S4B_CMIS_PASSWORD", "test");
 
     @Test
     void transmiteCienMegasDesdeBlobHaciaCmisSinCargarlosEnMemoria() throws Exception {
