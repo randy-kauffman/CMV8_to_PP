@@ -181,3 +181,19 @@ az rest --method post --url https://api.loganalytics.io/v1/workspaces/22e24388-1
 
    con `Set(varSas, 'CMV8Broker'.EmitirSasSubida({solicitudId: …, nombreArchivo: …, tamanoBytes: …}))`.
    Sin `tokenStorage`, la subida falla con "Storage rechazo la SAS (403)…": ahora todas las SAS salen ligadas.
+
+## Prueba desde Studio (2026-10-14, 12:30 UTC): confirmada
+
+Ejecutada por el usuario con el PCF 0.0.5 y el conector refrescado. Evidencia leída en Log Analytics y App Insights:
+
+| Fuente | Evidencia |
+| --- | --- |
+| App Insights, 12:30:22Z | `SAS de subida emitida… ligadaUsuario=true tokenStorageExpira=13:57:03Z` para la solicitud `b9cd9800-cbc7-f111-a05a-000d3a3b5b91` |
+| StorageBlobLogs, 12:30:37Z a 12:30:52Z | 25 `PutBlock` + 1 `PutBlockList`, todos **201**, `AuthenticationType=DelegationSas`, `RequesterUpn=admin@55xljh.onmicrosoft.com`, IP del usuario (no la de la Function), 4 carriles en paralelo, 100 MiB |
+| Dataverse | La fila pasó a **Subido** a las 12:30:52Z, el mismo segundo del `PutBlockList`: el `OnChange` del componente con `Patch` funciona |
+
+Duración de la subida: 15 s. El negativo (sin `tokenStorage`) no deja rastro en logs porque los 403 `AuthenticationFailed` no se registran;
+queda demostrado con las pruebas por CLI de arriba.
+
+Observación menor: la fila quedó con `cmv8_nombrearchivo` y `cmv8_tamanobytes` vacíos. El `Patch` de la app todavía no los escribe; agregarlos
+en el `Patch` final junto con el estado Subido.
