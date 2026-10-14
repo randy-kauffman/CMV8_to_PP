@@ -64,7 +64,9 @@ Hipótesis: OpenCMIS con Browser binding sube 100 MB a un servidor CMIS 1.1 de p
 
 ## S3. Defender for Storage
 
-`habilitarDefender=true`. Subir `eicar.com` y el video. Verificar evento `Microsoft.Security.MalwareScanningResult` en la Function, blob del EICAR rechazado y fila en Rechazado; video limpio encolado. Medir latencia entre PutBlockList y el evento.
+**No se ejecuta fuera del Banco** (decisión del usuario, 2026-10-14, por el costo fijo de ~$9,78/mes por cuenta). Queda cuantificado en `docs/justificacion-financiera-blob-vs-dataverse.md`, sección 8, y el Bicep lo soporta con `habilitarDefender=true` para correrlo dentro del Banco si allí ya está habilitado a nivel de suscripción.
+
+Plan original: `habilitarDefender=true`. Subir `eicar.com` y el video. Verificar evento `Microsoft.Security.MalwareScanningResult` en la Function, blob del EICAR rechazado y fila en Rechazado; video limpio encolado. Medir latencia entre PutBlockList y el evento.
 
 ## S5. Atribución de requests en el admin center
 
