@@ -16,20 +16,29 @@ H=(-H "Authorization: Bearer $TOKEN" -H "OData-MaxVersion: 4.0" -H "OData-Versio
 
 api() { # método ruta [archivo-json]
   local m="$1" ruta="$2" cuerpo="${3:-}"
+  local salida
   if [[ -n "$cuerpo" ]]; then
-    curl -sS -w '\n%{http_code}' -X "$m" "${H[@]}" -H "MSCRM.SolutionUniqueName: $SOLUCION" --data-binary "@$cuerpo" "$API/$ruta"
+    salida=$(curl -sS -w '\n%{http_code}' -X "$m" "${H[@]}" -H "MSCRM.SolutionUniqueName: $SOLUCION" --data-binary "@$cuerpo" "$API/$ruta")
   else
-    curl -sS -w '\n%{http_code}' -X "$m" "${H[@]}" "$API/$ruta"
+    salida=$(curl -sS -w '\n%{http_code}' -X "$m" "${H[@]}" "$API/$ruta")
   fi
+  local code; code=$(printf '%s' "$salida" | tail -1)
+  if [[ "$code" != 2* ]]; then
+    printf '%s' "$salida" | head -n -1 | python3 -I -c 'import sys,json
+try:
+    d=json.load(sys.stdin); print("    error:", d.get("error",{}).get("message","")[:300], file=sys.stderr)
+except Exception: pass'
+  fi
+  echo "$code"
 }
 
 echo "== Quién soy"
 curl -sS "${H[@]}" "$API/WhoAmI" | python3 -I -c 'import sys,json; d=json.load(sys.stdin); print("  user:", d["UserId"], "org:", d["OrganizationId"])'
 
 echo "== Publisher $PREFIJO"
-PUB=$(curl -sS "${H[@]}" "$API/publishers?\$select=publisherid&\$filter=customizationprefix eq '$PREFIJO'" | python3 -I -c 'import sys,json; v=json.load(sys.stdin)["value"]; print(v[0]["publisherid"] if v else "")')
+PUB=$(curl -sS -G "${H[@]}" "$API/publishers" --data-urlencode "\$select=publisherid" --data-urlencode "\$filter=customizationprefix eq '$PREFIJO'" | python3 -I -c 'import sys,json; v=json.load(sys.stdin)["value"]; print(v[0]["publisherid"] if v else "")')
 if [[ -z "$PUB" ]]; then
-  PUB=$(curl -sS -i -X POST "${H[@]}" "$API/publishers" --data-binary @- <<EOF | rg -o 'publishers\(([0-9a-f-]+)\)' -r '$1'
+  PUB=$(curl -sS -i -X POST "${H[@]}" "$API/publishers" --data-binary @- <<EOF | rg -o 'publishers\(([0-9a-f-]+)\)' -r '$1' | head -1
 {"uniquename":"banco_cmv8","friendlyname":"Banco CMV8","customizationprefix":"$PREFIJO","customizationoptionvalueprefix":10000}
 EOF
 )
@@ -39,9 +48,9 @@ else
 fi
 
 echo "== Solución $SOLUCION"
-SOL=$(curl -sS "${H[@]}" "$API/solutions?\$select=solutionid&\$filter=uniquename eq '$SOLUCION'" | python3 -I -c 'import sys,json; v=json.load(sys.stdin)["value"]; print(v[0]["solutionid"] if v else "")')
+SOL=$(curl -sS -G "${H[@]}" "$API/solutions" --data-urlencode "\$select=solutionid" --data-urlencode "\$filter=uniquename eq '$SOLUCION'" | python3 -I -c 'import sys,json; v=json.load(sys.stdin)["value"]; print(v[0]["solutionid"] if v else "")')
 if [[ -z "$SOL" ]]; then
-  curl -sS -o /dev/null -w '  POST solutions -> %{http_code}\n' -X POST "${H[@]}" "$API/solutions" --data-binary @- <<EOF
+  curl -sS -w '\n  POST solutions -> %{http_code}\n' -X POST "${H[@]}" "$API/solutions" --data-binary @- <<EOF | tail -3
 {"uniquename":"$SOLUCION","friendlyname":"CMV8 Ingesta","version":"0.1.0.0","publisherid@odata.bind":"/publishers($PUB)"}
 EOF
 else
@@ -78,6 +87,6 @@ done
 rm -rf "$TMP"
 
 echo "== Publicar"
-curl -sS -o /dev/null -w '  PublishAllXml -> %{http_code}\n' -X POST "${H[@]}" "$API/PublishAllXml"
+curl -sS -o /dev/null -w '  PublishAllXml -> %{http_code}\n' -X POST "${H[@]}" -d '{}' "$API/PublishAllXml"
 
 echo "Listo. Tabla cmv8_solicitudingesta en $DV dentro de la solución $SOLUCION."
