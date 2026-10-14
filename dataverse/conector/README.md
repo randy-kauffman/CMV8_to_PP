@@ -96,3 +96,8 @@ curl -s -X POST https://cmv8-func-supfcopn.azurewebsites.net/api/sas/subida \
 ```
 
 Sin `Authorization` la respuesta es 401 (Easy Auth, con `WWW-Authenticate: Bearer realm=...`).
+
+## URL de redirección por conector (aprendido en S7)
+
+Al crear la conexión, Power Platform usa una redirect URI **específica del conector**, no la global:
+`https://global.consent.azure-apim.net/redirect/new-5fcmv8-20broker-5ff95a98b5516c5717` (el sufijo sale del nombre interno del conector más un hash). Si no está en la app registration del conector, Entra devuelve `AADSTS50011`. Se ve en el conector, pestaña Seguridad, campo "URL de redirección", y hay que agregarla con `az ad app update --id <connectorAppId> --web-redirect-uris <global> <específica>`. Al recrear el conector cambia el hash y hay que repetirlo.
