@@ -14,6 +14,9 @@ param origenesCors = [
   'http://localhost:8181'
 ]
 
+// S1 corre sin Dataverse; para S2 en adelante pasar a 'dataverse'.
+param autorizacionModo = 'ninguna'
+
 // Sin firewall IP en el spike S1/S2. Para S1b/S3 agregar la IP pública propia.
 param ipsPermitidas = []
 

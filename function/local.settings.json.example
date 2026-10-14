@@ -1,0 +1,38 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "java",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+
+    "AZURE_CLIENT_ID": "",
+
+    "ADJUNTOS_STORAGE_ACCOUNT": "cmv8adjXXXXXXXX",
+    "ADJUNTOS_BLOB_ENDPOINT": "https://cmv8adjXXXXXXXX.blob.core.windows.net/",
+    "ADJUNTOS_CONTAINER": "cmv8-ingesta",
+    "SAS_UPLOAD_MINUTOS": "15",
+    "SAS_READ_MINUTOS": "5",
+    "SAS_LIGADA_USUARIO": "false",
+    "TAMANO_MAXIMO_BYTES": "1073741824",
+
+    "DATAVERSE_URL": "https://ORG.crm.dynamics.com",
+    "AUTORIZACION_MODO": "dataverse",
+
+    "COLA_INGESTA": "ingesta-pendiente",
+    "ESTANCADA_MINUTOS": "15",
+    "ESCANEO_REQUERIDO": "false",
+
+    "CMIS_URL": "https://cm.ejemplo.local/cmis/browser",
+    "CMIS_USER": "",
+    "CMIS_PASSWORD": "",
+    "CMIS_REPOSITORY_ID": "",
+    "CMIS_FOLDER_PATH": "/Ingesta",
+    "CMIS_TYPE_ID": "cmis:document",
+    "CMIS_PROPIEDADES_JSON": "{\"cm:idCliente\":\"${idCliente}\",\"cm:origen\":\"PowerApps\"}",
+
+    "AS400_HOST": "",
+    "AS400_USER": "",
+    "AS400_PASSWORD": "",
+    "AS400_SECURE": "true",
+    "AS400_SQL_CLIENTE": "SELECT IDCLIENTE, IDCLIENTE2, NOMBRE, AFILIADOPADRE, IDDUENO FROM BIBLIOTECA.CLIENTES WHERE IDCLIENTE = ?"
+  }
+}

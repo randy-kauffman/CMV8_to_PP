@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.banco</groupId>
+    <artifactId>cmv8-function</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>CMV8 Function</name>
+    <description>Broker de SAS, resolución de cliente (AS400) y worker de archivado CMIS hacia IBM Content Manager V8</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>21</maven.compiler.release>
+
+        <!-- Despliegue con el plugin (la Function App la crea Bicep) -->
+        <functionAppName>cmv8-func-CAMBIAR</functionAppName>
+        <resourceGroup>rg-cmv8-CAMBIAR</resourceGroup>
+        <region>eastus2</region>
+
+        <!-- Versiones verificadas en Maven Central el 2026-10-13 -->
+        <azure.functions.maven.plugin.version>1.42.0</azure.functions.maven.plugin.version>
+        <azure.functions.java.library.version>3.3.0</azure.functions.java.library.version>
+        <azure.sdk.bom.version>1.3.9</azure.sdk.bom.version>
+        <jackson.bom.version>2.22.3</jackson.bom.version>
+        <opencmis.version>1.1.0</opencmis.version>
+        <jt400.version>21.0.7</jt400.version>
+        <slf4j.version>1.7.36</slf4j.version>
+        <junit.version>5.14.4</junit.version>
+        <mockito.version>5.24.0</mockito.version>
+        <maven.compiler.plugin.version>3.16.0</maven.compiler.plugin.version>
+        <maven.surefire.plugin.version>3.6.0</maven.surefire.plugin.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Jackson primero: fija la versión por encima de la que trae el BOM de Azure -->
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.azure</groupId>
+                <artifactId>azure-sdk-bom</artifactId>
+                <version>${azure.sdk.bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- Anotaciones de Azure Functions (las provee el worker en tiempo de ejecución) -->
+        <dependency>
+            <groupId>com.microsoft.azure.functions</groupId>
+            <artifactId>azure-functions-java-library</artifactId>
+            <version>${azure.functions.java.library.version}</version>
+        </dependency>
+
+        <!-- Azure SDK (versiones del BOM: azure-identity 1.18.7, azure-storage-blob 12.36.0) -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-identity</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-storage-blob</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+
+        <!--
+            OpenCMIS 1.1.0 (última publicada; el proyecto está retirado en Apache Attic).
+            Con Browser binding NO hace falta JAXB ni JAX-WS en Java 21: usa su propio parser JSON
+            y HttpURLConnection. CXF solo lo usa el binding Web Services, así que se excluye
+            (CXF 3.0.12 es viejo, pesado y con CVEs conocidos).
+        -->
+        <dependency>
+            <groupId>org.apache.chemistry.opencmis</groupId>
+            <artifactId>chemistry-opencmis-client-impl</artifactId>
+            <version>${opencmis.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.cxf</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- OpenCMIS loguea con SLF4J 1.7: lo enviamos a java.util.logging (lo recoge el host) -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <!-- jt400: clasificador java11 (build para Java 11+, sin clases de compatibilidad de JDK viejos) -->
+        <dependency>
+            <groupId>net.sf.jt400</groupId>
+            <artifactId>jt400</artifactId>
+            <version>${jt400.version}</version>
+            <classifier>java11</classifier>
+        </dependency>
+
+        <!-- Pruebas -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>com.microsoft.azure</groupId>
+                <artifactId>azure-functions-maven-plugin</artifactId>
+                <version>${azure.functions.maven.plugin.version}</version>
+                <configuration>
+                    <!-- La Function App Flex Consumption la crea infra/main.bicep; el plugin solo empaqueta y despliega -->
+                    <appName>${functionAppName}</appName>
+                    <resourceGroup>${resourceGroup}</resourceGroup>
+                    <region>${region}</region>
+                    <runtime>
+                        <os>linux</os>
+                        <javaVersion>21</javaVersion>
+                    </runtime>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>package-functions</id>
+                        <goals>
+                            <goal>package</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

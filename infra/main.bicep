@@ -65,6 +65,10 @@ param crearSuscripcionEventGrid bool = false
 @description('URL del entorno de Dataverse que consumirá la Function (S2, S5, S7).')
 param dataverseUrl string = ''
 
+@description('Modo de autorización del broker de SAS: dataverse (verifica acceso a la fila) o ninguna (solo S1).')
+@allowed(['dataverse', 'ninguna'])
+param autorizacionModo string = 'dataverse'
+
 @description('Días de retención de los adjuntos en Storage antes del borrado automático (red de seguridad).')
 param diasRetencionAdjuntos int = 7
 
@@ -391,6 +395,11 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       DATAVERSE_URL: dataverseUrl
       SAS_UPLOAD_MINUTOS: '15'
       SAS_READ_MINUTOS: '5'
+      COLA_INGESTA: 'ingesta-pendiente'
+      AUTORIZACION_MODO: autorizacionModo
+      SAS_LIGADA_USUARIO: requerirSasLigadaAUsuario ? 'true' : 'false'
+      ESCANEO_REQUERIDO: habilitarDefender ? 'true' : 'false'
+      ESTANCADA_MINUTOS: '15'
     }
   }
 }
