@@ -120,6 +120,15 @@ Nuestro conector es idéntico hasta el paso 2 (recurso = app del broker). La dif
 | Frecuencia de inicio de sesión | El refresh token del conector la respeta; el OBO toma la sesión vigente | Ninguna |
 | Evaluación continua de acceso (CAE) | Storage y Entra soportan CAE; el token OBO puede ser de 24 h si el cliente es compatible | Considerar `tokenLifetimePolicy` (§7) para acotarlo |
 
+### Hipótesis para el Banco: la VNet de las VMs que ya salen a internet
+
+El usuario informa (2026-10-14) que el Banco tiene VMs en Azure con salida a internet que se conectan a My Apps, y el ADR-001 registra VMs con línea de red a AS400 y a CM V8. Si esas VMs salen por una IP pública fija que ya está en una ubicación con nombre de confianza, integrar la Function a esa VNet (o a un spoke emparejado) resuelve a la vez el hallazgo 10 (ubicación del OBO), S0 (red a IBM i y CM V8) y el private endpoint de Key Vault. Condiciones verificadas en Learn (Flex Consumption):
+
+- Subred propia delegada a `Microsoft.App/environments`, mínimo `/27`, sin private endpoints ni otras delegaciones, nombre sin `_`, proveedor `Microsoft.App` registrado.
+- **Integrar la VNet no cambia la IP pública de salida por sí solo**: la Function sigue saliendo por sus IP de plataforma salvo que la subred tenga una ruta (UDR) o un NAT Gateway que mande el tráfico a otro lado. Hay que aplicar a la subred de la Function el MISMO mecanismo de salida de las VMs (NAT Gateway, Azure Firewall o breakout on-prem por ExpressRoute).
+- Qué pedirle al Banco: cómo salen a internet esas VMs (NAT Gateway con IP reservada, firewall, o proxy on-prem), cuál es la IP pública (desde una VM: `curl https://ifconfig.me`), si esa IP figura en una ubicación con nombre marcada como de confianza, y una subred `/27` delegable en esa VNet o en un spoke emparejado con la misma tabla de rutas.
+- Si la salida es por breakout on-prem, la IP es del banco y seguro es de confianza, pero cada OBO y cada llamada a Storage/Entra desde la Function viaja a la sede y vuelve: medir latencia.
+
 ### Prueba antes de salir al Banco (en el tenant propio)
 
 El tenant de desarrollo tiene Entra ID P2 (Microsoft 365 E5 Developer). Prueba de 1 hora, decisión del administrador porque es un cambio a nivel tenant:
