@@ -99,7 +99,7 @@ Riesgos que estiran el esfuerzo: metadatos obligatorios de Content Manager mal d
 
 - Blob Storage hot, LRS: ~$0,02 / GB / mes aprox. Con borrado al archivar y 7 días de retención máxima, el escenario mediano mantiene menos de 250 GB en tránsito: menos de $5 / mes. Transacciones despreciables.
 - Event Grid: despreciable a este volumen (primeras 100.000 operaciones/mes gratis aprox.).
-- Defender for Storage: cargo por cuenta de almacenamiento protegida más escaneo antivirus por GB subido (con cap mensual configurable). Confirmar en la calculadora de Defender for Cloud. Escenario mediano: ~660 GB escaneados/mes.
+- Defender for Storage (verificado 2026-10-14, Azure Retail Prices, eastus2): $0,0134/h por cuenta protegida (≈ $9,78/mes) + $0,15 por GB escaneado + $0,1492 por millón de transacciones. Escenario chico (66 GB/mes) ≈ $20/mes; mediano (660 GB/mes) ≈ $109/mes. Cap mensual de GB configurable. No se probó en el entorno propio por decisión del usuario; ver justificación financiera, sección 8.
 - Dataverse: desaparece el riesgo de capacidad File y el consumo del pool de requests baja a ~3 por documento.
 
 ## 6. Costos que NO aparecen en la factura pero existen

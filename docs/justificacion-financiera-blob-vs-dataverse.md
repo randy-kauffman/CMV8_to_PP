@@ -41,7 +41,7 @@ En este caso el binario vive 1 o 2 días en la plataforma. Volumen en tránsito:
 | Requests Dataverse del application user | ~28 por documento con chunks de 4 MB: 2.800 a 14.000 por día | ~2 por documento: 200 a 1.000 por día |
 | Riesgo de throttling del pool de 25.000/día | Alto en el escenario mediano (56 % del pool para una sola solución) | Despreciable |
 | Event Grid | no aplica | menos de $1 |
-| Defender for Storage, antivirus al subir (control que hoy no existe) | no disponible para columnas de archivo | ~$10 por cuenta + escaneo por GB aprox.; escenario mediano ~660 GB/mes |
+| Defender for Storage, antivirus al subir (control que hoy no existe) | no disponible para columnas de archivo | $9,78 por cuenta/mes ($0,0134/h) + $0,15 por GB escaneado: chico 66 GB → ~$20/mes; mediano 660 GB → ~$109/mes. Precios verificados en Azure Retail Prices, eastus2, 2026-10-14 |
 
 Lectura honesta: **para CMV8 solo, con borrado al archivar, el costo operativo de las dos opciones es parecido y bajo**. Blob es más barato en almacenamiento y requests, y más caro si se activa el antivirus. La diferencia en dólares no es la que justifica el cambio.
 
@@ -87,4 +87,17 @@ Esta inversión es reutilizable: el broker y el modelo de gobierno sirven a toda
 3. El sobrecosto de construcción (3 a 4 semanas) se paga una vez y se amortiza con la primera solución que retenga archivos.
 4. Decisión recomendada: construir el camino Blob con CMV8 como primer caso, y establecerlo como estándar de adjuntos para el Banco.
 
-Pendientes que afinan los números: confirmar el precio del add-on File con el partner de licencias, leer el reporte de capacidad File del tenant, confirmar licencias Dynamics 365, y obtener el precio de escaneo de Defender for Storage en la calculadora.
+Pendientes que afinan los números: confirmar el precio del add-on File con el partner de licencias, leer el reporte de capacidad File del tenant, confirmar licencias Dynamics 365, y validar el precio de Defender for Storage con el partner (ya verificado en el API de precios: $0,0134/h por cuenta, $0,15/GB escaneado, $0,1492 por millón de transacciones).
+
+## 8. Nota sobre Defender for Storage (2026-10-14)
+
+Decisión del usuario: **no se ejecuta el spike S3** en el entorno propio para no incurrir en el costo fijo. Queda cuantificado para el Banco con precios verificados (Azure Retail Prices, eastus2):
+
+| Meter | Precio | Escenario chico (66 GB/mes) | Escenario mediano (660 GB/mes) |
+| --- | --- | --- | --- |
+| Standard Node, por cuenta de Storage protegida | $0,0134 / hora ≈ $9,78 / mes | $9,78 | $9,78 |
+| Malware Scanning Data Ingested | $0,15 / GB subido y escaneado | $9,90 | $99,00 |
+| Standard Transactions | $0,1492 / millón | despreciable | despreciable |
+| **Total** | | **≈ $20 / mes** | **≈ $109 / mes** |
+
+Con cap mensual de GB escaneados configurable por cuenta para acotar el máximo. Es el único componente de la solución con costo fijo; el resto escala a cero. Si el Banco ya tiene Defender for Storage habilitado a nivel de suscripción, el cargo por cuenta ya está pagado y solo suma el escaneo por GB. Sin Defender, el trigger del worker es `BlobCreated` directo (fallback ya contemplado en el Bicep) y el antivirus queda a cargo de Content Manager o del endpoint del usuario, como hoy.
