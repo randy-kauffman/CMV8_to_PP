@@ -27,8 +27,19 @@ DATAVERSE_URL=https://org36e60d9d.crm.dynamics.com bash dataverse/crear-tabla.sh
 
 El script usa el token de `az` contra Dataverse (el usuario debe ser administrador del entorno), crea publisher, solución, tabla y columnas si no existen, y publica.
 
+## Roles y usuario de aplicación
+
+```bash
+DATAVERSE_URL=https://org36e60d9d.crm.dynamics.com APP_CLIENT_ID=<identidadClientId> bash dataverse/crear-roles.sh
+```
+
+| Rol | Para quién | Privilegios |
+| --- | --- | --- |
+| CMV8 Worker | identidad administrada de la Function | tabla: Read/Write/Append/AppendTo Global; `prvActOnBehalfOfAnotherUser` (impersonación); lectura de User, BusinessUnit, Organization, Role, Team; UserSettings propios |
+| CMV8 Solicitante | usuarios de la app | tabla: Create/Read/Write/Append/AppendTo Basic (solo lo propio); lectura de User, BusinessUnit, Organization; UserSettings propios |
+
+El script crea los roles con `ReplacePrivilegesRole` (idempotente, deja el set exacto), da de alta el usuario de aplicación con el client id y le asigna CMV8 Worker. Ningún rol de sistema.
+
 ## Lo que falta en esta carpeta
 
-- Rol de seguridad "CMV8 Solicitante" (crear/leer/escribir propio sobre la tabla) y "CMV8 Worker" (leer/escribir organización) para el application user de la Function.
-- Registro del application user con el client id de la identidad administrada (salida `identidadClientId` del Bicep). Es una operación del admin center; se documenta en el spike S2.
-- Exportación de la solución (`pac solution export`) cuando el PCF y el conector estén adentro.
+- Exportación de la solución (`pac solution export`) cuando el PCF y el conector estén adentro. El PCF hoy se sube con `pac pcf push --publisher-prefix cmv8`, que usa una solución temporal.

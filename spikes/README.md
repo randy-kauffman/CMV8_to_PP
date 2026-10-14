@@ -11,8 +11,11 @@ az login
 az account set -s "<subscription id>"
 bash infra/desplegar.sh rg-cmv8-spikes eastus2          # infra base
 source ~/.sdkman/bin/sdkman-init.sh                      # java 21 + maven
-cd function && mvn clean package && func azure functionapp publish <functionAppName> --java && cd ..
+# OJO: `func azure functionapp publish --java` NO funciona en Flex Consumption (sube el directorio crudo, cero funciones).
+cd function && mvn clean package azure-functions:deploy -DfunctionAppName=<functionAppName> -DresourceGroup=rg-cmv8-spikes -Dregion=eastus2 && cd ..
 DATAVERSE_URL=https://org36e60d9d.crm.dynamics.com bash dataverse/crear-tabla.sh
+DATAVERSE_URL=https://org36e60d9d.crm.dynamics.com APP_CLIENT_ID=<identidadClientId> bash dataverse/crear-roles.sh
+cd pcf && npm run build && pac pcf push --publisher-prefix cmv8 && cd ..
 bash spikes/generar-fixtures.sh
 ```
 
