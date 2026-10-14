@@ -11,6 +11,7 @@
     "ADJUNTOS_CONTAINER": "cmv8-ingesta",
     "SAS_UPLOAD_MINUTOS": "15",
     "SAS_READ_MINUTOS": "5",
+    "SAS_BLOQUE_MB": "4",
     "SAS_LIGADA_USUARIO": "false",
     "TAMANO_MAXIMO_BYTES": "1073741824",
 

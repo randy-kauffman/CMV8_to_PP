@@ -103,6 +103,15 @@ public final class Configuracion {
         return entero("TAMANO_MAXIMO_BYTES", 1L << 30);
     }
 
+    /** Tamaño de bloque que se recomienda al PCF, en MiB (1 a 100). Permite experimentar sin republicar el PCF. */
+    public int bloqueBytes() {
+        long mb = entero("SAS_BLOQUE_MB", 4);
+        if (mb < 1 || mb > 100) {
+            throw new IllegalStateException("SAS_BLOQUE_MB debe estar entre 1 y 100, vino " + mb);
+        }
+        return (int) (mb * 1024 * 1024);
+    }
+
     // ---------------------------------------------------------------- dataverse
 
     /** Sin '/' final, por ejemplo https://org.crm.dynamics.com */

@@ -128,7 +128,7 @@ public final class Fabrica {
                         config.as400Clave(), config.as400Seguro(), config.as400SqlCliente())));
 
         emitirSasSubida = new Perezoso<>(() -> new EmitirSasSubida(politica.get(), autorizador.get(),
-                repositorio.get(), emisorSas.get(), config.vigenciaSasSubida()));
+                repositorio.get(), emisorSas.get(), config.vigenciaSasSubida(), config.bloqueBytes()));
         emitirSasLectura = new Perezoso<>(() -> new EmitirSasLectura(autorizador.get(), repositorio.get(),
                 almacen.get(), emisorSas.get(), config.vigenciaSasLectura()));
         procesarIngesta = new Perezoso<>(() -> new ProcesarIngesta(repositorio.get(), almacen.get(), archivo.get(),

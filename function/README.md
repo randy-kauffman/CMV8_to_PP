@@ -82,6 +82,7 @@ Las que ya define `infra/main.bicep`:
 | `DATAVERSE_URL` | `https://<org>.crm.dynamics.com` |
 | `SAS_UPLOAD_MINUTOS` | Vigencia de la SAS de subida (15). Tope: 60, igual a `sasPolicy` de la cuenta |
 | `SAS_READ_MINUTOS` | Vigencia de la SAS de lectura (5) |
+| `SAS_BLOQUE_MB` | Tamaño de bloque en MiB que el broker recomienda al PCF (4). Rango 1 a 100; sirve para experimentar throughput sin republicar el PCF |
 
 Nuevas (agregar a Bicep o a la configuración de la Function App):
 

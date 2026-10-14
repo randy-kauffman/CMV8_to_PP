@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  */
 public class EmitirSasSubida {
 
-    /** Tamaño de bloque recomendado al PCF (4 MiB). */
+    /** Tamaño de bloque por defecto recomendado al PCF (4 MiB). Configurable con SAS_BLOQUE_MB. */
     public static final int BLOQUE_BYTES = 4 * 1024 * 1024;
 
     public record Peticion(UUID solicitudId, String nombreArchivo, Long tamanoBytes, String contentType) {
@@ -41,14 +41,21 @@ public class EmitirSasSubida {
     private final RepositorioSolicitudes repositorio;
     private final EmisorSas emisor;
     private final Duration vigencia;
+    private final int bloqueBytes;
 
     public EmitirSasSubida(PoliticaSas politica, AutorizadorSolicitud autorizador, RepositorioSolicitudes repositorio,
                            EmisorSas emisor, Duration vigencia) {
+        this(politica, autorizador, repositorio, emisor, vigencia, BLOQUE_BYTES);
+    }
+
+    public EmitirSasSubida(PoliticaSas politica, AutorizadorSolicitud autorizador, RepositorioSolicitudes repositorio,
+                           EmisorSas emisor, Duration vigencia, int bloqueBytes) {
         this.politica = politica;
         this.autorizador = autorizador;
         this.repositorio = repositorio;
         this.emisor = emisor;
         this.vigencia = vigencia;
+        this.bloqueBytes = bloqueBytes;
     }
 
     public Resultado ejecutar(Peticion peticion, ContextoLlamador llamador, Logger log) {
@@ -74,6 +81,6 @@ public class EmitirSasSubida {
         repositorio.registrarRutaBlob(id, ruta);
         SasEmitida sas = emisor.emitirSubida(ruta, vigencia, llamador);
         log.info(() -> "SAS de subida emitida. solicitudId=" + id + " rutaBlob=" + ruta + " expira=" + sas.expira());
-        return new Resultado(sas.url(), ruta, sas.expira(), BLOQUE_BYTES, sas.versionServicio());
+        return new Resultado(sas.url(), ruta, sas.expira(), bloqueBytes, sas.versionServicio());
     }
 }

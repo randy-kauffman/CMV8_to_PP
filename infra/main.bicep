@@ -67,6 +67,11 @@ param dataverseUrl string = ''
 @allowed(['dataverse', 'ninguna'])
 param autorizacionModo string = 'dataverse'
 
+@description('Tamaño de bloque en MiB que el broker recomienda al PCF. Mayor = menos overhead por bloque, reintentos más caros.')
+@minValue(1)
+@maxValue(100)
+param bloqueMb int = 4
+
 @description('Días de retención de los adjuntos en Storage antes del borrado automático (red de seguridad).')
 param diasRetencionAdjuntos int = 7
 
@@ -403,6 +408,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       SAS_LIGADA_USUARIO: requerirSasLigadaAUsuario ? 'true' : 'false'
       ESCANEO_REQUERIDO: habilitarDefender ? 'true' : 'false'
       ESTANCADA_MINUTOS: '15'
+      SAS_BLOQUE_MB: string(bloqueMb)
     }
   }
 }
