@@ -7,12 +7,8 @@ param javaVersion = '21'
 param contenedorAdjuntos = 'cmv8-ingesta'
 param dataverseUrl = 'https://org36e60d9d.crm.dynamics.com'
 
-// El test harness del PCF corre en localhost:8181; en el Banco se quita.
-param origenesCors = [
-  'https://apps.powerapps.com'
-  'https://make.powerapps.com'
-  'http://localhost:8181'
-]
+// Power Apps corre desde hosts regionales variables (*.island.powerapps.com): no se pueden listar. Ver main.bicep.
+param origenesCors = ['*']
 
 // S1 corre sin Dataverse; para S2 en adelante pasar a 'dataverse'.
 param autorizacionModo = 'ninguna'

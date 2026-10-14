@@ -39,12 +39,10 @@ param instanceMemoryMB int = 2048
 @description('Nombre del contenedor de adjuntos de esta solución.')
 param contenedorAdjuntos string = 'cmv8-ingesta'
 
-@description('Orígenes permitidos por CORS para la carga directa desde el navegador (Power Apps).')
-param origenesCors array = [
-  'https://apps.powerapps.com'
-  'https://apps.gov.powerapps.us'
-  'https://make.powerapps.com'
-]
+@description('''Orígenes permitidos por CORS en Storage y en la Function. Power Apps ejecuta las apps desde hosts
+regionales variables (p. ej. authoring.us-il301.gateway.prod.island.powerapps.com), por lo que no se pueden listar.
+CORS no es un control de seguridad: la autorización la dan la SAS (Storage) y Entra ID (Function).''')
+param origenesCors array = ['*']
 
 @description('IPs o CIDR públicas permitidas en el firewall del Storage de adjuntos. Vacío = sin firewall (solo para spikes).')
 param ipsPermitidas array = []
