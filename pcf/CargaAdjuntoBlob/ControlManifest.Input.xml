@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="Banco" constructor="CargaAdjuntoBlob" version="0.0.2" display-name-key="CargaAdjuntoBlob_Display" description-key="CargaAdjuntoBlob_Desc" control-type="standard">
+  <control namespace="Banco" constructor="CargaAdjuntoBlob" version="0.0.3" display-name-key="CargaAdjuntoBlob_Display" description-key="CargaAdjuntoBlob_Desc" control-type="standard">
     <!-- El control llama por fetch al broker (Function) y a Blob Storage: se declara servicio externo.
          Ojo: esto lo clasifica como componente premium (licenciamiento). Ajustar los dominios reales al desplegar. -->
     <external-service-usage enabled="true">
@@ -26,6 +26,8 @@
     <property name="contentType" display-name-key="contentType_Display" description-key="contentType_Desc" of-type="SingleLine.Text" usage="output" />
     <property name="mensajeError" display-name-key="mensajeError_Display" description-key="mensajeError_Desc" of-type="SingleLine.Text" usage="output" />
     <property name="duracionMs" display-name-key="duracionMs_Display" description-key="duracionMs_Desc" of-type="Whole.None" usage="output" />
+    <property name="velocidadMbps" display-name-key="velocidadMbps_Display" description-key="velocidadMbps_Desc" of-type="Decimal" usage="output" />
+    <property name="velocidadPromedioMbps" display-name-key="velocidadPromedioMbps_Display" description-key="velocidadPromedioMbps_Desc" of-type="Decimal" usage="output" />
 
     <resources>
       <code path="index.ts" order="1" />

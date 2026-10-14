@@ -36,4 +36,8 @@
   <data name="mensajeError_Desc" xml:space="preserve"><value>Detalle del ultimo error, vacio si no hubo.</value></data>
   <data name="duracionMs_Display" xml:space="preserve"><value>Duracion (ms)</value></data>
   <data name="duracionMs_Desc" xml:space="preserve"><value>Duracion total de la subida en milisegundos.</value></data>
+  <data name="velocidadMbps_Display" xml:space="preserve"><value>Velocidad (Mbps)</value></data>
+  <data name="velocidadMbps_Desc" xml:space="preserve"><value>Velocidad de subida instantanea en megabits por segundo (ventana de 3 s).</value></data>
+  <data name="velocidadPromedioMbps_Display" xml:space="preserve"><value>Velocidad promedio (Mbps)</value></data>
+  <data name="velocidadPromedioMbps_Desc" xml:space="preserve"><value>Velocidad de subida promedio desde el inicio, en megabits por segundo.</value></data>
 </root>

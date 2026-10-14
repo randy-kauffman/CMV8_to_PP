@@ -41,6 +41,11 @@ export class CargaAdjuntoBlob implements ComponentFramework.StandardControl<IInp
     private _contentType = "";
     private _mensajeError = "";
     private _duracionMs = 0;
+    private _velocidadMbps = 0;
+    private _velocidadPromedioMbps = 0;
+
+    // Muestras (instante, bytes confirmados) para la velocidad instantánea en ventana de 3 s.
+    private _muestras: { t: number; bytes: number }[] = [];
 
     private _inicioMs = 0;
     private _abort?: AbortController;
@@ -119,7 +124,24 @@ export class CargaAdjuntoBlob implements ComponentFramework.StandardControl<IInp
             contentType: this._contentType,
             mensajeError: this._mensajeError,
             duracionMs: this._duracionMs,
+            velocidadMbps: this._velocidadMbps,
+            velocidadPromedioMbps: this._velocidadPromedioMbps,
         };
+    }
+
+    /** Actualiza velocidad instantánea (ventana 3 s) y promedio a partir de los bytes confirmados. */
+    private medirVelocidad(bytesConfirmados: number): void {
+        const ahora = Date.now();
+        this._muestras.push({ t: ahora, bytes: bytesConfirmados });
+        const limite = ahora - 3000;
+        while (this._muestras.length > 1 && this._muestras[0].t < limite) this._muestras.shift();
+        const primera = this._muestras[0];
+        const dtInst = (ahora - primera.t) / 1000;
+        const dtTotal = (ahora - this._inicioMs) / 1000;
+        const aMbps = (bytes: number, seg: number): number =>
+            seg > 0 ? Math.round(((bytes * 8) / 1_000_000 / seg) * 10) / 10 : 0;
+        this._velocidadMbps = aMbps(bytesConfirmados - primera.bytes, dtInst);
+        this._velocidadPromedioMbps = aMbps(bytesConfirmados, dtTotal);
     }
 
     public destroy(): void {
@@ -148,6 +170,9 @@ export class CargaAdjuntoBlob implements ComponentFramework.StandardControl<IInp
         this._contentType = "";
         this._mensajeError = "";
         this._duracionMs = 0;
+        this._velocidadMbps = 0;
+        this._velocidadPromedioMbps = 0;
+        this._muestras = [];
         this.cambiarEstado("inactivo");
     }
 
@@ -174,6 +199,9 @@ export class CargaAdjuntoBlob implements ComponentFramework.StandardControl<IInp
         this._rutaBlob = "";
         this._progreso = 0;
         this._duracionMs = 0;
+        this._velocidadMbps = 0;
+        this._velocidadPromedioMbps = 0;
+        this._muestras = [];
 
         // Validaciones previas, antes de pedir la SAS.
         const solicitudId = (p.solicitudId.raw ?? "").trim();
@@ -223,6 +251,7 @@ export class CargaAdjuntoBlob implements ComponentFramework.StandardControl<IInp
             this._rutaBlob = sas.rutaBlob;
 
             this.cambiarEstado("subiendo");
+            this._muestras = [{ t: Date.now(), bytes: 0 }];
             let ultimoPct = -1;
             await subirEnBloques(
                 archivo,
@@ -233,6 +262,7 @@ export class CargaAdjuntoBlob implements ComponentFramework.StandardControl<IInp
                     versionServicio: sas.versionServicio,
                 },
                 (hecho, total) => {
+                    this.medirVelocidad(hecho);
                     // Se notifica solo cuando cambia el porcentaje entero.
                     const pct = Math.floor((hecho / total) * 100);
                     if (pct !== ultimoPct) {
@@ -248,6 +278,8 @@ export class CargaAdjuntoBlob implements ComponentFramework.StandardControl<IInp
             this.cambiarEstado("confirmando");
             this._progreso = 100;
             this._duracionMs = Date.now() - this._inicioMs;
+            this.medirVelocidad(archivo.size);
+            this._velocidadMbps = this._velocidadPromedioMbps;
             this.cambiarEstado("completado");
         } catch (e) {
             if (e instanceof ErrorSubida && e.causa === "cancelado") {
@@ -277,7 +309,13 @@ export class CargaAdjuntoBlob implements ComponentFramework.StandardControl<IInp
         this._barra.dataset.estado = this._estado;
 
         let texto = TEXTO_ESTADO[this._estado];
-        if (this._estado === "subiendo") texto = `${texto} ${this._progreso}%`;
+        if (this._estado === "subiendo") {
+            texto = `${texto} ${this._progreso}% · ${this._velocidadMbps} Mbps (promedio ${this._velocidadPromedioMbps})`;
+        }
+        if (this._estado === "completado") {
+            const seg = Math.round(this._duracionMs / 100) / 10;
+            texto = `${texto} en ${seg} s · promedio ${this._velocidadPromedioMbps} Mbps`;
+        }
         if (this._estado === "error" && this._mensajeError) texto = this._mensajeError;
         this._linea.textContent = texto;
         this._linea.dataset.estado = this._estado;
