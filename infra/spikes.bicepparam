@@ -10,8 +10,8 @@ param dataverseUrl = 'https://org36e60d9d.crm.dynamics.com'
 // Power Apps corre desde hosts regionales variables (*.island.powerapps.com): no se pueden listar. Ver main.bicep.
 param origenesCors = ['*']
 
-// S1 corre sin Dataverse; para S2 en adelante pasar a 'dataverse'.
-param autorizacionModo = 'ninguna'
+// S1 corrió con 'ninguna'; desde S2 el broker verifica acceso en Dataverse con impersonación.
+param autorizacionModo = 'dataverse'
 
 // Sin firewall IP en el spike S1/S2. Para S1b/S3 agregar la IP pública propia.
 param ipsPermitidas = []
