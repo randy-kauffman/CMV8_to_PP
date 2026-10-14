@@ -1,0 +1,62 @@
+.banco-carga {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: "Segoe UI", sans-serif;
+    font-size: 14px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.banco-carga__boton {
+    align-self: flex-start;
+    padding: 6px 16px;
+    border: 1px solid #0f548c;
+    background: #0f6cbd;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.banco-carga__boton:disabled,
+.banco-carga__archivo:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.banco-carga__boton:focus-visible,
+.banco-carga__archivo:focus-visible {
+    outline: 2px solid #0f548c;
+    outline-offset: 2px;
+}
+
+.banco-carga__barra {
+    width: 100%;
+    height: 10px;
+    background: #e1e1e1;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.banco-carga__relleno {
+    height: 100%;
+    width: 0;
+    background: #0f6cbd;
+    transition: width 0.15s linear;
+}
+
+.banco-carga__barra[data-estado="completado"] .banco-carga__relleno {
+    background: #107c10;
+}
+
+.banco-carga__barra[data-estado="error"] .banco-carga__relleno {
+    background: #c50f1f;
+}
+
+.banco-carga__estado[data-estado="error"] {
+    color: #c50f1f;
+}
+
+.banco-carga__estado[data-estado="completado"] {
+    color: #107c10;
+}

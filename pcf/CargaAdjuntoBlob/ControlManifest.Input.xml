@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<manifest>
+  <control namespace="Banco" constructor="CargaAdjuntoBlob" version="0.0.1" display-name-key="CargaAdjuntoBlob_Display" description-key="CargaAdjuntoBlob_Desc" control-type="standard">
+    <!-- El control llama por fetch al broker (Function) y a Blob Storage: se declara servicio externo.
+         Ojo: esto lo clasifica como componente premium (licenciamiento). Ajustar los dominios reales al desplegar. -->
+    <external-service-usage enabled="true">
+      <domain>*.azurewebsites.net</domain>
+      <domain>*.blob.core.windows.net</domain>
+    </external-service-usage>
+
+    <!-- Entradas -->
+    <property name="urlBroker" display-name-key="urlBroker_Display" description-key="urlBroker_Desc" of-type="SingleLine.Text" usage="input" required="true" />
+    <property name="tokenBroker" display-name-key="tokenBroker_Display" description-key="tokenBroker_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="solicitudId" display-name-key="solicitudId_Display" description-key="solicitudId_Desc" of-type="SingleLine.Text" usage="input" required="true" />
+    <property name="tiposAceptados" display-name-key="tiposAceptados_Display" description-key="tiposAceptados_Desc" of-type="SingleLine.Text" usage="input" required="false" default-value="video/*,application/pdf" />
+    <property name="tamanoMaximoMB" display-name-key="tamanoMaximoMB_Display" description-key="tamanoMaximoMB_Desc" of-type="Whole.None" usage="input" required="false" default-value="250" />
+    <property name="paralelismo" display-name-key="paralelismo_Display" description-key="paralelismo_Desc" of-type="Whole.None" usage="input" required="false" default-value="4" />
+    <property name="disparadorReinicio" display-name-key="disparadorReinicio_Display" description-key="disparadorReinicio_Desc" of-type="Whole.None" usage="input" required="false" />
+
+    <!-- Salidas -->
+    <property name="estado" display-name-key="estado_Display" description-key="estado_Desc" of-type="SingleLine.Text" usage="output" />
+    <property name="progreso" display-name-key="progreso_Display" description-key="progreso_Desc" of-type="Whole.None" usage="output" />
+    <property name="rutaBlob" display-name-key="rutaBlob_Display" description-key="rutaBlob_Desc" of-type="SingleLine.Text" usage="output" />
+    <property name="nombreArchivo" display-name-key="nombreArchivo_Display" description-key="nombreArchivo_Desc" of-type="SingleLine.Text" usage="output" />
+    <property name="tamanoBytes" display-name-key="tamanoBytes_Display" description-key="tamanoBytes_Desc" of-type="Whole.None" usage="output" />
+    <property name="contentType" display-name-key="contentType_Display" description-key="contentType_Desc" of-type="SingleLine.Text" usage="output" />
+    <property name="mensajeError" display-name-key="mensajeError_Display" description-key="mensajeError_Desc" of-type="SingleLine.Text" usage="output" />
+    <property name="duracionMs" display-name-key="duracionMs_Display" description-key="duracionMs_Desc" of-type="Whole.None" usage="output" />
+
+    <resources>
+      <code path="index.ts" order="1" />
+      <css path="css/CargaAdjuntoBlob.css" order="1" />
+      <resx path="strings/CargaAdjuntoBlob.3082.resx" version="1.0.0" />
+    </resources>
+  </control>
+</manifest>

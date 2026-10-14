@@ -1,0 +1,40 @@
+# Fixtures pesados de spikes (se generan localmente)
+spikes/fixtures/
+
+# Secretos y estado local
+*.local.json
+local.settings.json
+.env
+.env.*
+*.pfx
+*.pem
+
+# Java / Maven
+function/target/
+**/target/
+*.class
+*.jar
+!**/lib/*.jar
+
+# Node / PCF
+node_modules/
+pcf/**/out/
+pcf/**/generated/
+pcf/**/obj/
+pcf/**/bin/
+*.pcfproj.user
+
+# Dataverse solution builds
+dataverse/**/bin/
+dataverse/**/obj/
+
+# Azure / Bicep
+infra/**/*.json
+!infra/**/*.parameters.json
+.azure/
+
+# IDE y SO
+.idea/
+.vscode/
+*.swp
+.DS_Store

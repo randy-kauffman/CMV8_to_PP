@@ -1,0 +1,108 @@
+[
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "SchemaName": "cmv8_NombreArchivo",
+    "MaxLength": 260,
+    "FormatName": { "Value": "Text" },
+    "RequiredLevel": { "Value": "None" },
+    "DisplayName": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Nombre de archivo", "LanguageCode": 3082 } ] }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.BigIntAttributeMetadata",
+    "SchemaName": "cmv8_TamanoBytes",
+    "RequiredLevel": { "Value": "None" },
+    "DisplayName": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Tamaño (bytes)", "LanguageCode": 3082 } ] }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "SchemaName": "cmv8_ContentType",
+    "MaxLength": 100,
+    "FormatName": { "Value": "Text" },
+    "RequiredLevel": { "Value": "None" },
+    "DisplayName": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Content type", "LanguageCode": 3082 } ] }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.PicklistAttributeMetadata",
+    "SchemaName": "cmv8_Estado",
+    "RequiredLevel": { "Value": "ApplicationRequired" },
+    "DefaultFormValue": 1,
+    "DisplayName": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Estado", "LanguageCode": 3082 } ] },
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.OptionSetMetadata",
+      "IsGlobal": false,
+      "OptionSetType": "Picklist",
+      "Options": [
+        { "Value": 1, "Label": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Creada", "LanguageCode": 3082 } ] } },
+        { "Value": 2, "Label": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Subido", "LanguageCode": 3082 } ] } },
+        { "Value": 3, "Label": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Procesando", "LanguageCode": 3082 } ] } },
+        { "Value": 4, "Label": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Archivado", "LanguageCode": 3082 } ] } },
+        { "Value": 5, "Label": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Rechazado", "LanguageCode": 3082 } ] } },
+        { "Value": 6, "Label": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Error", "LanguageCode": 3082 } ] } }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "SchemaName": "cmv8_RutaBlob",
+    "MaxLength": 400,
+    "FormatName": { "Value": "Text" },
+    "RequiredLevel": { "Value": "None" },
+    "DisplayName": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Ruta en Blob (sin firmar)", "LanguageCode": 3082 } ] }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "SchemaName": "cmv8_CmisObjectId",
+    "MaxLength": 200,
+    "FormatName": { "Value": "Text" },
+    "RequiredLevel": { "Value": "None" },
+    "DisplayName": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "CMIS objectId", "LanguageCode": 3082 } ] }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "SchemaName": "cmv8_IdCliente",
+    "MaxLength": 50,
+    "FormatName": { "Value": "Text" },
+    "RequiredLevel": { "Value": "None" },
+    "DisplayName": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Id cliente", "LanguageCode": 3082 } ] }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "SchemaName": "cmv8_IdCliente2",
+    "MaxLength": 50,
+    "FormatName": { "Value": "Text" },
+    "RequiredLevel": { "Value": "None" },
+    "DisplayName": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Id cliente 2", "LanguageCode": 3082 } ] }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "SchemaName": "cmv8_NombreCliente",
+    "MaxLength": 200,
+    "FormatName": { "Value": "Text" },
+    "RequiredLevel": { "Value": "None" },
+    "DisplayName": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Nombre del cliente", "LanguageCode": 3082 } ] }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "SchemaName": "cmv8_AfiliadoPadre",
+    "MaxLength": 50,
+    "FormatName": { "Value": "Text" },
+    "RequiredLevel": { "Value": "None" },
+    "DisplayName": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Afiliado padre", "LanguageCode": 3082 } ] }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "SchemaName": "cmv8_IdDueno",
+    "MaxLength": 50,
+    "FormatName": { "Value": "Text" },
+    "RequiredLevel": { "Value": "None" },
+    "DisplayName": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Id dueño del negocio", "LanguageCode": 3082 } ] }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.MemoAttributeMetadata",
+    "SchemaName": "cmv8_MensajeError",
+    "MaxLength": 4000,
+    "FormatName": { "Value": "TextArea" },
+    "RequiredLevel": { "Value": "None" },
+    "DisplayName": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Mensaje de error", "LanguageCode": 3082 } ] }
+  }
+]

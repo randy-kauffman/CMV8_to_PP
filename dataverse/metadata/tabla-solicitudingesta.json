@@ -1,0 +1,22 @@
+{
+  "@odata.type": "Microsoft.Dynamics.CRM.EntityMetadata",
+  "SchemaName": "cmv8_SolicitudIngesta",
+  "DisplayName": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Solicitud de ingesta", "LanguageCode": 3082 } ] },
+  "DisplayCollectionName": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Solicitudes de ingesta", "LanguageCode": 3082 } ] },
+  "Description": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Registro de seguimiento de cada documento enviado a Content Manager V8. El binario vive en Blob Storage.", "LanguageCode": 3082 } ] },
+  "OwnershipType": "UserOwned",
+  "IsActivity": false,
+  "HasNotes": false,
+  "HasActivities": false,
+  "Attributes": [
+    {
+      "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+      "SchemaName": "cmv8_Nombre",
+      "IsPrimaryName": true,
+      "MaxLength": 200,
+      "FormatName": { "Value": "Text" },
+      "RequiredLevel": { "Value": "ApplicationRequired" },
+      "DisplayName": { "@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [ { "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Nombre", "LanguageCode": 3082 } ] }
+    }
+  ]
+}
