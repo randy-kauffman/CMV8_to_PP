@@ -141,3 +141,26 @@ El tenant de desarrollo tiene Entra ID P2 (Microsoft 365 E5 Developer). Prueba d
 ### Alternativa si seguridad del Banco rechaza entregar el token al navegador
 
 Carga a través del conector estándar de Azure Blob Storage (autenticación Entra, todo del lado servidor, sin token en el navegador). Cambia la economía del ADR-002: el archivo pasa por el runtime de conectores en vez de ir directo a Storage, con los límites de tamaño por llamada de ese conector, que hay que verificar contra los 100 MB del caso de uso antes de proponerlo.
+
+## 11. Hallazgos al escribir las guías de montaje por componente (2026-10-14)
+
+Salieron de comparar `infra/main.bicep`, el runbook y el estado real del sandbox al escribir `docs/montaje/`. Ninguno bloquea el montaje; cada uno dice dónde está documentado.
+
+| # | Hallazgo | Qué hacer | Dónde |
+| --- | --- | --- | --- |
+| 11.1 | El Bicep no configura dead-letter ni `retryPolicy` en la suscripción de BlobCreated; ADR-002 lo daba por "nativo". Un evento no entregado en 24 h se descarta y solo lo recupera el Watchdog | Agregar dead-letter a un contenedor del storage host con la identidad del system topic | guía 11, ADR-002 (nota corregida) |
+| 11.2 | `rolKeyVaultAdministrador` fija `principalType: 'User'`, pero `oidOperadorKeyVault` admite "persona o pipeline". Con un service principal la asignación falla | Parámetro `tipoOperadorKeyVault` (`User` / `ServicePrincipal`) | guía 09 |
+| 11.3 | ADR-002 pide etiquetas por recurso para costos; el Bicep solo etiqueta el Key Vault y las del grupo no se heredan. `desplegar.sh` etiqueta `ambiente=spike` si no se exporta `AMBIENTE` | Etiquetar todos los recursos con `proyecto` y `ambiente`; exportar `AMBIENTE` en el Banco | guía 03 |
+| 11.4 | No hay parámetro para reutilizar un Log Analytics central del Banco | Parámetro `logAnalyticsIdExistente` con `existing` condicional | guía 05 |
+| 11.5 | Purge protection del vault no está habilitada (es irreversible; decisión del Banco) | Parámetro opcional | guía 09 |
+| 11.6 | Una cuenta de Storage admite un solo system topic: activar Defender después de la guía 11 choca con el system topic de BlobCreated | Borrar el system topic antes de `habilitarDefender=true` | guía 12 |
+| 11.7 | Huecos de az CLI 2.91: sin flag para `defaultToOAuthAuthentication` ni para los campos de SAS ligada; `az storage cors add` no tiene `--auth-mode login`; `az functionapp plan create` no acepta FC1 y `az functionapp create` genera un `AzureWebJobsStorage` con connection string que el host sin Shared Key rechaza | Las guías usan `az rest` donde hace falta | guías 07 y 10 |
+| 11.8 | En el sandbox la identidad tiene una octava asignación (Blob Data Contributor sobre el host) creada a mano, redundante con Blob Data Owner | No replicar en el Banco | guías 06 y 08 |
+| 11.9 | El runbook y `spikes.bicepparam` decían que la política de SAS ligada estaba "verificada"; lo verificado es la SAS con `sduoid`, no el efecto de la política (ADR-002) | Texto corregido en el índice de montaje | guía 07 |
+| 11.10 | Microsoft ya soporta identidad administrada del conector personalizado como credencial federada de la app cliente (single tenant): eliminaría el último secreto de la solución | Probar en desarrollo antes de proponerlo al Banco | guía 02 |
+| 11.11 | `apiProperties.json` del conector también trae el app id del broker de desarrollo en `properties.AzureActiveDirectoryResourceId`; el `jq` del runbook no lo reemplazaba | Filtro agregado | guía 20 |
+| 11.12 | `az keyvault secret set` del secreto del conector no llevaba `--expires`: el vault nunca avisaba antes del vencimiento | `--expires` agregado | guías 02 y 23 |
+| 11.13 | `az functionapp show --query state` devuelve vacío en az 2.91 (todo va bajo `properties`) | Usar `--query properties.state` | guía 10 |
+| 11.14 | El presupuesto `cmv8-spikes-mensual` real es de 5 USD a nivel de suscripción (no 20 sobre el grupo) | Documentado; en el Banco, por grupo de recursos | guía 13 |
+| 11.15 | Premium EP1 (alternativa a Flex) no tiene costo en `docs/costos-estimados.md`: ≈ 146 USD/mes fijos (Azure Retail Prices, eastus2, 2026-10-14) y migrar con Shared Key apagado en el host no es directo | Verificar antes de decidir | guía 10 |
+

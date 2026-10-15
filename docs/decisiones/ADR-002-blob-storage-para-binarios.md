@@ -60,7 +60,7 @@ sequenceDiagram
 
 Watchdog (timer): solicitudes en Subido durante más de 15 minutos sin Archivado ni Error se reprocesan. Idempotencia: el worker no sube a CMIS si la solicitud ya tiene cmisObjectId.
 
-Nota sobre el disparador: Event Grid reemplaza al flow + custom connector + Function HTTP de ingesta de ADR-001. Ventajas: no consume Power Platform requests, reintentos de 24 horas y dead-letter nativos, y espera el resultado del antivirus sin polling. El flow queda solo si se quiere para notificaciones. Si Defender for Storage no se aprueba, el disparador es el evento BlobCreated.
+Nota sobre el disparador: Event Grid reemplaza al flow + custom connector + Function HTTP de ingesta de ADR-001. Ventajas: no consume Power Platform requests, reintentos de 24 horas y dead-letter nativos (el dead-letter todavía no está configurado en `infra/main.bicep`: hasta que se agregue, un evento no entregado en 24 h se descarta y lo recupera el Watchdog; ver `docs/montaje/11-event-grid.md`), y espera el resultado del antivirus sin polling. El flow queda solo si se quiere para notificaciones. Si Defender for Storage no se aprueba, el disparador es el evento BlobCreated.
 
 ## Modelo de seguridad y gobierno del almacenamiento
 

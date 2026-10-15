@@ -11,13 +11,13 @@ Fecha: 2026-10-14. Complementa `docs/plan-solucion.md` §4b y §4c, `docs/backlo
 
 ## Fase 0. Cimientos en el tenant del Banco
 
-Reproduce lo que ya funciona en el tenant propio. Equipos: Identidad, Cloud, Power Platform. Los comandos exactos de cada paso están en `docs/guia-montaje-banco.md`; acá queda el resumen y la evidencia que cierra la fase.
+Reproduce lo que ya funciona en el tenant propio. Equipos: Identidad, Cloud, Power Platform. Los comandos exactos de cada paso están en `docs/guia-montaje-banco.md` (índice) y en una guía por componente en `docs/montaje/`, con Bicep, CLI y portal; acá queda el resumen y la evidencia que cierra la fase.
 
 ### 0.1 Suscripción, región y proveedores
 
 1. Suscripción y grupo de recursos para la solución (`rg-cmv8-<ambiente>`), región con Flex Consumption para Java 21 (`infra/desplegar.sh` lo verifica con `az functionapp list-flexconsumption-runtimes`).
 2. Proveedores registrados: Microsoft.Web, Storage, EventGrid, Insights, OperationalInsights, ManagedIdentity, Security, KeyVault y **Microsoft.App** (lo exige la delegación de subred de Flex Consumption).
-3. Presupuesto con alertas sobre el grupo de recursos, como el `cmv8-spikes-mensual` de afuera.
+3. Presupuesto con alertas sobre el grupo de recursos (el `cmv8-spikes-mensual` de afuera está a nivel de suscripción, 5 USD/mes; adentro conviene por grupo: `docs/montaje/13-presupuesto-y-alertas.md`).
 
 Evidencia: salida de `az account show`, lista de proveedores en `Registered`, captura del presupuesto.
 
