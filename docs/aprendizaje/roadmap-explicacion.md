@@ -9,14 +9,14 @@ Referencia visual de todo: `docs/arquitectura.md` (diagrama y tabla de component
 | 0 | La foto completa: el problema, la analogía de la consigna, las piezas | Hecho (2026-10-14) |
 | 1 | El flujo de una subida, paso a paso (los 11 números del diagrama) | Hecho (2026-10-15); dudas respondidas en `consultas-y-mejoras.md`, puntos M4 a M10 anotados para el paso 10 |
 | 2 | Identidad: Entra ID, tokens, las dos app registrations, Easy Auth, OBO, credencial federada, identidad administrada | Hecho (2026-10-16); consulta sobre separar broker y worker anotada (M5) |
-| 3 | El depósito: Blob Storage, la SAS, las "dos llaves", por qué la cuenta está endurecida | En curso (2026-10-16) |
-| 4 | Dataverse como juez: tabla, estados, roles, suplantación, usuario de aplicación | Pendiente |
-| 5 | La app: canvas, el PCF, el conector personalizado, DLP, licencias | Pendiente |
-| 6 | El encargado: la Azure Function (broker y worker), cola, Watchdog, Key Vault, idempotencia | Pendiente |
-| 7 | El timbre y la bóveda: Event Grid, AS400 con jt400, Content Manager con CMIS, la red del Banco | Pendiente |
-| 8 | Infraestructura como código: Bicep, CLI y portal; el cuaderno de valores; el orden de montaje | Pendiente |
-| 9 | Operación y seguridad: rotaciones, auditoría, acceso condicional, costos | Pendiente |
-| 10 | Lo que falta decidir: backlog, desvíos del ADR, lo que solo se prueba adentro | Pendiente |
+| 3 | El depósito: Blob Storage, la SAS, las "dos llaves", por qué la cuenta está endurecida | Hecho (2026-10-16); consulta sobre las dos cuentas de Storage anotada |
+| 4 | Dataverse como juez: tabla, estados, roles, suplantación, usuario de aplicación | Hecho (2026-10-16) |
+| 5 | La app: canvas, el PCF, el conector personalizado, DLP, licencias | Hecho (2026-10-16) |
+| 6 | El encargado: la Azure Function (broker y worker), cola, Watchdog, Key Vault, idempotencia | Hecho (2026-10-16) |
+| 7 | El timbre y la bóveda: Event Grid, AS400 con jt400, Content Manager con CMIS, la red del Banco | Hecho (2026-10-16) |
+| 8 | Infraestructura como código: Bicep, CLI y portal; el cuaderno de valores; el orden de montaje | Hecho (2026-10-16) |
+| 9 | Operación y seguridad: rotaciones, auditoría, acceso condicional, costos | Hecho (2026-10-16) |
+| 10 | Lo que falta decidir: backlog, desvíos del ADR, lo que solo se prueba adentro | Hecho (2026-10-16); discusión de M4 a M10 en `consultas-y-mejoras.md` |
 
 ## Paso 0. La foto completa
 

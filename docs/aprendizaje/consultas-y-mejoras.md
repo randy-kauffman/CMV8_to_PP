@@ -31,3 +31,53 @@ Bitácora de las preguntas que van surgiendo al recorrer `docs/aprendizaje/roadm
 | M8 | 2026-10-15 | Cada documento en Content Manager tiene un tipo (ItemType) y cada tipo exige metadatos distintos (nombre y los dos ids de cliente son comunes, pero no los únicos). Hoy el mapeo es fijo. Hacen falta: catálogo de tipos con sus metadatos, validaciones de formato (inmediatas, en la app) y de existencia/validez (contra AS400, en el worker, sincrónicas o diferidas), y un camino de resolución para solicitudes con metadatos faltantes o inválidos detectados después de la carga. | Hoy el worker marca `Error` con mensaje y el Watchdog reintenta; no hay estado "falta información" ni manera de que el usuario complete y reanude. Propuesta a evaluar: estado `Observada` + columna con qué falta + reencolado al corregir. | A discutir al final (paso 10) |
 | M9 | 2026-10-15 | Hay archivos que deben quedar en Blob aunque ya se hayan archivado en Content Manager. Hoy el worker borra el blob al terminar y el ciclo de vida borra todo a los 7 días. | Atributo de retención por solicitud o tipo (borrar al archivar / conservar N días / conservar siempre) y política de ciclo de vida por prefijo o tag en lugar de global. | A discutir al final (paso 10) |
 | M10 | 2026-10-15 | Mapa de diagnóstico por tramo: una tabla "paso del flujo → dónde se ve → consulta KQL o pantalla" en la guía 23, más exportar `AppServiceAuthenticationLogs` de la Function a Log Analytics (hoy los rechazos de Easy Auth no quedan en ningún lado nuestro). | Permite saber en cuál de las siete conexiones falló y por qué sin adivinar. | Por hacer (doc + Bicep) |
+
+## Discusión del paso 10 (2026-10-16)
+
+Posiciones tomadas al cerrar el roadmap. Son propuestas para decidir con el Banco, no decisiones.
+
+### M4. Solución agnóstica de la tabla
+
+- **Opción A, libro de ingesta + lookup (recomendada).** `cmv8_solicitudingesta` deja de ser "la tabla del negocio" y queda como el libro de ingesta: el contrato mínimo (estado, ruta, `cmisObjectId`, error, tipo de documento). Cada solución del Banco tiene su tabla de negocio y la liga al libro con una lookup (patrón "Regarding" de las actividades). La Function y la autorización no cambian; una solución nueva es una lookup y un rol en Dataverse. Costo: una fila del libro además del registro de negocio.
+- **Opción B, mapeo configurable por solución.** La Function recibe por configuración tabla y columnas y opera sobre N esquemas. Viable (`RetrievePrincipalAccess` y la Web API sirven para cualquier tabla; el puerto `RepositorioSolicitudes` aísla el cambio), pero N contratos que validar, cada solución nueva toca configuración de Azure, y el mensaje de ingesta debe decir de qué solución es.
+- Posición: A, porque pone la extensibilidad del lado de Power Platform y deja la Function estable.
+
+### M5. Broker y worker separados
+
+Partir en dos Function Apps cuando exista la VNet (S0). Detalle en la consulta del 2026-10-16.
+
+### M6. Destino y momento del archivado
+
+- Atributos en el tipo de documento (o en la solicitud): **destino** = Content Manager / solo Blob; **momento** = al subir / bajo demanda.
+- Worker en `BlobCreated`: "solo Blob" → estado nuevo **Almacenado**, no borra; "CM al subir" → como hoy; "CM bajo demanda" → estado **Pendiente de archivo**.
+- Disparador del "bajo demanda": el Watchdog suma el estado **Aprobada para archivar** y encola (sin componentes nuevos, latencia de hasta 15 minutos). Alternativas: webhook o plugin de Dataverse (inmediato, camino de entrada nuevo); Power Automate (descartado: consume requests). Endpoint "archivar ahora" en el broker solo si hace falta inmediatez.
+
+### M7. Varios archivos, model-driven, Power Automate
+
+- **Varios archivos**: tabla hija **adjunto** (1 solicitud : N adjuntos), cada uno con ruta, estado, `cmisObjectId` y su propia SAS; el PCF acepta N archivos y pide N SAS; el worker procesa por adjunto. Alternativa: N solicitudes hermanas (más simple en código, peor para el usuario y la auditoría).
+- **Model-driven**: mismo framework; el manifiesto hoy declara el control para canvas y hay que agregar la variante de formulario, o usar una página personalizada (canvas dentro de model-driven). Pendiente de verificar.
+- **Power Automate**: no es el mismo caso de uso. Un flujo no tiene navegador ni PCF, el token sería el de la conexión del dueño del flujo y 100 MB por un flujo no es viable. Ingesta de archivos que ya están en otro sistema = "ingesta de sistema", con identidad propia y sin las dos llaves; nombrarla aparte.
+
+### M8. Tipos de Content Manager, metadatos y validaciones
+
+- Tabla **tipo de documento**: ItemType de CM, carpeta destino, atributos de M6 y M9.
+- Tabla **definición de metadato** por tipo: nombre, propiedad CMIS, obligatorio, validación de formato (expresión regular, largo, lista de valores), validación de existencia (ninguna / consulta al AS400 parametrizada).
+- Valores por solicitud: tabla hija **valor de metadato** (preferida: se busca, se audita, se muestra en vistas) o columna JSON.
+- Dónde se valida: formato en la app (reglas armadas desde el catálogo) y de nuevo en el broker antes de la SAS; existencia contra el AS400 en el broker cuando la consulta es rápida (como `ResolverCliente` hoy) y en el worker cuando es lenta. El worker puede leer la definición del tipo por CMIS antes de `createDocument` y verificar lo obligatorio.
+- Resolución de faltantes: estado **Observada** con el detalle en `mensajeerror`; el usuario corrige en la app, la fila vuelve a **Subido** y el Watchdog la reencola. Una fila Observada no se reintenta sola.
+- `MapeoPropiedadesCmis` pasa a ser dirigido por datos. Es el cambio de código más grande y el de más valor.
+
+### M9. Retención en Blob
+
+Atributo de **retención** en el tipo o la solicitud (borrar al archivar / conservar N días / conservar). El worker no borra cuando corresponde; la política de ciclo de vida filtra por etiquetas de índice del blob (`retencion=permanente` excluido de la regla de 7 días); lectura con la SAS de lectura existente. Decidir con el Banco qué significa "conservar", porque un depósito que solo crece necesita su propia política.
+
+### M10. Mapa de diagnóstico
+
+Se hace: tabla por tramo en la guía 23 y categoría `AppServiceAuthenticationLogs` al Log Analytics en el Bicep.
+
+### Orden propuesto
+
+1. Ahora, barato: M10, M2, M1 en desarrollo.
+2. Diseño "v2 del modelo de datos" antes de construir la app real en el Banco: M8 como eje; M4, M6 y M9 como atributos del tipo de documento; M7 como tabla hija. Registrarlo como ADR-003.
+3. M5 cuando S0 responda.
+4. Las decisiones del Banco (red, token OBO al navegador, acceso condicional, plan, Defender, Key Vault, Log Analytics, DLP, Owner) en paralelo.
