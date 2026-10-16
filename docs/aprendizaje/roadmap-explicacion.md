@@ -8,8 +8,8 @@ Referencia visual de todo: `docs/arquitectura.md` (diagrama y tabla de component
 | --- | --- | --- |
 | 0 | La foto completa: el problema, la analogía de la consigna, las piezas | Hecho (2026-10-14) |
 | 1 | El flujo de una subida, paso a paso (los 11 números del diagrama) | Hecho (2026-10-15); dudas respondidas en `consultas-y-mejoras.md`, puntos M4 a M10 anotados para el paso 10 |
-| 2 | Identidad: Entra ID, tokens, las dos app registrations, Easy Auth, OBO, credencial federada, identidad administrada | En curso (2026-10-15) |
-| 3 | El depósito: Blob Storage, la SAS, las "dos llaves", por qué la cuenta está endurecida | Pendiente |
+| 2 | Identidad: Entra ID, tokens, las dos app registrations, Easy Auth, OBO, credencial federada, identidad administrada | Hecho (2026-10-16); consulta sobre separar broker y worker anotada (M5) |
+| 3 | El depósito: Blob Storage, la SAS, las "dos llaves", por qué la cuenta está endurecida | En curso (2026-10-16) |
 | 4 | Dataverse como juez: tabla, estados, roles, suplantación, usuario de aplicación | Pendiente |
 | 5 | La app: canvas, el PCF, el conector personalizado, DLP, licencias | Pendiente |
 | 6 | El encargado: la Azure Function (broker y worker), cola, Watchdog, Key Vault, idempotencia | Pendiente |
