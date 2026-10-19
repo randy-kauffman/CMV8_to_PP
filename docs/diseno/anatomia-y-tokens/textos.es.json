@@ -6,153 +6,549 @@
     "rule": "Nunca interpolar URLs, tokens, rutas ni identificadores internos en ningún texto."
   },
   "strings": {
-    "dropzone.title": { "text": "Arrastra archivos aquí", "notes": "Título de la zona de carga en reposo." },
-    "dropzone.or": { "text": "o", "notes": "Separador entre título y botón." },
-    "dropzone.browse": { "text": "Seleccionar archivos", "notes": "Botón que abre el selector del sistema." },
-    "dropzone.hint": { "text": "{types} · hasta {maxSize} por archivo · máximo {maxFiles} archivos", "notes": "Restricciones configuradas por el maker." },
-    "dropzone.dragActive": { "text": "Suelta para agregar", "notes": "Mientras se arrastra encima." },
-    "dropzone.disabled": { "text": "No tienes permiso para adjuntar archivos a este registro.", "notes": "Zona deshabilitada." },
-    "dropzone.full": { "text": "Lote completo ({maxFiles} archivos). Sube o quita archivos para agregar más.", "notes": "Cola llena." },
-    "dropzone.aria": { "text": "Zona de carga de archivos. {types}, hasta {maxSize} por archivo. Presiona Enter para seleccionar archivos.", "notes": "aria-label del área." },
-
-    "queue.title": { "text": "Archivos ({count})", "notes": "Encabezado de la cola." },
-    "queue.aria": { "text": "Archivos para subir", "notes": "aria-label de la lista." },
-    "queue.summary.ready": { "text": "{count} listos para subir", "notes": "" },
-    "queue.summary.uploading": { "text": "Subiendo {done} de {total}", "notes": "" },
-    "queue.summary.done": { "text": "{count} subidos", "notes": "" },
-    "queue.summary.mixed": { "text": "{ok} subidos · {failed} con error", "notes": "" },
-    "queue.summary.needsDocType": { "text": "Elige el tipo de documento de {count} archivos para poder subirlos.", "notes": "Solo model-driven." },
-
-    "action.uploadAll": { "text": "Subir todo", "notes": "Botón principal de la cola." },
-    "action.clearDone": { "text": "Limpiar terminados", "notes": "Quita Subidos y Cancelados de la cola." },
-    "action.remove": { "text": "Quitar", "notes": "" },
-    "action.cancel": { "text": "Cancelar", "notes": "Cancela una subida en curso." },
-    "action.retry": { "text": "Reintentar", "notes": "" },
-    "action.retryFailed": { "text": "Reintentar fallidos", "notes": "" },
-    "action.upload": { "text": "Subir", "notes": "Ciclo de vida: Creada." },
-    "action.view": { "text": "Ver", "notes": "Abre el documento en el visor del Banco." },
-    "action.archiveNow": { "text": "Archivar ahora", "notes": "Ciclo de vida: Almacenado." },
-    "action.fix": { "text": "Corregir y reanudar", "notes": "Ciclo de vida: Observada." },
-    "action.more": { "text": "Más acciones", "notes": "Menú de fila." },
-    "action.details": { "text": "Ver detalle", "notes": "Abre el panel lateral." },
-
-    "tooltip.remove": { "text": "Quitar de la lista", "notes": "" },
-    "tooltip.cancel": { "text": "Cancelar la subida", "notes": "" },
-    "tooltip.retry": { "text": "Volver a intentar la subida", "notes": "" },
-    "tooltip.speed": { "text": "Velocidad actual de subida", "notes": "" },
-    "tooltip.docTypeRequired": { "text": "Obligatorio para subir", "notes": "" },
-
-    "file.docType.label": { "text": "Tipo de documento", "notes": "" },
-    "file.docType.placeholder": { "text": "Elegir tipo", "notes": "" },
-    "file.docType.required": { "text": "Elige el tipo de documento.", "notes": "Error en línea si se intenta subir sin tipo." },
-
-    "upload.queued": { "text": "En cola", "notes": "Estado 1." },
-    "upload.authorizing": { "text": "Solicitando permiso…", "notes": "Estado 2. Sin porcentaje." },
-    "upload.uploading": { "text": "Subiendo", "notes": "Estado 3." },
-    "upload.uploading.detail": { "text": "{sent} de {total} · {speed} · {eta}", "notes": "Línea de detalle; el porcentaje va aparte." },
-    "upload.eta.seconds": { "text": "{n} s restantes", "notes": "" },
-    "upload.eta.minutes": { "text": "{n} min restantes", "notes": "" },
-    "upload.eta.calculating": { "text": "Calculando tiempo…", "notes": "Primeros 3 s." },
-    "upload.verifying": { "text": "Verificando…", "notes": "Estado 4. Sin porcentaje." },
-    "upload.uploaded": { "text": "Subido", "notes": "Estado 5." },
-    "upload.error": { "text": "Error", "notes": "Estado 6, etiqueta corta." },
-    "upload.canceled": { "text": "Cancelado", "notes": "Estado 7." },
-    "upload.rejected": { "text": "No se agregó", "notes": "Rechazo de validación previa." },
-
-    "error.permissionDenied": { "text": "No tienes permiso para adjuntar archivos a este registro. Pide acceso al responsable.", "notes": "Sin Reintentar." },
-    "error.passExpired": { "text": "La subida tardó más de 15 minutos y se interrumpió. Vuelve a intentarlo.", "notes": "" },
-    "error.network": { "text": "Se perdió la conexión. Revisa tu red y vuelve a intentarlo.", "notes": "" },
-    "error.fileChanged": { "text": "El archivo cambió mientras se subía. Vuelve a intentarlo con la versión actual.", "notes": "" },
-    "error.generic": { "text": "No se pudo subir el archivo. Vuelve a intentarlo.", "notes": "Fallback." },
-
-    "validation.type": { "text": "Tipo no permitido. Se aceptan {types}.", "notes": "" },
-    "validation.size": { "text": "Pesa {size}; el máximo es {maxSize}.", "notes": "" },
-    "validation.duplicate": { "text": "Ya está en la lista.", "notes": "Mismo nombre y tamaño." },
-    "validation.batchFull": { "text": "El lote admite {maxFiles} archivos.", "notes": "" },
-    "validation.empty": { "text": "El archivo está vacío.", "notes": "" },
-
-    "a11y.added": { "text": "{count} archivos agregados.", "notes": "aria-live polite." },
-    "a11y.rejected": { "text": "{count} archivos no se agregaron. Revisa los motivos en la lista.", "notes": "aria-live polite." },
-    "a11y.status": { "text": "{name}: {status}.", "notes": "Cada cambio de estado." },
-    "a11y.progress": { "text": "{name}: {percent} por ciento.", "notes": "Cada 25 %." },
-    "a11y.done": { "text": "Subida terminada: {ok} subidos, {failed} con error.", "notes": "" },
-    "a11y.error": { "text": "{name}: {message}", "notes": "aria-live assertive." },
-
-    "grid.title": { "text": "Adjuntos", "notes": "" },
-    "grid.count": { "text": "{count} adjuntos", "notes": "" },
-    "grid.aria": { "text": "Adjuntos del registro", "notes": "aria-label de la grilla." },
-    "grid.empty.title": { "text": "Todavía no hay adjuntos", "notes": "" },
-    "grid.empty.body": { "text": "Arrastra archivos a la zona de arriba o usa Seleccionar archivos.", "notes": "" },
-    "grid.filterEmpty": { "text": "Ningún adjunto coincide con el filtro.", "notes": "" },
-    "grid.clearFilter": { "text": "Quitar filtro", "notes": "" },
-    "grid.col.name": { "text": "Nombre", "notes": "" },
-    "grid.col.docType": { "text": "Tipo de documento", "notes": "" },
-    "grid.col.status": { "text": "Estado", "notes": "" },
-    "grid.col.size": { "text": "Tamaño", "notes": "" },
-    "grid.col.date": { "text": "Fecha de subida", "notes": "" },
-    "grid.col.user": { "text": "Subido por", "notes": "" },
-    "grid.col.actions": { "text": "Acciones", "notes": "Solo lectores de pantalla." },
-    "grid.sort.label": { "text": "Ordenar", "notes": "" },
-    "grid.sort.dateDesc": { "text": "Más recientes primero", "notes": "Por defecto." },
-    "grid.sort.dateAsc": { "text": "Más antiguos primero", "notes": "" },
-    "grid.sort.status": { "text": "Por estado (requieren acción primero)", "notes": "" },
-    "grid.filter.label": { "text": "Filtrar por estado", "notes": "" },
-    "grid.filter.all": { "text": "Todos", "notes": "" },
-    "grid.filter.action": { "text": "Requieren acción", "notes": "Observada, Error, Creada." },
-    "grid.filter.inProgress": { "text": "En proceso", "notes": "Subido, Procesando, Detenida." },
-    "grid.filter.saved": { "text": "Guardados", "notes": "Archivado, Almacenado." },
-    "grid.filter.closed": { "text": "Cerrados", "notes": "Rechazado, Depurado." },
-    "grid.density.label": { "text": "Densidad", "notes": "" },
-    "grid.density.compact": { "text": "Compacta", "notes": "" },
-    "grid.density.comfortable": { "text": "Cómoda", "notes": "" },
-
-    "lifecycle.created": { "text": "Creada", "notes": "Registro creado; falta subir el archivo." },
-    "lifecycle.uploaded": { "text": "Subido", "notes": "En el depósito, esperando proceso." },
-    "lifecycle.processing": { "text": "Procesando", "notes": "Se está archivando." },
-    "lifecycle.archived": { "text": "Archivado", "notes": "En el gestor documental." },
-    "lifecycle.stored": { "text": "Almacenado", "notes": "En el depósito; no en el gestor documental." },
-    "lifecycle.observed": { "text": "Observada", "notes": "Requiere corrección del usuario." },
-    "lifecycle.held": { "text": "Detenida", "notes": "Espera a un administrador." },
-    "lifecycle.error": { "text": "Error", "notes": "Falla técnica." },
-    "lifecycle.rejected": { "text": "Rechazado", "notes": "Definitivo." },
-    "lifecycle.purged": { "text": "Depurado", "notes": "Eliminado por retención." },
-
-    "lifecycle.created.desc": { "text": "Falta subir el archivo.", "notes": "Tooltip del chip." },
-    "lifecycle.uploaded.desc": { "text": "Recibido. Espera su turno para archivarse.", "notes": "" },
-    "lifecycle.processing.desc": { "text": "Se está guardando en el gestor documental.", "notes": "" },
-    "lifecycle.archived.desc": { "text": "Guardado en el gestor documental.", "notes": "" },
-    "lifecycle.stored.desc": { "text": "Guardado, pero todavía no está en el gestor documental.", "notes": "" },
-    "lifecycle.observed.desc": { "text": "Necesita una corrección tuya para continuar.", "notes": "" },
-    "lifecycle.held.desc": { "text": "Espera a un administrador. No necesitas hacer nada.", "notes": "" },
-    "lifecycle.error.desc": { "text": "Falló por un problema técnico. Puedes reintentar.", "notes": "" },
-    "lifecycle.rejected.desc": { "text": "Rechazado de forma definitiva.", "notes": "" },
-    "lifecycle.purged.desc": { "text": "Eliminado por la política de retención.", "notes": "" },
-
-    "detail.observed.missingField": { "text": "Falta la fecha de vencimiento del documento.", "notes": "Ejemplo." },
-    "detail.observed.invalidDocType": { "text": "El tipo de documento no coincide con el contenido. Elige el tipo correcto.", "notes": "Ejemplo." },
-    "detail.held.config": { "text": "Falta configurar el destino para este tipo de documento. Ya avisamos al administrador; no necesitas hacer nada.", "notes": "Ejemplo." },
-    "detail.error.technical": { "text": "No se pudo conectar con el gestor documental. Reintenta en unos minutos.", "notes": "Ejemplo." },
-    "detail.rejected.malware": { "text": "Se detectó contenido malicioso. El archivo se bloqueó.", "notes": "Ejemplo." },
-    "detail.rejected.expired": { "text": "Venció el plazo para corregir los datos. Sube el documento de nuevo.", "notes": "Ejemplo." },
-    "detail.purged.retention": { "text": "Se eliminó el {date} según la política de retención.", "notes": "" },
-
-    "panel.close": { "text": "Cerrar", "notes": "" },
-    "panel.section.status": { "text": "Estado", "notes": "" },
-    "panel.section.data": { "text": "Datos", "notes": "" },
-    "panel.section.fix": { "text": "Corregir datos", "notes": "" },
-    "panel.section.history": { "text": "Historial", "notes": "" },
-    "panel.field.expiry": { "text": "Fecha de vencimiento", "notes": "" },
-    "panel.field.size": { "text": "Tamaño", "notes": "" },
-    "panel.field.date": { "text": "Fecha de subida", "notes": "" },
-    "panel.field.user": { "text": "Subido por", "notes": "" },
-    "panel.save": { "text": "Guardar y reanudar", "notes": "" },
-    "panel.cancel": { "text": "Cancelar", "notes": "" },
-    "panel.fieldRequired": { "text": "Campo obligatorio.", "notes": "" },
-
-    "unit.kb": { "text": "{n} KB", "notes": "Base 1024, 0 decimales." },
-    "unit.mb": { "text": "{n} MB", "notes": "1 decimal bajo 100 MB, 0 decimales encima." },
-    "unit.gb": { "text": "{n} GB", "notes": "" },
-    "unit.mbps": { "text": "{n} Mbps", "notes": "1 decimal; media móvil de 5 s." },
-    "unit.percent": { "text": "{n} %", "notes": "Espacio fino antes de %." }
+    "dropzone.title": {
+      "text": "Arrastra archivos aquí",
+      "notes": "Título de la zona de carga en reposo."
+    },
+    "dropzone.or": {
+      "text": "o",
+      "notes": "Separador entre título y botón."
+    },
+    "dropzone.browse": {
+      "text": "Seleccionar archivos",
+      "notes": "Botón que abre el selector del sistema."
+    },
+    "dropzone.hint": {
+      "text": "{types} · hasta {maxSize} por archivo · máximo {maxFiles} archivos",
+      "notes": "Restricciones configuradas por el maker."
+    },
+    "dropzone.dragActive": {
+      "text": "Suelta para agregar",
+      "notes": "Mientras se arrastra encima."
+    },
+    "dropzone.disabled": {
+      "text": "No tienes permiso para adjuntar archivos a este registro.",
+      "notes": "Zona deshabilitada."
+    },
+    "dropzone.full": {
+      "text": "Lote completo ({maxFiles} archivos). Sube o quita archivos para agregar más.",
+      "notes": "Cola llena."
+    },
+    "dropzone.aria": {
+      "text": "Zona de carga de archivos. {types}, hasta {maxSize} por archivo. Presiona Enter para seleccionar archivos.",
+      "notes": "aria-label del área."
+    },
+    "queue.title": {
+      "text": "Archivos ({count})",
+      "notes": "Encabezado de la cola."
+    },
+    "queue.aria": {
+      "text": "Archivos para subir",
+      "notes": "aria-label de la lista."
+    },
+    "queue.summary.ready": {
+      "text": "{count} listos para subir",
+      "notes": ""
+    },
+    "queue.summary.uploading": {
+      "text": "Subiendo {done} de {total}",
+      "notes": ""
+    },
+    "queue.summary.done": {
+      "text": "{count} subidos",
+      "notes": ""
+    },
+    "queue.summary.mixed": {
+      "text": "{ok} subidos · {failed} con error",
+      "notes": ""
+    },
+    "queue.summary.needsDocType": {
+      "text": "Elige el tipo de documento de {count} archivos para poder subirlos.",
+      "notes": "Solo model-driven."
+    },
+    "action.uploadAll": {
+      "text": "Subir todo",
+      "notes": "Botón principal de la cola."
+    },
+    "action.clearDone": {
+      "text": "Limpiar terminados",
+      "notes": "Quita Subidos y Cancelados de la cola."
+    },
+    "action.remove": {
+      "text": "Quitar",
+      "notes": ""
+    },
+    "action.cancel": {
+      "text": "Cancelar",
+      "notes": "Cancela una subida en curso."
+    },
+    "action.retry": {
+      "text": "Reintentar",
+      "notes": ""
+    },
+    "action.retryFailed": {
+      "text": "Reintentar fallidos",
+      "notes": ""
+    },
+    "action.upload": {
+      "text": "Subir",
+      "notes": "Ciclo de vida: Creada."
+    },
+    "action.view": {
+      "text": "Ver",
+      "notes": "Abre el documento en el visor del Banco."
+    },
+    "action.archiveNow": {
+      "text": "Archivar ahora",
+      "notes": "Ciclo de vida: Almacenado."
+    },
+    "action.fix": {
+      "text": "Corregir y reanudar",
+      "notes": "Ciclo de vida: Observada."
+    },
+    "action.more": {
+      "text": "Más acciones",
+      "notes": "Menú de fila."
+    },
+    "action.details": {
+      "text": "Ver detalle",
+      "notes": "Abre el panel lateral."
+    },
+    "tooltip.remove": {
+      "text": "Quitar de la lista",
+      "notes": ""
+    },
+    "tooltip.cancel": {
+      "text": "Cancelar la subida",
+      "notes": ""
+    },
+    "tooltip.retry": {
+      "text": "Volver a intentar la subida",
+      "notes": ""
+    },
+    "tooltip.speed": {
+      "text": "Velocidad actual de subida",
+      "notes": ""
+    },
+    "tooltip.docTypeRequired": {
+      "text": "Obligatorio para subir",
+      "notes": ""
+    },
+    "file.docType.label": {
+      "text": "Tipo de documento",
+      "notes": ""
+    },
+    "file.docType.placeholder": {
+      "text": "Elegir tipo",
+      "notes": ""
+    },
+    "file.docType.required": {
+      "text": "Elige el tipo de documento.",
+      "notes": "Error en línea si se intenta subir sin tipo."
+    },
+    "upload.queued": {
+      "text": "En cola",
+      "notes": "Estado 1."
+    },
+    "upload.authorizing": {
+      "text": "Solicitando permiso…",
+      "notes": "Estado 2. Sin porcentaje."
+    },
+    "upload.uploading": {
+      "text": "Subiendo",
+      "notes": "Estado 3."
+    },
+    "upload.uploading.detail": {
+      "text": "{sent} de {total} · {speed} · {eta}",
+      "notes": "Línea de detalle; el porcentaje va aparte."
+    },
+    "upload.eta.seconds": {
+      "text": "{n} s restantes",
+      "notes": ""
+    },
+    "upload.eta.minutes": {
+      "text": "{n} min restantes",
+      "notes": ""
+    },
+    "upload.eta.calculating": {
+      "text": "Calculando tiempo…",
+      "notes": "Primeros 3 s."
+    },
+    "upload.verifying": {
+      "text": "Verificando…",
+      "notes": "Estado 4. Sin porcentaje."
+    },
+    "upload.uploaded": {
+      "text": "Subido",
+      "notes": "Estado 5."
+    },
+    "upload.error": {
+      "text": "Error",
+      "notes": "Estado 6, etiqueta corta."
+    },
+    "upload.canceled": {
+      "text": "Cancelado",
+      "notes": "Estado 7."
+    },
+    "upload.rejected": {
+      "text": "No se agregó",
+      "notes": "Rechazo de validación previa."
+    },
+    "error.permissionDenied": {
+      "text": "No tienes permiso para adjuntar archivos a este registro. Pide acceso al responsable.",
+      "notes": "Sin Reintentar."
+    },
+    "error.passExpired": {
+      "text": "La subida tardó más de 15 minutos y se interrumpió. Vuelve a intentarlo.",
+      "notes": ""
+    },
+    "error.network": {
+      "text": "Se perdió la conexión. Revisa tu red y vuelve a intentarlo.",
+      "notes": ""
+    },
+    "error.fileChanged": {
+      "text": "El archivo cambió mientras se subía. Vuelve a intentarlo con la versión actual.",
+      "notes": ""
+    },
+    "error.generic": {
+      "text": "No se pudo subir el archivo. Vuelve a intentarlo.",
+      "notes": "Fallback."
+    },
+    "validation.type": {
+      "text": "Tipo no permitido. Se aceptan {types}.",
+      "notes": ""
+    },
+    "validation.size": {
+      "text": "Pesa {size}; el máximo es {maxSize}.",
+      "notes": ""
+    },
+    "validation.duplicate": {
+      "text": "Ya está en la lista.",
+      "notes": "Mismo nombre y tamaño."
+    },
+    "validation.batchFull": {
+      "text": "El lote admite {maxFiles} archivos.",
+      "notes": ""
+    },
+    "validation.empty": {
+      "text": "El archivo está vacío.",
+      "notes": ""
+    },
+    "a11y.added": {
+      "text": "{count} archivos agregados.",
+      "notes": "aria-live polite."
+    },
+    "a11y.rejected": {
+      "text": "{count} archivos no se agregaron. Revisa los motivos en la lista.",
+      "notes": "aria-live polite."
+    },
+    "a11y.status": {
+      "text": "{name}: {status}.",
+      "notes": "Cada cambio de estado."
+    },
+    "a11y.progress": {
+      "text": "{name}: {percent} por ciento.",
+      "notes": "Cada 25 %."
+    },
+    "a11y.done": {
+      "text": "Subida terminada: {ok} subidos, {failed} con error.",
+      "notes": ""
+    },
+    "a11y.error": {
+      "text": "{name}: {message}",
+      "notes": "aria-live assertive."
+    },
+    "grid.title": {
+      "text": "Adjuntos",
+      "notes": ""
+    },
+    "grid.count": {
+      "text": "{count} adjuntos",
+      "notes": ""
+    },
+    "grid.aria": {
+      "text": "Adjuntos del registro",
+      "notes": "aria-label de la grilla."
+    },
+    "grid.empty.title": {
+      "text": "Todavía no hay adjuntos",
+      "notes": ""
+    },
+    "grid.empty.body": {
+      "text": "Arrastra archivos a la zona de arriba o usa Seleccionar archivos.",
+      "notes": ""
+    },
+    "grid.filterEmpty": {
+      "text": "Ningún adjunto coincide con el filtro.",
+      "notes": ""
+    },
+    "grid.clearFilter": {
+      "text": "Quitar filtro",
+      "notes": ""
+    },
+    "grid.col.name": {
+      "text": "Nombre",
+      "notes": ""
+    },
+    "grid.col.docType": {
+      "text": "Tipo de documento",
+      "notes": ""
+    },
+    "grid.col.status": {
+      "text": "Estado",
+      "notes": ""
+    },
+    "grid.col.size": {
+      "text": "Tamaño",
+      "notes": ""
+    },
+    "grid.col.date": {
+      "text": "Fecha de subida",
+      "notes": ""
+    },
+    "grid.col.user": {
+      "text": "Subido por",
+      "notes": ""
+    },
+    "grid.col.actions": {
+      "text": "Acciones",
+      "notes": "Solo lectores de pantalla."
+    },
+    "grid.sort.label": {
+      "text": "Ordenar",
+      "notes": ""
+    },
+    "grid.sort.dateDesc": {
+      "text": "Más recientes primero",
+      "notes": "Por defecto."
+    },
+    "grid.sort.dateAsc": {
+      "text": "Más antiguos primero",
+      "notes": ""
+    },
+    "grid.sort.status": {
+      "text": "Por estado (requieren acción primero)",
+      "notes": ""
+    },
+    "grid.filter.label": {
+      "text": "Filtrar por estado",
+      "notes": ""
+    },
+    "grid.filter.all": {
+      "text": "Todos",
+      "notes": ""
+    },
+    "grid.filter.action": {
+      "text": "Requieren acción",
+      "notes": "Observada, Error, Creada."
+    },
+    "grid.filter.inProgress": {
+      "text": "En proceso",
+      "notes": "Subido, Procesando, Detenida."
+    },
+    "grid.filter.saved": {
+      "text": "Guardados",
+      "notes": "Archivado, Almacenado."
+    },
+    "grid.filter.closed": {
+      "text": "Cerrados",
+      "notes": "Rechazado, Depurado."
+    },
+    "grid.density.label": {
+      "text": "Densidad",
+      "notes": ""
+    },
+    "grid.density.compact": {
+      "text": "Compacta",
+      "notes": ""
+    },
+    "grid.density.comfortable": {
+      "text": "Cómoda",
+      "notes": ""
+    },
+    "lifecycle.created": {
+      "text": "Creada",
+      "notes": "Registro creado; falta subir el archivo."
+    },
+    "lifecycle.uploaded": {
+      "text": "Subido",
+      "notes": "En el depósito, esperando proceso."
+    },
+    "lifecycle.processing": {
+      "text": "Procesando",
+      "notes": "Se está archivando."
+    },
+    "lifecycle.archived": {
+      "text": "Archivado",
+      "notes": "En el gestor documental."
+    },
+    "lifecycle.stored": {
+      "text": "Almacenado",
+      "notes": "En el depósito; no en el gestor documental."
+    },
+    "lifecycle.observed": {
+      "text": "Observada",
+      "notes": "Requiere corrección del usuario."
+    },
+    "lifecycle.held": {
+      "text": "Detenida",
+      "notes": "Espera a un administrador."
+    },
+    "lifecycle.error": {
+      "text": "Error",
+      "notes": "Falla técnica."
+    },
+    "lifecycle.rejected": {
+      "text": "Rechazado",
+      "notes": "Definitivo."
+    },
+    "lifecycle.purged": {
+      "text": "Depurado",
+      "notes": "Eliminado por retención."
+    },
+    "lifecycle.created.desc": {
+      "text": "Falta subir el archivo.",
+      "notes": "Tooltip del chip."
+    },
+    "lifecycle.uploaded.desc": {
+      "text": "Recibido. Espera su turno para archivarse.",
+      "notes": ""
+    },
+    "lifecycle.processing.desc": {
+      "text": "Se está guardando en el gestor documental.",
+      "notes": ""
+    },
+    "lifecycle.archived.desc": {
+      "text": "Guardado en el gestor documental.",
+      "notes": ""
+    },
+    "lifecycle.stored.desc": {
+      "text": "Guardado, pero todavía no está en el gestor documental.",
+      "notes": ""
+    },
+    "lifecycle.observed.desc": {
+      "text": "Necesita una corrección tuya para continuar.",
+      "notes": ""
+    },
+    "lifecycle.held.desc": {
+      "text": "Espera a un administrador. No necesitas hacer nada.",
+      "notes": ""
+    },
+    "lifecycle.error.desc": {
+      "text": "Falló por un problema técnico. Puedes reintentar.",
+      "notes": ""
+    },
+    "lifecycle.rejected.desc": {
+      "text": "Rechazado de forma definitiva.",
+      "notes": ""
+    },
+    "lifecycle.purged.desc": {
+      "text": "Eliminado por la política de retención.",
+      "notes": ""
+    },
+    "detail.observed.missingField": {
+      "text": "Falta la fecha de vencimiento del documento.",
+      "notes": "Ejemplo."
+    },
+    "detail.observed.invalidDocType": {
+      "text": "El tipo de documento no coincide con el contenido. Elige el tipo correcto.",
+      "notes": "Ejemplo."
+    },
+    "detail.held.config": {
+      "text": "Falta configurar el destino para este tipo de documento. Ya avisamos al administrador; no necesitas hacer nada.",
+      "notes": "Ejemplo."
+    },
+    "detail.error.technical": {
+      "text": "No se pudo conectar con el gestor documental. Reintenta en unos minutos.",
+      "notes": "Ejemplo."
+    },
+    "detail.rejected.malware": {
+      "text": "Se detectó contenido malicioso. El archivo se bloqueó.",
+      "notes": "Ejemplo."
+    },
+    "detail.rejected.expired": {
+      "text": "Venció el plazo para corregir los datos. Sube el documento de nuevo.",
+      "notes": "Ejemplo."
+    },
+    "detail.purged.retention": {
+      "text": "Se eliminó el {date} según la política de retención.",
+      "notes": ""
+    },
+    "panel.close": {
+      "text": "Cerrar",
+      "notes": ""
+    },
+    "panel.section.status": {
+      "text": "Estado",
+      "notes": ""
+    },
+    "panel.section.data": {
+      "text": "Datos",
+      "notes": ""
+    },
+    "panel.section.fix": {
+      "text": "Corregir datos",
+      "notes": ""
+    },
+    "panel.section.history": {
+      "text": "Historial",
+      "notes": ""
+    },
+    "panel.field.expiry": {
+      "text": "Fecha de vencimiento",
+      "notes": ""
+    },
+    "panel.field.size": {
+      "text": "Tamaño",
+      "notes": ""
+    },
+    "panel.field.date": {
+      "text": "Fecha de subida",
+      "notes": ""
+    },
+    "panel.field.user": {
+      "text": "Subido por",
+      "notes": ""
+    },
+    "panel.save": {
+      "text": "Guardar y reanudar",
+      "notes": ""
+    },
+    "panel.cancel": {
+      "text": "Cancelar",
+      "notes": ""
+    },
+    "panel.fieldRequired": {
+      "text": "Campo obligatorio.",
+      "notes": ""
+    },
+    "unit.kb": {
+      "text": "{n} KB",
+      "notes": "Base 1024, 0 decimales."
+    },
+    "unit.mb": {
+      "text": "{n} MB",
+      "notes": "1 decimal bajo 100 MB, 0 decimales encima."
+    },
+    "unit.gb": {
+      "text": "{n} GB",
+      "notes": ""
+    },
+    "unit.mbps": {
+      "text": "{n} Mbps",
+      "notes": "1 decimal; media móvil de 5 s."
+    },
+    "unit.percent": {
+      "text": "{n} %",
+      "notes": "Espacio fino antes de %."
+    },
+    "dropzone.compact": {
+      "text": "Arrastra o selecciona más archivos",
+      "notes": "Zona reducida cuando ya hay archivos en la cola."
+    },
+    "dropzone.compactCount": {
+      "text": "{count} de {maxFiles}",
+      "notes": "Archivos en el lote."
+    }
   }
 }

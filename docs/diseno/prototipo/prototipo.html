@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Control de carga de archivos — Prototipo</title>
+<script src="proto-data.js"></script>
+<script src="proto-lib.js"></script>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0F6CBD"></rect><rect x="30" y="26" width="40" height="48" rx="4" fill="none" stroke="#fff" stroke-width="5"></rect><rect x="42" y="40" width="16" height="5" fill="#fff"></rect><rect x="42" y="52" width="16" height="5" fill="#fff"></rect></svg></template>
+<style>
+html,body{margin:0;height:100%}
+body{background:#F3F3F2;color:#1B1B1B;font-family:"Segoe UI","Segoe UI Web (West European)",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#0F6CBD}a:hover{color:#0C3B5E}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:var(--fu-focus-width,2px) solid var(--fu-color-focus,#1B1B1B);outline-offset:var(--fu-focus-offset,2px)}
+</style>
+</helmet>
+<div style="height:100vh;display:flex;flex-direction:column">
+
+<header style="flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding:10px 20px;background:#fff;border-bottom:1px solid #E3E3E3">
+  <div style="display:flex;flex-direction:column;line-height:18px;margin-right:8px">
+    <span style="font-size:14px;font-weight:600">Control de carga de archivos</span>
+    <span style="font-size:12px;color:#5F5F5F">Prototipo · el Banco · PCF</span>
+  </div>
+  <nav aria-label="Vista" style="flex:1 1 320px;min-width:0;display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto">
+    <sc-for list="{{ viewTabs }}" as="o" hint-placeholder-count="4">
+      <button aria-pressed="{{ o.on }}" onClick="{{ o.pick }}" style="border:0;background:transparent;padding:8px 10px;font-size:13px;cursor:pointer;border-bottom:2px solid {{ o.line }};font-weight:{{ o.w }};color:#1B1B1B;white-space:nowrap">{{ o.label }}</button>
+    </sc-for>
+  </nav>
+  <div role="radiogroup" aria-label="Variante" style="display:flex;border:1px solid #CFCFCF;border-radius:4px;overflow:hidden">
+    <sc-for list="{{ variantOpts }}" as="o" hint-placeholder-count="3">
+      <button role="radio" aria-checked="{{ o.on }}" onClick="{{ o.pick }}" style="border:0;padding:6px 12px;font-size:13px;cursor:pointer;white-space:nowrap;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+    </sc-for>
+  </div>
+  <div role="radiogroup" aria-label="Modo" style="display:flex;border:1px solid #CFCFCF;border-radius:4px;overflow:hidden">
+    <sc-for list="{{ modeOpts }}" as="o" hint-placeholder-count="2">
+      <button role="radio" aria-checked="{{ o.on }}" onClick="{{ o.pick }}" style="border:0;padding:6px 12px;font-size:13px;cursor:pointer;white-space:nowrap;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+    </sc-for>
+  </div>
+  <button onClick="{{ togglePanel }}" aria-expanded="{{ panelOpenStr }}" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid #CFCFCF;border-radius:4px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap"><fu-icon name="paint_brush_20_regular" size="16px"></fu-icon>Personalizar</button>
+</header>
+
+<div style="flex:1;min-height:0;display:flex">
+<main style="flex:1;min-width:0;overflow:auto;padding:28px;background:{{ stageBg }}">
+  <div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+  <sc-for list="{{ frames }}" as="fr" hint-placeholder-count="2">
+    <div style="flex:none;display:flex;flex-direction:column;gap:10px;width:{{ fr.wpx }}">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;min-height:28px">
+        <span style="font-size:13px;font-weight:600;color:{{ stageInk }}">{{ fr.label }}</span>
+        <span style="font-size:12px;color:{{ stageInk2 }}">{{ fr.sub }}</span>
+        <span style="flex:1"></span>
+        <sc-if value="{{ fr.hasWidthOpts }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;border:1px solid #BDBDBD;border-radius:4px;overflow:hidden">
+            <sc-for list="{{ widthOpts }}" as="o" hint-placeholder-count="2">
+              <button onClick="{{ o.pick }}" aria-pressed="{{ o.on }}" style="border:0;padding:3px 10px;font-size:12px;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ fr.isMd }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:{{ stageInk2 }}">Adjuntos
+            <div style="display:flex;border:1px solid #BDBDBD;border-radius:4px;overflow:hidden">
+              <sc-for list="{{ countOpts }}" as="o" hint-placeholder-count="3">
+                <button onClick="{{ o.pick }}" aria-pressed="{{ o.on }}" style="border:0;padding:3px 10px;font-size:12px;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="{{ fr.vars }}">
+      <div style="position:relative;min-height:var(--x-ctrl-minh);outline:1px dashed {{ stageLine }};outline-offset:3px;overflow:hidden">
+        <sc-if value="{{ fr.isMd }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px var(--x-pad);background:var(--fu-color-surface);border-bottom:var(--fu-border-width) solid var(--fu-color-border)">
+            <span style="width:32px;height:32px;flex:none;border-radius:var(--fu-radius-md);background:var(--fu-color-primary-subtle);color:var(--fu-color-primary-text);display:flex;align-items:center;justify-content:center"><fu-icon name="document_20_regular" size="20px"></fu-icon></span>
+            <div style="display:flex;flex-direction:column;min-width:0">
+              <span style="font-weight:var(--fu-font-weight-semibold);font-size:var(--fu-font-size-subtitle);line-height:var(--fu-font-line-subtitle);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Solicitud de crédito hipotecario</span>
+              <span style="font-size:var(--fu-font-size-caption);line-height:var(--fu-font-line-caption);color:var(--fu-color-text-secondary)">SC-2026-00418 · Expediente de cliente 55120</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="display:flex;flex-direction:column;gap:var(--fu-space-5);padding:var(--x-pad);background:{{ fr.ctrlBg }}">
+        <div style="display:flex;flex-direction:column;gap:var(--fu-space-4);background:{{ fr.cardBg }};border:{{ fr.cardBd }};border-radius:var(--fu-radius-lg);padding:{{ fr.cardPad }}">
+
+          <sc-if value="{{ fr.dzFull }}" hint-placeholder-val="{{ true }}">
+            <div role="region" aria-label="{{ fr.dzAria }}" onClick="{{ fr.browse }}" onDragOver="{{ fr.dragOver }}" onDragLeave="{{ fr.dragLeave }}" onDrop="{{ fr.drop }}" style="min-height:var(--fu-size-dropzone-min);box-sizing:border-box;display:flex;flex-direction:var(--x-dz-dir);align-items:center;justify-content:center;gap:var(--x-dz-gap);padding:var(--x-dz-pad);border-radius:var(--fu-radius-lg);cursor:pointer;transition:background var(--fu-motion-fast);border:{{ fr.dzBorder }};background:{{ fr.dzBg }}">
+              <span style="flex:none;width:var(--x-dz-ibox);height:var(--x-dz-ibox);border-radius:50%;background:var(--x-dz-ibg);color:var(--x-dz-icol);display:flex;align-items:center;justify-content:center"><fu-icon name="arrow_upload_24_regular" size="var(--x-dz-isz)"></fu-icon></span>
+              <div style="display:flex;flex-direction:column;gap:4px;text-align:var(--x-dz-ta);align-items:var(--x-dz-items);flex:1 1 auto;min-width:0">
+                <span style="font-size:var(--fu-font-size-subtitle);line-height:var(--fu-font-line-subtitle);font-weight:var(--fu-font-weight-semibold);color:{{ fr.dzTitleColor }}">{{ fr.dzTitle }}</span>
+                <span id="{{ fr.hintId }}" style="font-size:var(--fu-font-size-caption);line-height:var(--fu-font-line-caption);color:var(--fu-color-text-secondary);text-wrap:pretty">{{ fr.hint }}</span>
+              </div>
+              <span style="display:var(--x-dz-or);font-size:var(--fu-font-size-caption);color:var(--fu-color-text-secondary)">o</span>
+              <button type="button" disabled="{{ fr.full }}" aria-describedby="{{ fr.hintId }}" style="flex:none;width:var(--x-browse-w);height:var(--x-browse-h);padding:0 var(--fu-space-4);border-radius:var(--fu-radius-md);border:var(--fu-border-width) solid var(--x-browse-bd);font-weight:var(--fu-font-weight-semibold);white-space:nowrap;cursor:pointer;background:{{ fr.browseBg }};color:{{ fr.browseFg }}" style-hover="background:var(--x-browse-hover)">Seleccionar archivos</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ fr.dzCompact }}" hint-placeholder-val="{{ false }}">
+            <div role="region" aria-label="{{ fr.dzAria }}" onClick="{{ fr.browse }}" onDragOver="{{ fr.dragOver }}" onDragLeave="{{ fr.dragLeave }}" onDrop="{{ fr.drop }}" style="min-height:calc(var(--fu-size-control) + 16px);box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:0 var(--fu-space-4);border-radius:var(--fu-radius-lg);cursor:pointer;border:{{ fr.dzBorder }};background:{{ fr.dzBg }}">
+              <fu-icon name="arrow_upload_20_regular" size="20px" style="color:var(--fu-color-text-secondary)"></fu-icon>
+              <span style="flex:1;min-width:0;text-wrap:pretty;padding:6px 0;color:{{ fr.dzTitleColor }}">{{ fr.dzCompactLead }}<button type="button" disabled="{{ fr.full }}" style="border:0;background:transparent;padding:0;font-weight:var(--fu-font-weight-semibold);cursor:pointer;color:{{ fr.linkColor }}">{{ fr.dzCompactLink }}</button></span>
+              <span style="flex:none;font-size:var(--fu-font-size-caption);color:var(--fu-color-text-secondary);font-variant-numeric:tabular-nums">{{ fr.countLabel }}</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ fr.hasQueue }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:var(--fu-space-3)">
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+                <div style="flex:1 1 auto;flex-basis:var(--x-qsum-basis);min-width:0;display:flex;flex-direction:column">
+                  <span style="font-weight:var(--fu-font-weight-semibold)">{{ fr.qTitle }} <span style="font-weight:var(--fu-font-weight-regular);color:var(--fu-color-text-secondary)">· {{ fr.qSummary }}</span></span>
+                  <sc-if value="{{ fr.needsDoc }}" hint-placeholder-val="{{ false }}"><span style="font-size:var(--fu-font-size-caption);line-height:var(--fu-font-line-caption);color:var(--fu-color-status-warning-fg)">{{ fr.needsDocText }}</span></sc-if>
+                </div>
+                <sc-if value="{{ fr.canClear }}" hint-placeholder-val="{{ false }}">
+                  <button type="button" onClick="{{ fr.clearDone }}" style="flex:var(--x-qbtn-flex);height:var(--x-act);padding:0 10px;border:var(--fu-border-width) solid transparent;border-radius:var(--fu-radius-md);background:transparent;cursor:pointer;white-space:nowrap" style-hover="background:var(--fu-color-surface-hover)">Limpiar terminados</button>
+                </sc-if>
+                <sc-if value="{{ fr.canRetryAll }}" hint-placeholder-val="{{ false }}">
+                  <button type="button" onClick="{{ fr.retryAll }}" style="flex:var(--x-qbtn-flex);height:var(--x-act);padding:0 10px;border:var(--fu-border-width) solid transparent;border-radius:var(--fu-radius-md);background:transparent;cursor:pointer;white-space:nowrap" style-hover="background:var(--fu-color-surface-hover)">Reintentar fallidos</button>
+                </sc-if>
+                <button type="button" onClick="{{ fr.uploadAll }}" disabled="{{ fr.noQueued }}" style="flex:var(--x-qbtn-flex);height:var(--x-act);padding:0 var(--fu-space-4);border:var(--fu-border-width) solid transparent;border-radius:var(--fu-radius-md);font-weight:var(--fu-font-weight-semibold);white-space:nowrap;background:{{ fr.upBg }};color:{{ fr.upFg }};cursor:{{ fr.upCursor }}">Subir todo</button>
+              </div>
+
+              <div role="list" aria-label="Archivos para subir" style="display:flex;flex-direction:column;gap:var(--fu-space-list-gap);border-top:var(--x-list-top)">
+                <sc-for list="{{ fr.items }}" as="it" hint-placeholder-count="4">
+                  <div role="listitem" style="display:grid;grid-template-columns:var(--x-fr-cols);grid-template-areas:var(--x-fr-areas);column-gap:var(--x-colgap);row-gap:8px;align-items:center;min-height:var(--fu-size-file-row);box-sizing:border-box;padding:var(--fu-space-row-y) var(--fu-space-row-x);border:var(--x-row-bd);border-bottom:var(--x-row-div);border-radius:var(--x-row-radius);box-shadow:var(--x-row-shadow);background:{{ it.rowBg }}">
+                    <span style="grid-area:icon;align-self:start;width:var(--x-ftile);height:var(--x-ftile);border-radius:var(--fu-radius-md);background:var(--x-ftile-bg);display:flex;align-items:center;justify-content:center;color:var(--fu-color-text-secondary)"><fu-icon name="{{ it.ficon }}" size="var(--fu-size-icon-file)"></fu-icon></span>
+                    <div style="grid-area:main;min-width:0;display:flex;flex-direction:column;gap:3px">
+                      <div style="display:flex;align-items:baseline;gap:8px;min-width:0">
+                        <span id="{{ it.nameId }}" title="{{ it.name }}" style="display:flex;min-width:0;font-weight:var(--fu-font-weight-semibold)"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ it.base }}</span><span style="flex:none">{{ it.ext }}</span></span>
+                        <span style="display:var(--x-size-l1);flex:none;font-size:var(--fu-font-size-caption);color:var(--fu-color-text-secondary);font-variant-numeric:tabular-nums;white-space:nowrap">{{ it.size }}</span>
+                      </div>
+                      <div style="display:flex;align-items:{{ it.l2align }};gap:6px;min-width:0;font-size:var(--fu-font-size-caption);line-height:var(--fu-font-line-caption);font-variant-numeric:tabular-nums">
+                        <span style="flex:none;display:inline-flex;align-items:center;gap:4px;font-weight:var(--fu-font-weight-semibold);white-space:nowrap;color:{{ it.scolor }}"><fu-icon name="{{ it.sicon }}" size="14px" spin="{{ it.spin }}"></fu-icon>{{ it.slabel }}</span>
+                        <span style="display:var(--x-size-l2);flex:none;color:var(--fu-color-text-secondary)">· {{ it.size }}</span>
+                        <span title="{{ it.detailFull }}" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:{{ it.ws }};text-wrap:pretty;color:{{ it.dcolor }}">{{ it.detail }}<span style="display:var(--x-wide)">{{ it.detailWide }}</span></span>
+                        <sc-if value="{{ it.hasPct }}" hint-placeholder-val="{{ false }}"><span style="flex:none;width:40px;text-align:right;font-weight:var(--fu-font-weight-semibold);color:var(--fu-color-text)">{{ it.pct }}</span></sc-if>
+                      </div>
+                      <sc-if value="{{ it.showBar }}" hint-placeholder-val="{{ false }}">
+                        <fu-bar mode="{{ it.barMode }}" value="{{ it.barVal }}" valuetext="{{ it.barText }}" label="{{ it.name }}" blocks="{{ it.blocks }}" style="margin-top:3px"></fu-bar>
+                      </sc-if>
+                    </div>
+                    <sc-if value="{{ fr.isMd }}" hint-placeholder-val="{{ false }}">
+                      <div style="grid-area:doc;width:var(--x-doc-w);display:flex;flex-direction:column;gap:2px">
+                        <sc-if value="{{ it.docEditable }}" hint-placeholder-val="{{ false }}">
+                          <select aria-label="Tipo de documento" aria-invalid="{{ it.docInvalid }}" aria-required="true" title="Obligatorio para subir" value="{{ it.docType }}" onChange="{{ it.setDoc }}" style="width:100%;height:var(--x-act);padding:0 8px;border-radius:var(--fu-radius-md);background:var(--fu-color-surface);color:var(--fu-color-text);border:var(--fu-border-width) solid {{ it.docBorder }}">
+                            <option value="">Elegir tipo</option>
+                            <sc-for list="{{ docOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o }}">{{ o }}</option></sc-for>
+                          </select>
+                          <sc-if value="{{ it.docErr }}" hint-placeholder-val="{{ false }}"><span style="font-size:var(--fu-font-size-caption);line-height:var(--fu-font-line-caption);color:var(--fu-color-status-danger-fg)">Elige el tipo de documento.</span></sc-if>
+                        </sc-if>
+                        <sc-if value="{{ it.docText }}" hint-placeholder-val="{{ false }}">
+                          <span style="font-size:var(--fu-font-size-caption);color:var(--fu-color-text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ it.docType }}</span>
+                        </sc-if>
+                      </div>
+                    </sc-if>
+                    <div style="grid-area:act;align-self:start;display:flex;gap:2px;justify-content:flex-end;min-width:var(--x-act)">
+                      <sc-for list="{{ it.actions }}" as="a" hint-placeholder-count="1">
+                        <button type="button" aria-label="{{ a.aria }}" title="{{ a.tip }}" onClick="{{ a.run }}" style="width:var(--x-act);height:var(--x-act);display:flex;align-items:center;justify-content:center;border:0;border-radius:var(--fu-radius-md);background:transparent;color:var(--fu-color-text-secondary);cursor:pointer" style-hover="background:var(--fu-color-surface-hover);color:var(--fu-color-text)"><fu-icon name="{{ a.icon }}" size="var(--fu-size-icon-action)"></fu-icon></button>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ fr.isMd }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:var(--x-md-cols);gap:var(--x-md-gap);align-items:start">
+            <div style="min-width:0;display:flex;flex-direction:column;background:var(--fu-color-surface);border:var(--fu-border-width) solid var(--fu-color-border);border-radius:var(--fu-radius-lg);box-shadow:var(--x-row-shadow)">
+              <div style="min-height:var(--fu-size-toolbar);display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:6px var(--fu-space-row-x);border-bottom:var(--fu-border-width) solid var(--fu-color-border)">
+                <h3 style="margin:0;font-family:var(--fu-font-family-heading);font-size:var(--fu-font-size-subtitle);line-height:var(--fu-font-line-subtitle);font-weight:var(--fu-font-weight-semibold);white-space:nowrap">Adjuntos <span style="font-family:var(--fu-font-family);font-weight:var(--fu-font-weight-regular);font-size:var(--fu-font-size-body);color:var(--fu-color-text-secondary)">{{ fr.gridCount }}</span></h3>
+                <div role="radiogroup" aria-label="Filtrar por estado" style="display:var(--x-filters);flex-wrap:wrap;gap:4px">
+                  <sc-for list="{{ fr.filters }}" as="f" hint-placeholder-count="5">
+                    <button type="button" role="radio" aria-checked="{{ f.on }}" onClick="{{ f.pick }}" style="height:calc(var(--fu-size-control) - 4px);display:inline-flex;align-items:center;gap:6px;padding:0 10px;border-radius:var(--fu-radius-md);font-size:var(--fu-font-size-caption);white-space:nowrap;cursor:pointer;background:{{ f.bg }};color:{{ f.fg }};border:var(--fu-border-width) solid {{ f.bd }};font-weight:{{ f.w }}">{{ f.label }}<span style="font-variant-numeric:tabular-nums;color:{{ f.nfg }}">{{ f.n }}</span></button>
+                  </sc-for>
+                </div>
+                <select aria-label="Filtrar por estado" value="{{ filter }}" onChange="{{ onFilterSel }}" style="display:var(--x-filter-sel);height:var(--x-act);padding:0 8px;border-radius:var(--fu-radius-md);background:var(--fu-color-surface);color:var(--fu-color-text);border:var(--fu-border-width) solid var(--fu-color-border-strong)">
+                  <sc-for list="{{ fr.filters }}" as="f" hint-placeholder-count="0"><option value="{{ f.id }}">{{ f.optLabel }}</option></sc-for>
+                </select>
+                <span style="flex:1"></span>
+                <label style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0;max-width:100%;font-size:var(--fu-font-size-caption);color:var(--fu-color-text-secondary)"><fu-icon name="arrow_sort_20_regular" size="16px"></fu-icon>Ordenar
+                  <select value="{{ sort }}" onChange="{{ onSort }}" style="max-width:100%;min-width:0;height:var(--x-act);padding:0 6px;border-radius:var(--fu-radius-md);background:var(--fu-color-surface);color:var(--fu-color-text);border:var(--fu-border-width) solid var(--fu-color-border-strong);font-size:var(--fu-font-size-caption)">
+                    <option value="dateDesc">Más recientes primero</option>
+                    <option value="dateAsc">Más antiguos primero</option>
+                    <option value="status">Por estado (requieren acción primero)</option>
+                  </select>
+                </label>
+                <label style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0;max-width:100%;font-size:var(--fu-font-size-caption);color:var(--fu-color-text-secondary)"><fu-icon name="text_density_20_regular" size="16px"></fu-icon>Densidad
+                  <select value="{{ density }}" onChange="{{ onDensity }}" style="max-width:100%;min-width:0;height:var(--x-act);padding:0 6px;border-radius:var(--fu-radius-md);background:var(--fu-color-surface);color:var(--fu-color-text);border:var(--fu-border-width) solid var(--fu-color-border-strong);font-size:var(--fu-font-size-caption)">
+                    <option value="compact">Compacta</option>
+                    <option value="comfortable">Cómoda</option>
+                  </select>
+                </label>
+              </div>
+
+              <div role="grid" aria-label="Adjuntos del registro" aria-rowcount="{{ fr.rowCount }}" style="display:flex;flex-direction:column;gap:var(--x-g-gap);padding:{{ fr.gridPad }}">
+                <div role="row" style="display:var(--x-g-head);grid-template-columns:var(--x-g-cols);min-height:var(--fu-size-grid-header);align-items:center;background:var(--fu-color-surface-alt);border-bottom:var(--fu-border-width) solid var(--fu-color-border);font-size:var(--fu-font-size-caption);font-weight:var(--fu-font-weight-semibold);color:var(--fu-color-text-secondary);text-transform:var(--x-head-tt);letter-spacing:var(--fu-font-tracking-label)">
+                  <span role="columnheader" style="padding:0 var(--fu-space-row-x)">Nombre</span>
+                  <span role="columnheader" style="padding:0 var(--fu-space-row-x)">Tipo de documento</span>
+                  <span role="columnheader" aria-sort="{{ fr.statusSort }}" style="padding:0"><button type="button" onClick="{{ sortStatus }}" style="border:0;background:transparent;padding:0 var(--fu-space-row-x);cursor:pointer;font-weight:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;font-size:inherit;display:flex;align-items:center;gap:4px;height:100%">Estado<fu-icon name="{{ fr.statusSortIcon }}" size="12px"></fu-icon></button></span>
+                  <span role="columnheader" style="display:var(--x-g-wide);justify-content:flex-end;padding:0 var(--fu-space-row-x)">Tamaño</span>
+                  <span role="columnheader" aria-sort="{{ fr.dateSort }}" style="display:var(--x-g-date);padding:0"><button type="button" onClick="{{ sortDate }}" style="border:0;background:transparent;padding:0 var(--fu-space-row-x);cursor:pointer;font-weight:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;font-size:inherit;display:flex;align-items:center;gap:4px;white-space:nowrap">Fecha de subida<fu-icon name="{{ fr.dateSortIcon }}" size="12px"></fu-icon></button></span>
+                  <span role="columnheader" style="display:var(--x-g-wide);padding:0 var(--fu-space-row-x)">Subido por</span>
+                  <span role="columnheader" style="grid-column:span 2;position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Acciones</span>
+                </div>
+
+                <sc-if value="{{ fr.gridEmpty }}" hint-placeholder-val="{{ false }}">
+                  <div style="min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:16px">
+                    <fu-icon name="attach_20_regular" size="24px" style="color:var(--fu-color-text-secondary)"></fu-icon>
+                    <span style="font-weight:var(--fu-font-weight-semibold)">Todavía no hay adjuntos</span>
+                    <span style="font-size:var(--fu-font-size-caption);color:var(--fu-color-text-secondary);max-width:320px;text-wrap:pretty">Arrastra archivos a la zona de arriba o usa Seleccionar archivos.</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ fr.filterEmpty }}" hint-placeholder-val="{{ false }}">
+                  <div style="min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px">
+                    <span style="color:var(--fu-color-text-secondary)">Ningún adjunto coincide con el filtro.</span>
+                    <button type="button" onClick="{{ clearFilter }}" style="height:var(--x-act);padding:0 12px;border-radius:var(--fu-radius-md);border:var(--fu-border-width) solid var(--fu-color-border);background:var(--fu-color-surface);font-weight:var(--fu-font-weight-semibold);cursor:pointer">Quitar filtro</button>
+                  </div>
+                </sc-if>
+
+                <sc-for list="{{ fr.rows }}" as="r" hint-placeholder-count="3">
+                  <div role="row" data-row="1" tabindex="{{ r.tab }}" aria-selected="{{ r.ariaSel }}" onClick="{{ r.open }}" onKeyDown="{{ r.key }}" style="display:grid;grid-template-columns:var(--x-g-cols);grid-template-areas:var(--x-g-areas);row-gap:var(--x-g-rowgap);align-items:center;min-height:var(--fu-size-grid-row);box-sizing:border-box;padding:var(--x-g-pady) 0;border:var(--x-g-bd);border-bottom:var(--x-g-div);border-radius:var(--x-g-radius);cursor:pointer;background:{{ r.bg }}" style-hover="background:var(--fu-color-surface-hover)">
+                    <span role="gridcell" style="grid-area:name;display:flex;align-items:center;gap:8px;min-width:0;padding:0 var(--fu-space-row-x);border-left:2px solid {{ r.stripe }}">
+                      <fu-icon name="{{ r.ficon }}" size="20px" style="color:var(--fu-color-text-secondary)"></fu-icon>
+                      <span title="{{ r.name }}" style="display:flex;min-width:0;font-weight:{{ r.nameW }}"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.base }}</span><span style="flex:none">{{ r.ext }}</span></span>
+                    </span>
+                    <span role="gridcell" style="grid-area:doc;min-width:0;padding:0 var(--fu-space-row-x);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.doc }}</span>
+                    <span role="gridcell" style="grid-area:status;padding:0 var(--fu-space-row-x);display:flex">
+                      <span title="{{ r.chip.desc }}" style="display:inline-flex;align-items:center;gap:4px;height:var(--fu-size-chip);box-sizing:border-box;padding:0 {{ r.chip.px }};border-radius:var(--fu-radius-chip);font-size:var(--fu-font-size-caption);font-weight:var(--fu-font-weight-semibold);white-space:nowrap;background:{{ r.chip.bg }};color:{{ r.chip.fg }};border:var(--fu-border-width) {{ r.chip.bs }} {{ r.chip.bc }}"><fu-icon name="{{ r.chip.icon }}" size="var(--fu-size-chip-icon)" spin="{{ r.chip.spin }}"></fu-icon>{{ r.chip.label }}</span>
+                    </span>
+                    <span role="gridcell" style="grid-area:size;display:var(--x-g-wide);justify-content:flex-end;padding:0 var(--fu-space-row-x);font-variant-numeric:tabular-nums;white-space:nowrap">{{ r.size }}</span>
+                    <span role="gridcell" style="grid-area:date;display:var(--x-g-date);padding:0 var(--fu-space-row-x);font-variant-numeric:tabular-nums;white-space:nowrap">{{ r.date }}</span>
+                    <span role="gridcell" style="grid-area:user;display:var(--x-g-wide);min-width:0;padding:0 var(--fu-space-row-x);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.user }}</span>
+                    <span style="grid-area:meta;display:var(--x-g-meta);gap:6px;flex-wrap:wrap;padding:0 var(--fu-space-row-x) 0 calc(var(--fu-space-row-x) + 30px);font-size:var(--fu-font-size-caption);color:var(--fu-color-text-secondary);font-variant-numeric:tabular-nums">{{ r.size }}<span style="display:var(--x-g-meta-date)">· {{ r.date }}</span><span>· {{ r.user }}</span></span>
+                    <sc-if value="{{ r.hasMsg }}" hint-placeholder-val="{{ false }}">
+                      <span style="grid-area:msg;display:flex;gap:6px;align-items:flex-start;padding:0 var(--fu-space-row-x) 0 calc(var(--fu-space-row-x) + 30px);font-size:var(--fu-font-size-caption);line-height:var(--fu-font-line-caption);text-wrap:pretty;color:{{ r.msgColor }}"><fu-icon name="{{ r.msgIcon }}" size="12px" style="margin-top:2px"></fu-icon>{{ r.msg }}</span>
+                    </sc-if>
+                    <span role="gridcell" style="grid-area:prim;display:flex;justify-content:var(--x-g-prim-j);padding:0 4px 0 var(--fu-space-row-x)">
+                      <sc-if value="{{ r.hasPrim }}" hint-placeholder-val="{{ false }}">
+                        <button type="button" onClick="{{ r.primRun }}" tabindex="-1" style="width:var(--x-g-prim-w);height:var(--x-g-prim-h);padding:0 10px;border-radius:var(--fu-radius-md);border:var(--fu-border-width) solid var(--fu-color-border);background:var(--fu-color-surface);color:var(--fu-color-text);font-weight:var(--fu-font-weight-semibold);font-size:var(--fu-font-size-caption);white-space:nowrap;cursor:pointer" style-hover="background:var(--fu-color-surface-hover)">{{ r.primLabel }}</button>
+                      </sc-if>
+                    </span>
+                    <span role="gridcell" style="grid-area:menu;display:flex;justify-content:center">
+                      <button type="button" aria-label="Ver detalle" title="Ver detalle" tabindex="-1" onClick="{{ r.open }}" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:0;border-radius:var(--fu-radius-md);background:transparent;color:var(--fu-color-text-secondary);cursor:pointer" style-hover="background:var(--fu-color-surface-hover)"><fu-icon name="more_horizontal_20_regular" size="20px"></fu-icon></button>
+                    </span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <sc-if value="{{ fr.hasPanel }}" hint-placeholder-val="{{ false }}">
+              <div onClick="{{ closePanel }}" style="display:var(--x-scrim);position:absolute;inset:0;background:var(--fu-color-scrim);z-index:1"></div>
+              <aside role="complementary" aria-labelledby="{{ fr.panelTitleId }}" onKeyDown="{{ panelKey }}" style="position:var(--x-panel-pos);top:0;right:0;bottom:0;z-index:2;width:var(--x-panel-w);max-width:480px;min-width:0;box-sizing:border-box;display:flex;flex-direction:column;background:var(--fu-color-surface);border:var(--fu-border-width) solid var(--fu-color-border);border-radius:var(--x-panel-radius);box-shadow:var(--x-panel-shadow);overflow:auto">
+                <div style="display:flex;align-items:flex-start;gap:10px;padding:var(--x-panel-pad);border-bottom:var(--fu-border-width) solid var(--fu-color-border)">
+                  <fu-icon name="{{ p.ficon }}" size="24px" style="color:var(--fu-color-text-secondary)"></fu-icon>
+                  <h4 id="{{ fr.panelTitleId }}" style="margin:0;flex:1;min-width:0;font-family:var(--fu-font-family-heading);font-size:var(--fu-font-size-subtitle);line-height:var(--fu-font-line-subtitle);font-weight:var(--fu-font-weight-semibold);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ p.name }}</h4>
+                  <button type="button" aria-label="Cerrar" title="Cerrar" onClick="{{ closePanel }}" style="flex:none;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:0;border-radius:var(--fu-radius-md);background:transparent;color:var(--fu-color-text-secondary);cursor:pointer" style-hover="background:var(--fu-color-surface-hover)"><fu-icon name="dismiss_20_regular" size="20px"></fu-icon></button>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:20px;padding:var(--x-panel-pad)">
+                  <section style="display:flex;flex-direction:column;gap:8px">
+                    <span style="font-size:var(--fu-font-size-caption);font-weight:var(--fu-font-weight-semibold);color:var(--fu-color-text-secondary);text-transform:var(--x-head-tt);letter-spacing:var(--fu-font-tracking-label)">Estado</span>
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+                      <span style="display:inline-flex;align-items:center;gap:4px;height:var(--fu-size-chip);box-sizing:border-box;padding:0 {{ p.chip.px }};border-radius:var(--fu-radius-chip);font-size:var(--fu-font-size-caption);font-weight:var(--fu-font-weight-semibold);white-space:nowrap;background:{{ p.chip.bg }};color:{{ p.chip.fg }};border:var(--fu-border-width) {{ p.chip.bs }} {{ p.chip.bc }}"><fu-icon name="{{ p.chip.icon }}" size="var(--fu-size-chip-icon)" spin="{{ p.chip.spin }}"></fu-icon>{{ p.chip.label }}</span>
+                      <span style="font-size:var(--fu-font-size-caption);color:var(--fu-color-text-secondary)">{{ p.chip.desc }}</span>
+                    </div>
+                    <sc-if value="{{ p.hasMsg }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;gap:8px;align-items:flex-start;padding:12px;border-radius:var(--fu-radius-md);text-wrap:pretty;background:{{ p.msgBg }};border:var(--fu-border-width) solid {{ p.msgBd }};color:var(--fu-color-text)"><fu-icon name="{{ p.msgIcon }}" size="16px" style="margin-top:2px;color:{{ p.msgFg }}"></fu-icon><span>{{ p.msg }}</span></div>
+                    </sc-if>
+                  </section>
+                  <sc-if value="{{ p.isObserved }}" hint-placeholder-val="{{ false }}">
+                    <section style="display:flex;flex-direction:column;gap:12px">
+                      <span style="font-size:var(--fu-font-size-caption);font-weight:var(--fu-font-weight-semibold);color:var(--fu-color-text-secondary);text-transform:var(--x-head-tt);letter-spacing:var(--fu-font-tracking-label)">Corregir datos</span>
+                      <label style="display:flex;flex-direction:column;gap:4px;font-weight:var(--fu-font-weight-semibold)">Tipo de documento
+                        <select value="{{ p.fixDoc }}" onChange="{{ p.setDoc }}" style="height:var(--fu-size-control);padding:0 8px;border-radius:var(--fu-radius-md);background:var(--fu-color-surface);color:var(--fu-color-text);border:var(--fu-border-width) solid var(--fu-color-border-strong);font-weight:var(--fu-font-weight-regular)">
+                          <sc-for list="{{ docOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o }}">{{ o }}</option></sc-for>
+                        </select>
+                      </label>
+                      <label style="display:flex;flex-direction:column;gap:4px;font-weight:var(--fu-font-weight-semibold)">Fecha de vencimiento
+                        <input type="date" value="{{ p.fixExp }}" onChange="{{ p.setExp }}" aria-invalid="{{ p.expInvalid }}" aria-required="true" style="height:var(--fu-size-control);box-sizing:border-box;padding:0 8px;border-radius:var(--fu-radius-md);background:var(--fu-color-surface);color:var(--fu-color-text);font-weight:var(--fu-font-weight-regular);border:var(--fu-border-width) solid {{ p.expBorder }}"></input>
+                        <sc-if value="{{ p.showExpErr }}" hint-placeholder-val="{{ false }}"><span style="font-size:var(--fu-font-size-caption);font-weight:var(--fu-font-weight-regular);color:var(--fu-color-status-danger-fg)">Campo obligatorio.</span></sc-if>
+                      </label>
+                    </section>
+                  </sc-if>
+                  <section style="display:flex;flex-direction:column;gap:8px">
+                    <span style="font-size:var(--fu-font-size-caption);font-weight:var(--fu-font-weight-semibold);color:var(--fu-color-text-secondary);text-transform:var(--x-head-tt);letter-spacing:var(--fu-font-tracking-label)">Datos</span>
+                    <dl style="margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 16px">
+                      <sc-for list="{{ p.data }}" as="d" hint-placeholder-count="4">
+                        <dt style="font-size:var(--fu-font-size-caption);color:var(--fu-color-text-secondary)">{{ d.k }}</dt><dd style="margin:0;overflow-wrap:anywhere">{{ d.v }}</dd>
+                      </sc-for>
+                    </dl>
+                  </section>
+                  <section style="display:flex;flex-direction:column;gap:8px">
+                    <span style="font-size:var(--fu-font-size-caption);font-weight:var(--fu-font-weight-semibold);color:var(--fu-color-text-secondary);text-transform:var(--x-head-tt);letter-spacing:var(--fu-font-tracking-label)">Historial</span>
+                    <ol style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column">
+                      <sc-for list="{{ p.hist }}" as="h" hint-placeholder-count="3">
+                        <li style="display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 0;font-size:var(--fu-font-size-caption)"><span style="width:8px;height:8px;border-radius:50%;background:{{ h.dot }}"></span><span>{{ h.label }}</span><span style="color:var(--fu-color-text-secondary);font-variant-numeric:tabular-nums">{{ h.date }}</span></li>
+                      </sc-for>
+                    </ol>
+                  </section>
+                </div>
+                <sc-if value="{{ p.hasActions }}" hint-placeholder-val="{{ false }}">
+                  <div style="min-height:56px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end;padding:8px var(--x-panel-pad);border-top:var(--fu-border-width) solid var(--fu-color-border);position:sticky;bottom:0;background:var(--fu-color-surface)">
+                    <sc-for list="{{ p.actions }}" as="a" hint-placeholder-count="1">
+                      <button type="button" onClick="{{ a.run }}" style="height:var(--fu-size-control);padding:0 var(--fu-space-4);border-radius:var(--fu-radius-md);font-weight:var(--fu-font-weight-semibold);white-space:nowrap;cursor:pointer;background:{{ a.bg }};color:{{ a.fg }};border:var(--fu-border-width) solid {{ a.bd }}">{{ a.label }}</button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </aside>
+            </sc-if>
+          </div>
+        </sc-if>
+        </div>
+      </div>
+      </div>
+    </div>
+  </sc-for>
+  </div>
+</main>
+
+<sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+<aside aria-label="Personalización" style="flex:none;width:300px;overflow:auto;background:#fff;border-left:1px solid #E3E3E3;padding:20px;display:flex;flex-direction:column;gap:22px;font-size:13px">
+  <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:15px;font-weight:600">Personalización</span><button type="button" onClick="{{ resetCustom }}" style="border:0;background:transparent;color:#0F6CBD;cursor:pointer;font-size:12px;padding:4px">Restablecer</button></div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font-size:12px;font-weight:600;color:#5F5F5F">Variante</span>
+    <sc-for list="{{ variantOpts }}" as="o" hint-placeholder-count="3">
+      <button type="button" role="radio" aria-checked="{{ o.on }}" onClick="{{ o.pick }}" style="text-align:left;padding:10px 12px;border-radius:6px;cursor:pointer;background:#fff;display:flex;flex-direction:column;gap:2px;border:{{ o.cardBd }}"><span style="font-weight:600">{{ o.full }}</span><span style="font-size:12px;color:#5F5F5F;text-wrap:pretty">{{ o.desc }}</span></button>
+    </sc-for>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font-size:12px;font-weight:600;color:#5F5F5F">Modo</span>
+    <div role="radiogroup" aria-label="Modo" style="display:flex;border:1px solid #CFCFCF;border-radius:4px;overflow:hidden">
+      <sc-for list="{{ modeOpts }}" as="o" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{ o.on }}" onClick="{{ o.pick }}" style="flex:1;border:0;padding:6px;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button></sc-for>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font-size:12px;font-weight:600;color:#5F5F5F">Color primario</span>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <sc-for list="{{ swatches }}" as="s" hint-placeholder-count="5"><button type="button" aria-label="{{ s.c }}" aria-pressed="{{ s.on }}" onClick="{{ s.pick }}" style="width:28px;height:28px;border-radius:50%;cursor:pointer;background:{{ s.c }};border:2px solid #fff;box-shadow:{{ s.ring }}"></button></sc-for>
+      <input type="color" aria-label="Color personalizado" value="{{ primaryVal }}" onInput="{{ onPrimary }}" style="width:36px;height:30px;padding:0;border:1px solid #CFCFCF;border-radius:4px;background:#fff;cursor:pointer"></input>
+      <code style="font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#3A3A3A">{{ primaryVal }}</code>
+    </div>
+    <span style="font-size:12px;color:#5F5F5F;text-wrap:pretty">Hover, presionado, tinte y texto sobre primario se derivan solos. {{ onPrimaryNote }}</span>
+  </div>
+  <label style="display:flex;flex-direction:column;gap:8px"><span style="font-size:12px;font-weight:600;color:#5F5F5F">Tipografía</span>
+    <select value="{{ fontKey }}" onChange="{{ onFont }}" style="height:32px;padding:0 8px;border:1px solid #CFCFCF;border-radius:4px;background:#fff">
+      <option value="default">Segoe UI (predeterminada)</option>
+      <option value="system">Sistema (system-ui)</option>
+      <option value="arial">Arial / Helvetica</option>
+      <option value="georgia">Georgia (serif)</option>
+      <option value="verdana">Verdana</option>
+    </select>
+  </label>
+  <label style="display:flex;flex-direction:column;gap:8px"><span style="font-size:12px;font-weight:600;color:#5F5F5F;display:flex;justify-content:space-between">Radio de bordes<span style="font-weight:400;font-variant-numeric:tabular-nums">{{ radiusLabel }}</span></span>
+    <input type="range" min="0" max="16" step="1" value="{{ radiusVal }}" onInput="{{ onRadius }}" style="accent-color:#0F6CBD"></input>
+  </label>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font-size:12px;font-weight:600;color:#5F5F5F">Densidad</span>
+    <div role="radiogroup" aria-label="Densidad" style="display:flex;border:1px solid #CFCFCF;border-radius:4px;overflow:hidden">
+      <sc-for list="{{ densOpts }}" as="o" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{ o.on }}" onClick="{{ o.pick }}" style="flex:1;border:0;padding:6px;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button></sc-for>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;padding-top:18px;border-top:1px solid #EDEDED">
+    <span style="font-size:15px;font-weight:600">Simulación</span>
+    <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;font-weight:600;color:#5F5F5F">Error en la próxima subida</span>
+      <select value="{{ inject }}" onChange="{{ onInject }}" style="height:32px;padding:0 8px;border:1px solid #CFCFCF;border-radius:4px;background:#fff">
+        <option value="none">Ninguno</option>
+        <option value="network">Red cortada</option>
+        <option value="passExpired">Pase vencido (más de 15 min)</option>
+        <option value="fileChanged">Archivo cambió en disco</option>
+        <option value="permissionDenied">Permiso denegado</option>
+      </select>
+    </label>
+    <button type="button" onClick="{{ addSamples }}" style="height:32px;border:1px solid #CFCFCF;border-radius:4px;background:#fff;cursor:pointer;font-weight:600">Agregar archivos de ejemplo</button>
+    <span style="font-size:12px;color:#5F5F5F;text-wrap:pretty">Agrega 6 archivos a cada cola: 3 válidos, 1 duplicado, 1 de tipo no permitido y 1 demasiado grande. También puedes arrastrar o elegir archivos reales.</span>
+    <div style="display:flex;gap:8px">
+      <button type="button" onClick="{{ resetData }}" style="flex:1;height:32px;border:1px solid #CFCFCF;border-radius:4px;background:#fff;cursor:pointer">Restablecer ejemplo</button>
+      <button type="button" onClick="{{ emptyQueues }}" style="flex:1;height:32px;border:1px solid #CFCFCF;border-radius:4px;background:#fff;cursor:pointer">Vaciar colas</button>
+    </div>
+  </div>
+</aside>
+</sc-if>
+</div>
+
+<div aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">{{ live }}</div>
+<div aria-live="assertive" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">{{ liveErr }}</div>
+<input type="file" multiple="{{ true }}" accept=".pdf,.jpg,.jpeg,.png,.mp4" ref="{{ refC }}" onChange="{{ pickC }}" style="display:none"></input>
+<input type="file" multiple="{{ true }}" accept=".pdf,.jpg,.jpeg,.png,.mp4" ref="{{ refM }}" onChange="{{ pickM }}" style="display:none"></input>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const MB = 1048576, BLOCK = 8 * MB;
+const ACTIVE = ['authorizing', 'uploading', 'verifying'];
+const DOCS = ['Cédula de identidad', 'Contrato firmado', 'Comprobante de ingresos', 'Comprobante de domicilio', 'Estado de cuenta', 'Declaración de renta', 'Avalúo de inmueble', 'Escritura pública', 'Solicitud de crédito', 'Autorización firmada', 'Póliza de seguro', 'Video de verificación', 'Otro'];
+const LC = {
+  created: { k: 'lifecycle.created', sem: 'neutral', st: 'dashed', icon: 'document_add_16_regular', act: 'upload' },
+  uploaded: { k: 'lifecycle.uploaded', sem: 'info', st: 'outline', icon: 'cloud_arrow_up_16_regular' },
+  processing: { k: 'lifecycle.processing', sem: 'info', st: 'tint', icon: 'arrow_sync_16_regular', spin: true },
+  archived: { k: 'lifecycle.archived', sem: 'success', st: 'tint', icon: 'archive_16_regular', act: 'view' },
+  stored: { k: 'lifecycle.stored', sem: 'success', st: 'outline', icon: 'cloud_checkmark_16_regular', act: 'archiveNow' },
+  observed: { k: 'lifecycle.observed', sem: 'warning', st: 'strong', icon: 'edit_16_filled', act: 'fix' },
+  held: { k: 'lifecycle.held', sem: 'info', st: 'tint', icon: 'person_clock_16_filled' },
+  error: { k: 'lifecycle.error', sem: 'danger', st: 'tint', icon: 'error_circle_16_filled', act: 'retry' },
+  rejected: { k: 'lifecycle.rejected', sem: 'neutral', st: 'tint', icon: 'prohibited_16_filled' },
+  purged: { k: 'lifecycle.purged', sem: 'neutral', st: 'outline', icon: 'delete_16_regular' }
+};
+const STATUS_ORDER = ['observed', 'error', 'created', 'held', 'processing', 'uploaded', 'stored', 'archived', 'rejected', 'purged'];
+const GROUPS = { all: null, action: ['observed', 'error', 'created'], inProgress: ['uploaded', 'processing', 'held'], saved: ['archived', 'stored'], closed: ['rejected', 'purged'] };
+const GROUP_KEYS = { all: 'grid.filter.all', action: 'grid.filter.action', inProgress: 'grid.filter.inProgress', saved: 'grid.filter.saved', closed: 'grid.filter.closed' };
+const ACT_KEYS = { upload: 'action.upload', view: 'action.view', archiveNow: 'action.archiveNow', fix: 'action.fix', retry: 'action.retry' };
+const UP = {
+  queued: { k: 'upload.queued', icon: 'clock_16_regular', c: 'var(--fu-color-status-neutral-fg)' },
+  authorizing: { k: 'upload.authorizing', icon: 'arrow_sync_16_regular', c: 'var(--fu-color-status-info-fg)', spin: true },
+  uploading: { k: 'upload.uploading', icon: 'arrow_upload_16_regular', c: 'var(--fu-color-primary-text)' },
+  verifying: { k: 'upload.verifying', icon: 'shield_checkmark_16_regular', c: 'var(--fu-color-status-info-fg)' },
+  uploaded: { k: 'upload.uploaded', icon: 'checkmark_circle_16_filled', c: 'var(--fu-color-status-success-fg)' },
+  error: { k: 'upload.error', icon: 'error_circle_16_filled', c: 'var(--fu-color-status-danger-fg)' },
+  canceled: { k: 'upload.canceled', icon: 'dismiss_circle_16_regular', c: 'var(--fu-color-status-neutral-fg)' },
+  rejected: { k: 'upload.rejected', icon: 'warning_16_filled', c: 'var(--fu-color-status-danger-fg)' }
+};
+const VARIANTS = [
+  ['fluent', 'Fluent nativo', 'Fluent nativo', 'Idéntico a los controles estándar de Power Apps y Dynamics 365.'],
+  ['institucional', 'Institucional', 'Institucional sobrio', 'Alto contraste, bordes finos, sin sombras. Para formularios densos.'],
+  ['moderno', 'Moderno', 'Moderno con tarjetas', 'Cada archivo como tarjeta, más aire. Para usuarios ocasionales.']
+];
+const FONTS = { default: null, system: 'system-ui, -apple-system, "Segoe UI", sans-serif', arial: 'Arial, "Helvetica Neue", Helvetica, sans-serif', georgia: 'Georgia, Cambria, "Times New Roman", serif', verdana: 'Verdana, Geneva, sans-serif' };
+const SWATCHES = ['#0F6CBD', '#1F4E79', '#2E5E4E', '#4A3F8C', '#8A2B3E'];
+const ftype = n => { const e = (n.split('.').pop() || '').toLowerCase(); return e === 'pdf' ? 'document_pdf_24_regular' : ['jpg', 'jpeg', 'png'].includes(e) ? 'image_24_regular' : e === 'mp4' ? 'video_24_regular' : 'document_24_regular'; };
+const splitName = n => { const i = n.lastIndexOf('.'); return i > 0 ? [n.slice(0, i), n.slice(i)] : [n, '']; };
+let ID = 1;
+
+function seedCanvas() {
+  const f = (name, size, st, x = {}) => ({ id: ID++, name, size, st, sent: 0, speed: 0, ...x });
+  return [
+    f('Contrato_marco_firmado.pdf', 2.4 * MB, 'queued'),
+    f('Cedula_identidad_frente.jpg', 1.1 * MB, 'authorizing', { frozen: true }),
+    f('Video_visita_domicilio_cliente_2026.mp4', 186 * MB, 'uploading', { frozen: true, sent: 78.1 * MB, speed: 38.2, t0: 0 }),
+    f('Estado_cuenta_marzo.pdf', 3.4 * MB, 'verifying', { frozen: true }),
+    f('Certificado_laboral.pdf', 820 * 1024, 'uploaded'),
+    f('Avaluo_inmueble_fotos.jpg', 5.6 * MB, 'error', { err: 'network' }),
+    f('Escritura_publica_notaria.pdf', 12.8 * MB, 'canceled'),
+    f('Flujo_caja_proyectado.xlsx', 204 * 1024, 'rejected', { reason: 'validation.type' }),
+    f('Video_recorrido_completo.mp4', 312 * MB, 'rejected', { reason: 'validation.size' })
+  ];
+}
+function seedMd() {
+  return [
+    { id: ID++, name: 'Comprobante_domicilio_octubre.pdf', size: 640 * 1024, st: 'queued', docType: 'Comprobante de domicilio' },
+    { id: ID++, name: 'Foto_firma_cliente.jpg', size: 1.9 * MB, st: 'queued', docType: '' }
+  ];
+}
+function seedRows() {
+  const U = ['Marta Rivas', 'Luis Ortega', 'Ana Pérez'];
+  const R = [
+    ['Contrato_credito_firmado.pdf', 'Contrato firmado', 'archived', 1.8 * MB, '2026-10-14', 0],
+    ['Cedula_identidad_frente.jpg', 'Cédula de identidad', 'observed', 640 * 1024, '2026-10-13', 1, 'detail.observed.missingField'],
+    ['Declaracion_renta_2025.pdf', 'Declaración de renta', 'held', 3.2 * MB, '2026-10-12', 0, 'detail.held.config'],
+    ['Avaluo_inmueble_informe.pdf', 'Avalúo de inmueble', 'processing', 8.6 * MB, '2026-10-16', 2],
+    ['Video_verificacion_cliente.mp4', 'Video de verificación', 'uploaded', 142 * MB, '2026-10-16', 2],
+    ['Escritura_publica_inmueble.pdf', 'Escritura pública', 'error', 12.4 * MB, '2026-10-15', 1, 'detail.error.technical'],
+    ['Comprobante_ingresos_agosto.pdf', 'Comprobante de ingresos', 'archived', 420 * 1024, '2026-10-10', 0],
+    ['Comprobante_ingresos_septiembre.pdf', 'Comprobante de ingresos', 'archived', 455 * 1024, '2026-10-10', 0],
+    ['Estado_cuenta_julio.pdf', 'Estado de cuenta', 'stored', 1.1 * MB, '2026-10-09', 1],
+    ['Estado_cuenta_agosto.pdf', 'Estado de cuenta', 'stored', 1.2 * MB, '2026-10-09', 1],
+    ['Foto_fachada_inmueble.jpg', 'Avalúo de inmueble', 'archived', 4.8 * MB, '2026-10-08', 2],
+    ['Certificado_laboral.pdf', 'Comprobante de ingresos', 'archived', 310 * 1024, '2026-10-08', 0],
+    ['Formulario_solicitud_credito.pdf', 'Solicitud de crédito', 'created', null, '2026-10-17', 2],
+    ['Autorizacion_consulta_buro.pdf', 'Autorización firmada', 'archived', 280 * 1024, '2026-10-07', 0],
+    ['Poliza_seguro_desgravamen.pdf', 'Póliza de seguro', 'processing', 2.2 * MB, '2026-10-17', 1],
+    ['Cedula_conyuge_reverso.jpg', 'Cédula de identidad', 'held', 590 * 1024, '2026-10-11', 1, 'detail.held.config'],
+    ['Archivo_adjunto_correo.pdf', 'Otro', 'rejected', 1.6 * MB, '2026-10-05', 2, 'detail.rejected.malware'],
+    ['Video_recorrido_inmueble.mp4', 'Video de verificación', 'uploaded', 88 * MB, '2026-10-17', 2],
+    ['Estado_cuenta_junio.pdf', 'Estado de cuenta', 'stored', 1.0 * MB, '2026-10-03', 1],
+    ['Contrato_garantia_firmado.pdf', 'Contrato firmado', 'archived', 2.6 * MB, '2026-10-02', 0],
+    ['Recibo_servicios_domicilio.pdf', 'Comprobante de domicilio', 'archived', 760 * 1024, '2026-10-02', 2],
+    ['Plano_inmueble_escaneado.pdf', 'Avalúo de inmueble', 'stored', 18.3 * MB, '2026-09-30', 0],
+    ['Solicitud_anterior_2024.pdf', 'Solicitud de crédito', 'purged', 1.4 * MB, '2026-09-12', 1],
+    ['Declaracion_patrimonio.pdf', 'Declaración de renta', 'rejected', 2.9 * MB, '2026-09-28', 0, 'detail.rejected.expired'],
+    ['Referencias_comerciales.pdf', 'Otro', 'archived', 530 * 1024, '2026-09-27', 0]
+  ];
+  const chain = { archived: ['uploaded', 'processing', 'archived'], stored: ['uploaded', 'stored'], observed: ['uploaded', 'processing', 'observed'], held: ['uploaded', 'processing', 'held'], processing: ['uploaded', 'processing'], uploaded: ['uploaded'], error: ['uploaded', 'processing', 'error'], created: ['created'], rejected: ['uploaded', 'processing', 'rejected'], purged: ['uploaded', 'processing', 'archived', 'purged'] };
+  const mk = (r, i) => ({ id: 'r' + i, name: r[0], doc: r[1], lc: r[2], size: r[3], date: r[4], user: U[r[5]], msg: r[6] || null, hist: chain[r[2]].map((lc, j) => ({ lc, date: r[4] === '2026-09-12' && lc === 'purged' ? '12/10/2026' : FU_DATE(r[4]) + ' ' + String(9 + j).padStart(2, '0') + ':' + String(10 + i).padStart(2, '0') })) });
+  const all = R.map(mk);
+  return { 0: [], 3: all.slice(0, 3).map(x => ({ ...x })), 25: all };
+}
+function FU_DATE(iso) { const p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+
+class Component extends DCLogic {
+  state = { ready: !!window.FU, view: 'canvas', variant: 'fluent', mode: 'light', density: 'comfortable', primary: null, fontKey: 'default', radius: null, panelOpen: true, mdWidth: 1200, gridCount: 25, sort: 'dateDesc', filter: 'all', sel: null, drag: null, inject: 'none', cq: seedCanvas(), mq: seedMd(), sets: seedRows(), fix: null, live: '', liveErr: '' };
+
+  componentDidMount() {
+    this._w = setInterval(() => { if (window.FU && FU.theme && customElements.get('fu-icon')) { clearInterval(this._w); this.setState({ ready: true }); } }, 40);
+    this._t = setInterval(() => this.tick(), 250);
+    this._timers = [];
+  }
+  componentWillUnmount() { clearInterval(this._w); clearInterval(this._t); (this._timers || []).forEach(clearTimeout); }
+
+  T(k, p) { return window.FU ? FU.T(k, p) : ''; }
+  say(msg, err) { this.setState(err ? { liveErr: msg } : { live: msg }); }
+  later(fn, ms) { this._timers.push(setTimeout(fn, ms)); }
+
+  busy(q) { return q.some(i => !i.frozen && (ACTIVE.includes(i.st) || (i.st === 'queued' && i.go))); }
+  tick() {
+    if (!this.state.ready) return;
+    const s = this.state, now = Date.now(), dt = Math.min(1, (now - (this._last || now)) / 1000); this._last = now;
+    if (!this.busy(s.cq) && !this.busy(s.mq)) return;
+    const fx = { live: [], err: [], done: [], inject: s.inject };
+    const cq = this.step(s.cq, 'canvas', dt, now, fx), mq = this.step(s.mq, 'md', dt, now, fx);
+    const patch = { cq, mq, inject: fx.inject };
+    if (fx.live.length) patch.live = fx.live.join(' ');
+    if (fx.err.length) patch.liveErr = fx.err.join(' ');
+    this.setState(patch);
+    fx.done.forEach(i => this.toGrid(i));
+  }
+  step(q, host, dt, now, fx) {
+    const T = (k, p) => this.T(k, p);
+    const out = q.map(i => ({ ...i }));
+    const fail = (i, e) => { i.st = 'error'; i.err = e; fx.err.push(T('a11y.error', { name: i.name, message: T('error.' + e) })); };
+    for (const i of out) {
+      if (i.frozen) continue;
+      if (i.st === 'authorizing' && now >= i.until) {
+        if (i.inj === 'permissionDenied') fail(i, 'permissionDenied');
+        else { i.st = 'uploading'; i.t0 = now; i.raw = 0; i.sent = 0; i.speed = 28 + Math.random() * 20; i.q = 0; fx.live.push(T('a11y.status', { name: i.name, status: T('upload.uploading') })); }
+      } else if (i.st === 'uploading') {
+        i.speed = Math.max(12, Math.min(72, i.speed + (Math.random() - 0.5) * 6));
+        i.raw += i.speed * 1e6 / 8 * dt;
+        i.sent = Math.min(i.size, Math.floor(i.raw / BLOCK) * BLOCK);
+        const frac = i.raw / i.size;
+        if (i.inj && i.inj !== 'permissionDenied' && frac >= i.failAt) { fail(i, i.inj); continue; }
+        const qn = Math.floor(Math.min(1, frac) * 4);
+        if (qn > i.q && qn < 4) { i.q = qn; fx.live.push(T('a11y.progress', { name: i.name, percent: qn * 25 })); }
+        if (i.raw >= i.size) { i.sent = i.size; i.st = 'verifying'; i.until = now + 900 + Math.random() * 500; fx.live.push(T('a11y.status', { name: i.name, status: T('upload.verifying') })); }
+      } else if (i.st === 'verifying' && now >= i.until) {
+        i.st = 'uploaded'; fx.live.push(T('a11y.status', { name: i.name, status: T('upload.uploaded') }));
+        if (host === 'md') fx.done.push(i);
+      }
+    }
+    for (const i of out) {
+      const act = out.filter(x => !x.frozen && ACTIVE.includes(x.st)).length;
+      if (i.st === 'queued' && i.go && !i.frozen && act < 2) {
+        i.st = 'authorizing'; i.go = false; i.until = now + 1000 + Math.random() * 2000; i.failAt = 0.3 + Math.random() * 0.3;
+        i.inj = fx.inject !== 'none' ? fx.inject : null; fx.inject = 'none';
+        fx.live.push(T('a11y.status', { name: i.name, status: T('upload.authorizing') }));
+      }
+    }
+    const was = q.some(i => !i.frozen && (ACTIVE.includes(i.st) || i.go)), now2 = out.some(i => !i.frozen && (ACTIVE.includes(i.st) || i.go));
+    if (was && !now2) { const ok = out.filter(i => i.st === 'uploaded').length, failed = out.filter(i => i.st === 'error').length; fx.live.push(T('a11y.done', { ok, failed })); }
+    return out;
+  }
+  toGrid(i) {
+    const d = new Date(), iso = d.toISOString().slice(0, 10), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const row = { id: 'u' + i.id, name: i.name, doc: i.docType || 'Otro', lc: 'uploaded', size: i.size, date: iso, user: 'Ana Pérez', msg: null, hist: [{ lc: 'uploaded', date: FU_DATE(iso) + ' ' + hm }] };
+    this.setState(s => ({ sets: { ...s.sets, [s.gridCount]: [row, ...s.sets[s.gridCount]] } }));
+    this.later(() => this.setLc(row.id, 'processing'), 2500);
+    this.later(() => this.setLc(row.id, 'archived'), 6000);
+  }
+  setLc(id, lc, extra = {}) {
+    const d = new Date(), stamp = FU_DATE(d.toISOString().slice(0, 10)) + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    let name = '';
+    this.setState(s => {
+      const sets = {};
+      Object.keys(s.sets).forEach(k => { sets[k] = s.sets[k].map(r => { if (r.id !== id) return r; name = r.name; return { ...r, lc, msg: null, ...extra, hist: [...r.hist, { lc, date: stamp }] }; }); });
+      return { sets };
+    }, () => name && this.say(this.T('a11y.status', { name, status: this.T(LC[lc].k) })));
+  }
+
+  qKey(host) { return host === 'md' ? 'mq' : 'cq'; }
+  upd(host, fn) { const k = this.qKey(host); this.setState(s => ({ [k]: fn(s[k]) })); }
+  addFiles(host, files) {
+    const C = FU.config, T = (k, p) => this.T(k, p);
+    let added = 0, rej = 0;
+    this.upd(host, q => {
+      const next = [...q];
+      files.forEach(f => {
+        const ext = (f.name.split('.').pop() || '').toLowerCase();
+        const live = next.filter(i => i.st !== 'rejected');
+        let reason = null;
+        if (live.length >= C.maxFiles) reason = 'validation.batchFull';
+        else if (!C.exts.includes(ext)) reason = 'validation.type';
+        else if (f.size > C.maxSize) reason = 'validation.size';
+        else if (f.size === 0) reason = 'validation.empty';
+        else if (live.some(i => i.name === f.name && i.size === f.size)) reason = 'validation.duplicate';
+        next.push({ id: ID++, name: f.name, size: f.size, st: reason ? 'rejected' : 'queued', reason, docType: host === 'md' ? (f.docType || '') : undefined, sent: 0 });
+        reason ? rej++ : added++;
+      });
+      return next;
+    });
+    const msgs = []; if (added) msgs.push(T('a11y.added', { count: added })); if (rej) msgs.push(T('a11y.rejected', { count: rej }));
+    this.say(msgs.join(' '));
+  }
+  browse(host) { const el = host === 'md' ? this._inM : this._inC; if (el) el.click(); }
+  setItem(host, id, patch) { this.upd(host, q => q.map(i => i.id === id ? { ...i, ...patch } : i)); }
+  removeItem(host, id) { this.upd(host, q => q.filter(i => i.id !== id)); }
+  retry(host, id) { this.setItem(host, id, { st: 'queued', go: true, err: null, sent: 0, raw: 0, frozen: false }); }
+  cancel(host, id) { const it = this.state[this.qKey(host)].find(i => i.id === id); this.setItem(host, id, { st: 'canceled', go: false, frozen: false }); if (it) this.say(this.T('a11y.status', { name: it.name, status: this.T('upload.canceled') })); }
+  uploadAll(host) {
+    this.upd(host, q => q.map(i => {
+      if (i.st !== 'queued') return i;
+      if (host === 'md' && !i.docType) return { ...i, docErr: true };
+      return { ...i, go: true, frozen: false };
+    }));
+  }
+
+  openRow(id) { this.setState({ sel: id, fix: null }); }
+  rowAction(r, act) {
+    if (act === 'view' || act === 'fix') return this.openRow(r.id);
+    if (act === 'archiveNow') { this.setLc(r.id, 'processing'); this.later(() => this.setLc(r.id, 'archived'), 3500); }
+    if (act === 'retry') { this.setLc(r.id, 'processing'); this.later(() => this.setLc(r.id, 'archived'), 3500); }
+    if (act === 'upload') { this.setLc(r.id, 'uploaded', { size: 1.3 * MB }); this.later(() => this.setLc(r.id, 'processing'), 2500); this.later(() => this.setLc(r.id, 'archived'), 6000); }
+  }
+
+  sampleFiles(host) {
+    const s = [
+      { name: 'Comprobante_ingresos_sept.pdf', size: 3.1 * MB, docType: 'Comprobante de ingresos' },
+      { name: 'Foto_fachada_inmueble.jpg', size: 6.4 * MB, docType: '' },
+      { name: 'Video_verificacion_identidad.mp4', size: 58 * MB, docType: 'Video de verificación' },
+      { name: 'Comprobante_ingresos_sept.pdf', size: 3.1 * MB },
+      { name: 'Planilla_flujo_caja.xlsx', size: 210 * 1024 },
+      { name: 'Video_visita_sin_editar.mp4', size: 318 * MB }
+    ];
+    this.addFiles(host, s);
+  }
+
+  chipVM(lc) {
+    const L = LC[lc], b = 'var(--fu-color-status-' + L.sem + '-';
+    return { label: this.T(L.k), desc: this.T(L.k + '.desc'), icon: L.icon, spin: L.spin ? 'true' : 'false',
+      bg: L.st === 'tint' || L.st === 'strong' ? b + 'bg)' : 'var(--fu-color-surface)', fg: b + 'fg)', bc: L.st === 'strong' ? b + 'fg)' : b + 'border)',
+      bs: L.st === 'dashed' ? 'dashed' : 'solid', px: this.state.variant === 'moderno' ? '8px' : '6px' };
+  }
+
+  itemVM(i, host, key) {
+    const T = (k, p) => this.T(k, p), U = UP[i.st], C = FU.config;
+    const [base, ext] = splitName(i.name);
+    let detail = '', detailWide = '', pct = '', hasPct = false, showBar = false, barMode = 'det', barVal = 0, barText = '', dcolor = 'var(--fu-color-text-secondary)';
+    if (i.st === 'uploading') {
+      const p = i.size ? (i.sent / i.size) * 100 : 0;
+      detail = T('upload.uploading.detail', { sent: FU.fmtSize(i.sent), total: FU.fmtSize(i.size), speed: '', eta: '' }).replace(/ · {2}· $/, '').replace(/ ·  · $/, '');
+      detail = FU.fmtSize(i.sent) + ' de ' + FU.fmtSize(i.size);
+      const elapsed = i.frozen ? 10 : (Date.now() - (i.t0 || 0)) / 1000;
+      const rem = (i.size - i.sent) / (i.speed * 1e6 / 8);
+      const eta = elapsed < 3 ? T('upload.eta.calculating') : rem < 60 ? T('upload.eta.seconds', { n: Math.max(1, Math.ceil(rem)) }) : T('upload.eta.minutes', { n: Math.ceil(rem / 60) });
+      detailWide = ' · ' + FU.fmtMbps(i.speed) + ' · ' + eta;
+      pct = FU.fmtPct(p); hasPct = true; showBar = true; barVal = p; barText = detail;
+    } else if (i.st === 'authorizing' || i.st === 'verifying') { showBar = true; barMode = 'ind'; }
+    else if (i.st === 'error') { detail = T('error.' + i.err); dcolor = 'var(--fu-color-status-danger-fg)'; }
+    else if (i.st === 'rejected') { detail = T(i.reason, { types: C.types, size: FU.fmtSize(i.size), maxSize: C.maxSizeLabel, maxFiles: C.maxFiles }); dcolor = 'var(--fu-color-status-danger-fg)'; }
+    const A = (icon, aria, tip, run) => ({ icon, aria: aria + ': ' + i.name, tip, run });
+    const rm = A('dismiss_20_regular', T('action.remove'), T('tooltip.remove'), () => this.removeItem(host, i.id));
+    const actions = {
+      queued: [rm], authorizing: [A('dismiss_circle_16_regular', T('action.cancel'), T('tooltip.cancel'), () => this.cancel(host, i.id))],
+      uploading: [A('dismiss_circle_16_regular', T('action.cancel'), T('tooltip.cancel'), () => this.cancel(host, i.id))], verifying: [],
+      uploaded: [rm], canceled: [A('arrow_clockwise_20_regular', T('action.retry'), T('tooltip.retry'), () => this.retry(host, i.id)), rm],
+      error: i.err === 'permissionDenied' ? [rm] : [A('arrow_clockwise_20_regular', T('action.retry'), T('tooltip.retry'), () => this.retry(host, i.id)), rm],
+      rejected: [rm]
+    }[i.st];
+    const isMd = host === 'md';
+    const blocks = this.state.variant === 'moderno' ? Math.ceil(i.size / BLOCK) : 0;
+    return { name: i.name, base, ext, nameId: 'n-' + key + '-' + i.id, size: FU.fmtSize(i.size), ficon: ftype(i.name), slabel: T(U.k), sicon: U.icon, spin: U.spin ? 'true' : 'false', scolor: U.c,
+      detail, detailWide, detailFull: detail + detailWide, dcolor, pct, hasPct, showBar, barMode, barVal: String(barVal), barText, blocks: String(blocks),
+      ws: i.st === 'error' || i.st === 'rejected' ? 'normal' : 'nowrap', l2align: i.st === 'error' || i.st === 'rejected' ? 'flex-start' : 'center', rowBg: i.st === 'rejected' ? 'var(--fu-color-status-danger-bg)' : 'var(--fu-color-surface)', actions,
+      docEditable: isMd && i.st === 'queued', docText: isMd && i.st !== 'queued' && i.st !== 'rejected' && !!i.docType, docType: i.docType || '',
+      docErr: !!(i.docErr && !i.docType), docInvalid: i.docErr && !i.docType ? 'true' : 'false', docBorder: i.docErr && !i.docType ? 'var(--fu-color-status-danger-fg)' : 'var(--fu-color-border-strong)',
+      setDoc: e => this.setItem(host, i.id, { docType: e.target.value, docErr: false }) };
+  }
+
+  queueVM(q, host) {
+    const T = (k, p) => this.T(k, p);
+    const items = q, nonRej = items.filter(i => i.st !== 'rejected');
+    const active = items.filter(i => ACTIVE.includes(i.st)).length, queued = items.filter(i => i.st === 'queued').length;
+    const ok = items.filter(i => i.st === 'uploaded').length, failed = items.filter(i => i.st === 'error').length;
+    let sum;
+    if (active) sum = T('queue.summary.uploading', { done: ok, total: nonRej.filter(i => i.st !== 'canceled').length });
+    else if (queued) sum = T('queue.summary.ready', { count: queued });
+    else if (failed) sum = T('queue.summary.mixed', { ok, failed });
+    else sum = T('queue.summary.done', { count: ok });
+    const missing = host === 'md' ? items.filter(i => i.st === 'queued' && !i.docType).length : 0;
+    return { sum, title: T('queue.title', { count: items.length }), canClear: items.some(i => i.st === 'uploaded' || i.st === 'canceled'), canRetryAll: failed > 0 && items.some(i => i.st === 'error' && i.err !== 'permissionDenied'),
+      noQueued: queued === 0, missing, full: nonRej.length >= FU.config.maxFiles, count: nonRej.length };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const seg = (list, cur, key, extra) => list.map(([id, label, full, desc]) => ({ label, full, desc, on: id === cur ? 'true' : 'false', bg: id === cur ? '#1B1B1B' : '#fff', fg: id === cur ? '#fff' : '#1B1B1B', cardBd: id === cur ? '2px solid #1B1B1B' : '1px solid #DADADA', pick: () => this.setState({ [key]: id, ...(extra || {}) }) }));
+    const base = {
+      viewTabs: [['canvas', 'Canvas'], ['md', 'Model-driven'], ['r320', '320 px'], ['compare', 'Comparar variantes']].map(([id, label]) => ({ label, on: id === s.view ? 'true' : 'false', line: id === s.view ? '#1B1B1B' : 'transparent', w: id === s.view ? 600 : 400, pick: () => this.setState({ view: id }) })),
+      variantOpts: seg(VARIANTS, s.variant, 'variant'), modeOpts: seg([['light', 'Claro'], ['dark', 'Oscuro']], s.mode, 'mode'), densOpts: seg([['compact', 'Compacta'], ['comfortable', 'Cómoda']], s.density, 'density'),
+      widthOpts: seg([[1200, '1200'], [760, '760']], s.mdWidth, 'mdWidth'), countOpts: seg([[0, '0'], [3, '3'], [25, '25']], s.gridCount, 'gridCount', { sel: null, filter: 'all' }),
+      panelOpen: s.panelOpen, panelOpenStr: s.panelOpen ? 'true' : 'false', togglePanel: () => this.setState({ panelOpen: !s.panelOpen }),
+      stageBg: s.mode === 'dark' ? '#0E0E0E' : '#ECECEB', stageInk: s.mode === 'dark' ? '#F0F0F0' : '#1B1B1B', stageInk2: s.mode === 'dark' ? '#B8B8B8' : '#5F5F5F', stageLine: s.mode === 'dark' ? '#4A4A4A' : '#B5B5B5',
+      swatches: SWATCHES.map(c => ({ c, on: (s.primary || '#0F6CBD') === c ? 'true' : 'false', ring: (s.primary || '#0F6CBD') === c ? '0 0 0 2px #1B1B1B' : '0 0 0 1px #CFCFCF', pick: () => this.setState({ primary: c === '#0F6CBD' ? null : c }) })),
+      primaryVal: s.primary || '#0F6CBD', onPrimary: e => this.setState({ primary: e.target.value }),
+      onPrimaryNote: '', fontKey: s.fontKey, onFont: e => this.setState({ fontKey: e.target.value }),
+      radiusVal: s.radius == null ? (s.variant === 'fluent' ? 4 : s.variant === 'institucional' ? 2 : 10) : s.radius, onRadius: e => this.setState({ radius: +e.target.value }),
+      inject: s.inject, onInject: e => this.setState({ inject: e.target.value }),
+      addSamples: () => { this.sampleFiles('canvas'); this.sampleFiles('md'); },
+      resetData: () => this.setState({ cq: seedCanvas(), mq: seedMd(), sets: seedRows(), sel: null, filter: 'all' }),
+      emptyQueues: () => this.setState({ cq: [], mq: [] }),
+      resetCustom: () => this.setState({ primary: null, fontKey: 'default', radius: null, density: 'comfortable', mode: 'light' }),
+      refC: el => { this._inC = el; }, refM: el => { this._inM = el; },
+      pickC: e => { this.addFiles('canvas', [...e.target.files].map(f => ({ name: f.name, size: f.size }))); e.target.value = ''; },
+      pickM: e => { this.addFiles('md', [...e.target.files].map(f => ({ name: f.name, size: f.size }))); e.target.value = ''; },
+      live: s.live, liveErr: s.liveErr, docOpts: DOCS, filter: s.filter, sort: s.sort, density: s.density,
+      onFilterSel: e => this.setState({ filter: e.target.value }), onSort: e => this.setState({ sort: e.target.value }), onDensity: e => this.setState({ density: e.target.value }),
+      sortDate: () => this.setState({ sort: s.sort === 'dateDesc' ? 'dateAsc' : 'dateDesc' }), sortStatus: () => this.setState({ sort: 'status' }),
+      clearFilter: () => this.setState({ filter: 'all' }), closePanel: () => this.setState({ sel: null, fix: null }),
+      panelKey: e => { if (e.key === 'Escape') this.setState({ sel: null, fix: null }); },
+      radiusLabel: (s.radius == null ? 'de la variante · ' : '') + (s.radius == null ? (s.variant === 'fluent' ? 4 : s.variant === 'institucional' ? 2 : 10) : s.radius) + ' px',
+      frames: [], p: { chip: {}, data: [], hist: [], actions: [] }
+    };
+    if (!s.ready || !window.FU || !FU.theme) return base;
+    const T = (k, p) => this.T(k, p), C = FU.config;
+    if (s.primary) { const r = FU.contrast(s.primary, '#FFFFFF'); base.onPrimaryNote = r >= 4.5 ? 'Texto blanco: ' + r.toFixed(1) + ':1.' : 'Contraste con blanco ' + r.toFixed(1) + ':1 → se usa texto negro.'; }
+
+    const defs = { canvas: [['c360', 'canvas', 360], ['c800', 'canvas', 800]], md: [['md', 'md', s.mdWidth]], r320: [['c320', 'canvas', 320], ['m320', 'md', 320]], compare: VARIANTS.map(v => ['cmp-' + v[0], 'canvas', 360, v[0]]) }[s.view];
+    const rowsAll = s.sets[s.gridCount] || [];
+    const counts = {}; Object.keys(GROUPS).forEach(g => counts[g] = GROUPS[g] ? rowsAll.filter(r => GROUPS[g].includes(r.lc)).length : rowsAll.length);
+    let rows = GROUPS[s.filter] ? rowsAll.filter(r => GROUPS[s.filter].includes(r.lc)) : rowsAll.slice();
+    rows.sort((a, b) => s.sort === 'status' ? (STATUS_ORDER.indexOf(a.lc) - STATUS_ORDER.indexOf(b.lc)) || b.date.localeCompare(a.date) : s.sort === 'dateAsc' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
+    const selRow = rowsAll.find(r => r.id === s.sel) || null;
+
+    base.frames = defs.map(([key, host, w, vOverride]) => {
+      const variant = vOverride || s.variant, isMd = host === 'md';
+      const vars = FU.theme({ variant, mode: s.mode, density: s.density, primary: s.primary, font: FONTS[s.fontKey], radius: s.radius, width: w, panelOpen: isMd && !!selRow });
+      const q = isMd ? s.mq : s.cq, qv = this.queueVM(q, host), drag = s.drag === key;
+      const label = vOverride ? VARIANTS.find(v => v[0] === variant)[2] + ' · ' + w + ' px' : (isMd ? 'Model-driven · ' + w + ' px' : 'App canvas · ' + w + ' px');
+      const fr = {
+        key, wpx: w + 'px', isMd, label, sub: isMd ? 'Subcuadrícula de Adjuntos en el formulario' : 'Solo sube; el estado lo muestra la app', hasWidthOpts: isMd && s.view === 'md',
+        vars, ctrlBg: isMd ? 'var(--fu-color-surface-alt)' : 'var(--fu-color-bg)',
+        cardBg: isMd ? 'var(--fu-color-surface)' : 'transparent', cardBd: isMd ? 'var(--fu-border-width) solid var(--fu-color-border)' : '0', cardPad: isMd ? 'var(--fu-space-row-x)' : '0',
+        dzFull: q.length === 0, dzCompact: q.length > 0, full: qv.full,
+        dzAria: T('dropzone.aria', { types: C.types, maxSize: C.maxSizeLabel }), hintId: 'hint-' + key,
+        hint: T('dropzone.hint', { types: C.types, maxSize: C.maxSizeLabel, maxFiles: C.maxFiles }),
+        dzTitle: drag ? T('dropzone.dragActive') : qv.full ? T('dropzone.full', { maxFiles: C.maxFiles }) : T('dropzone.title'),
+        dzTitleColor: drag ? 'var(--fu-color-primary-text)' : 'var(--fu-color-text)',
+        dzCompactLead: drag ? T('dropzone.dragActive') : qv.full ? T('dropzone.full', { maxFiles: C.maxFiles }) : T('dropzone.compact').replace('selecciona más archivos', ''),
+        dzCompactLink: drag || qv.full ? '' : 'selecciona más archivos', linkColor: 'var(--fu-color-primary-text)',
+        countLabel: T('dropzone.compactCount', { count: qv.count, maxFiles: C.maxFiles }),
+        dzBorder: drag ? '2px solid var(--fu-color-primary)' : 'var(--fu-border-width-dropzone) dashed var(--fu-color-border-strong)',
+        dzBg: drag ? 'var(--fu-color-primary-subtle)' : 'var(--fu-color-surface-alt)',
+        browseBg: qv.full ? 'var(--fu-color-surface-alt)' : 'var(--x-browse-bg)', browseFg: qv.full ? 'var(--fu-color-text-disabled)' : 'var(--x-browse-fg)',
+        browse: e => { e.stopPropagation(); if (!qv.full) this.browse(host); },
+        dragOver: e => { e.preventDefault(); if (s.drag !== key) this.setState({ drag: key }); },
+        dragLeave: e => { if (!e.currentTarget.contains(e.relatedTarget)) this.setState({ drag: null }); },
+        drop: e => { e.preventDefault(); this.setState({ drag: null }); this.addFiles(host, [...e.dataTransfer.files].map(f => ({ name: f.name, size: f.size }))); },
+        hasQueue: q.length > 0, qTitle: qv.title, qSummary: qv.sum, needsDoc: qv.missing > 0, needsDocText: T('queue.summary.needsDocType', { count: qv.missing }),
+        canClear: qv.canClear, canRetryAll: qv.canRetryAll, noQueued: qv.noQueued,
+        upBg: qv.noQueued ? 'var(--fu-color-surface-alt)' : 'var(--fu-color-primary)', upFg: qv.noQueued ? 'var(--fu-color-text-disabled)' : 'var(--fu-color-on-primary)', upCursor: qv.noQueued ? 'not-allowed' : 'pointer',
+        clearDone: () => this.upd(host, qq => qq.filter(i => i.st !== 'uploaded' && i.st !== 'canceled')),
+        retryAll: () => this.upd(host, qq => qq.map(i => i.st === 'error' && i.err !== 'permissionDenied' ? { ...i, st: 'queued', go: true, err: null, sent: 0 } : i)),
+        uploadAll: () => this.uploadAll(host),
+        items: q.map(i => this.itemVM(i, host, key))
+      };
+      if (isMd) {
+        const M = variant === 'moderno', cards = w < 600;
+        fr.gridCount = rowsAll.length; fr.rowCount = String(rows.length + 1); fr.gridPad = cards ? '8px' : M ? '8px' : '0';
+        fr.gridEmpty = rowsAll.length === 0; fr.filterEmpty = rowsAll.length > 0 && rows.length === 0;
+        fr.filters = Object.keys(GROUPS).map(g => ({ id: g, label: T(GROUP_KEYS[g]), optLabel: T(GROUP_KEYS[g]) + ' (' + counts[g] + ')', n: String(counts[g]), on: s.filter === g ? 'true' : 'false',
+          bg: s.filter === g ? 'var(--fu-color-primary-subtle)' : 'var(--fu-color-surface)', fg: s.filter === g ? 'var(--fu-color-primary-text)' : 'var(--fu-color-text)',
+          bd: s.filter === g ? 'var(--fu-color-primary-text)' : 'var(--fu-color-border)', w: s.filter === g ? 600 : 400, nfg: s.filter === g ? 'var(--fu-color-primary-text)' : 'var(--fu-color-text-secondary)', pick: () => this.setState({ filter: g }) }));
+        fr.dateSort = s.sort === 'dateDesc' ? 'descending' : s.sort === 'dateAsc' ? 'ascending' : 'none';
+        fr.dateSortIcon = s.sort === 'dateAsc' ? 'arrow_sort_up_16_regular' : s.sort === 'dateDesc' ? 'arrow_sort_down_16_regular' : '';
+        fr.statusSort = s.sort === 'status' ? 'ascending' : 'none'; fr.statusSortIcon = s.sort === 'status' ? 'arrow_sort_down_16_regular' : '';
+        const firstTab = rows.findIndex(r => r.id === s.sel);
+        fr.rows = rows.map((r, ix) => {
+          const L = LC[r.lc], [b, e] = splitName(r.name), sem = L.sem, hasMsg = !!r.msg && ['observed', 'held', 'error', 'rejected'].includes(r.lc);
+          const act = L.act && L.act !== 'view' ? L.act : (L.act === 'view' ? 'view' : null);
+          return { id: r.id, name: r.name, base: b, ext: e, ficon: ftype(r.name).replace('_24_', '_24_'), doc: r.doc, chip: this.chipVM(r.lc), size: FU.fmtSize(r.size), date: FU.fmtDate(r.date), user: r.user,
+            hasMsg, msg: hasMsg ? T(r.msg) : '', msgColor: 'var(--fu-color-status-' + sem + '-fg)', msgIcon: r.lc === 'held' ? 'info_16_filled' : r.lc === 'observed' ? 'edit_16_filled' : r.lc === 'error' ? 'error_circle_16_filled' : 'prohibited_16_filled',
+            stripe: r.lc === 'observed' ? 'var(--fu-color-status-warning-fg)' : 'transparent', nameW: r.id === s.sel ? 600 : 400,
+            hasPrim: !!act, primLabel: act ? T(ACT_KEYS[act]) : '', primRun: ev => { ev.stopPropagation(); this.rowAction(r, act); },
+            bg: r.id === s.sel ? 'var(--fu-color-primary-subtle)' : 'var(--fu-color-surface)', ariaSel: r.id === s.sel ? 'true' : 'false',
+            tab: (firstTab === -1 ? ix === 0 : ix === firstTab) ? '0' : '-1',
+            open: ev => { ev.stopPropagation(); this.openRow(r.id); },
+            key: ev => {
+              const list = [...ev.currentTarget.parentElement.querySelectorAll('[data-row]')], k = list.indexOf(ev.currentTarget);
+              if (ev.key === 'ArrowDown' && list[k + 1]) { ev.preventDefault(); list[k + 1].focus(); }
+              else if (ev.key === 'ArrowUp' && list[k - 1]) { ev.preventDefault(); list[k - 1].focus(); }
+              else if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); this.openRow(r.id); }
+            } };
+        });
+        fr.hasPanel = !!selRow; fr.panelTitleId = 'pt-' + key;
+      }
+      return fr;
+    });
+
+    if (selRow) {
+      const r = selRow, L = LC[r.lc], sem = L.sem, fix = s.fix || { doc: r.doc, exp: '', tried: false };
+      const hasMsg = !!r.msg, isObs = r.lc === 'observed', expBad = fix.tried && !fix.exp;
+      const btn = (label, run, primary) => ({ label, run, bg: primary ? 'var(--fu-color-primary)' : 'var(--fu-color-surface)', fg: primary ? 'var(--fu-color-on-primary)' : 'var(--fu-color-text)', bd: primary ? 'transparent' : 'var(--fu-color-border)' });
+      const acts = [];
+      if (isObs) { acts.push(btn(T('panel.cancel'), () => this.setState({ sel: null, fix: null }))); acts.push(btn(T('panel.save'), () => {
+        if (!fix.exp) return this.setState({ fix: { ...fix, tried: true } });
+        this.setLc(r.id, 'processing', { doc: fix.doc }); this.setState({ fix: null }); this.later(() => this.setLc(r.id, 'archived'), 3500);
+      }, true)); }
+      if (r.lc === 'archived') acts.push(btn(T('action.view'), () => this.say(r.name + ': ' + T('action.view')), true));
+      if (r.lc === 'stored') { acts.push(btn(T('action.view'), () => this.say(r.name + ': ' + T('action.view')))); acts.push(btn(T('action.archiveNow'), () => this.rowAction(r, 'archiveNow'), true)); }
+      if (r.lc === 'error') acts.push(btn(T('action.retry'), () => this.rowAction(r, 'retry'), true));
+      if (r.lc === 'created') acts.push(btn(T('action.upload'), () => this.rowAction(r, 'upload'), true));
+      const msgText = r.lc === 'purged' ? T('detail.purged.retention', { date: r.hist[r.hist.length - 1].date.split(' ')[0] }) : hasMsg ? T(r.msg) : '';
+      base.p = { name: r.name, ficon: ftype(r.name), chip: this.chipVM(r.lc), hasMsg: !!msgText, msg: msgText,
+        msgBg: 'var(--fu-color-status-' + sem + '-bg)', msgBd: 'var(--fu-color-status-' + sem + '-border)', msgFg: 'var(--fu-color-status-' + sem + '-fg)',
+        msgIcon: r.lc === 'held' ? 'info_16_filled' : r.lc === 'observed' ? 'edit_16_filled' : r.lc === 'error' ? 'error_circle_16_filled' : r.lc === 'purged' ? 'delete_16_regular' : 'prohibited_16_filled',
+        isObserved: isObs, fixDoc: fix.doc, fixExp: fix.exp, expInvalid: expBad ? 'true' : 'false', showExpErr: expBad, expBorder: expBad ? 'var(--fu-color-status-danger-fg)' : 'var(--fu-color-border-strong)',
+        setDoc: e => this.setState({ fix: { ...fix, doc: e.target.value } }), setExp: e => this.setState({ fix: { ...fix, exp: e.target.value } }),
+        data: [{ k: T('file.docType.label'), v: r.doc }, { k: T('panel.field.size'), v: FU.fmtSize(r.size) }, { k: T('panel.field.date'), v: FU.fmtDate(r.date) }, { k: T('panel.field.user'), v: r.user }],
+        hist: r.hist.slice().reverse().map(h => ({ label: T(LC[h.lc].k), date: h.date, dot: 'var(--fu-color-status-' + LC[h.lc].sem + '-fg)' })),
+        actions: acts, hasActions: acts.length > 0 };
+    }
+    return base;
+  }
+}
+</script>
+</body>
+</html>

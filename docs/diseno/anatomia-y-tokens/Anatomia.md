@@ -16,7 +16,7 @@ Versión 0.1 · Medidas en px. Formato `compacta / cómoda`. Si una medida cambi
 ## 1. Zona de carga (`Dropzone`)
 
 **Partes**
-1. Contenedor — `role="button"`, `tabindex=0`, `aria-describedby` → pista. Borde punteado `--fu-border-width-dropzone` `--fu-color-border-strong`, radio `--fu-radius-lg`, fondo `--fu-color-surface-alt`.
+1. Contenedor — `role="region"` con `aria-label` (`dropzone.aria`); clic en cualquier punto abre el selector. El botón (4) es la única parada de tabulación (evita controles interactivos anidados). Borde punteado `--fu-border-width-dropzone` `--fu-color-border-strong`, radio `--fu-radius-lg`, fondo `--fu-color-surface-alt`.
 2. Ícono — `ArrowUpload` 24 (M: 32, en círculo 48 `--fu-color-primary-subtle`).
 3. Título — `dropzone.title`, `--fu-font-size-subtitle`, semibold.
 4. Botón — `dropzone.browse`, secundario (F, I) / primario (M), alto `--fu-size-control`.
@@ -32,7 +32,7 @@ Versión 0.1 · Medidas en px. Formato `compacta / cómoda`. Si una medida cambi
 | Disposición | centrada vertical | horizontal: ícono · texto · botón a la derecha (≥ 480) | centrada vertical |
 
 **Estados**: reposo · hover (fondo `surface-hover`) · foco · arrastrando encima (borde sólido 2 `--fu-color-primary`, fondo `primary-subtle`, título → `dropzone.dragActive`) · lote lleno (`dropzone.full`, botón deshabilitado) · deshabilitada (`dropzone.disabled`, `aria-disabled`).
-**Compacta con archivos en cola**: la zona se reduce a una línea (alto `--fu-size-control` + 16) con ícono, "Arrastra o selecciona más archivos" y pista.
+**Compacta con archivos en cola**: la zona se reduce a una línea (alto `--fu-size-control` + 16) con ícono, `dropzone.compact` y `dropzone.compactCount`.
 **< 480**: siempre vertical; botón ancho completo; pista en 2 líneas como máximo.
 
 ## 2. Barra de cola (`QueueToolbar`)
