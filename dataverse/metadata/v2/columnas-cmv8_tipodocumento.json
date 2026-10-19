@@ -1,0 +1,747 @@
+[
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "MaxLength": 20,
+    "FormatName": {
+      "Value": "Text"
+    },
+    "SchemaName": "cmv8_Codigo",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Código",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "ID corto del tipo (derivado al descubrir desde la propiedad convencional o el prefijo del nombre visible; editable).",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.PicklistAttributeMetadata",
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.OptionSetMetadata",
+      "IsGlobal": false,
+      "OptionSetType": "Picklist",
+      "Options": [
+        {
+          "Value": 1,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Descubierto",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        },
+        {
+          "Value": 2,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Local",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "SchemaName": "cmv8_OrigenTipo",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Origen del tipo",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "ApplicationRequired"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Descubierto: viene de Content Manager y tiene ItemType. Local: lo creó el administrador, no tiene ItemType y su destino es Solo Blob.",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "DefaultFormValue": 2
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "MaxLength": 400,
+    "FormatName": {
+      "Value": "Text"
+    },
+    "SchemaName": "cmv8_TipoCmisId",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Id del tipo CMIS",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Id de wire del ItemType en Content Manager. Solo descubiertos.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "MaxLength": 200,
+    "FormatName": {
+      "Value": "Text"
+    },
+    "SchemaName": "cmv8_LocalName",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Nombre local CMIS",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "localName que publica Content Manager. Solo descubiertos.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.BooleanAttributeMetadata",
+    "DefaultValue": false,
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.BooleanOptionSetMetadata",
+      "TrueOption": {
+        "Value": 1,
+        "Label": {
+          "@odata.type": "Microsoft.Dynamics.CRM.Label",
+          "LocalizedLabels": [
+            {
+              "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+              "Label": "Sí",
+              "LanguageCode": 3082
+            }
+          ]
+        }
+      },
+      "FalseOption": {
+        "Value": 0,
+        "Label": {
+          "@odata.type": "Microsoft.Dynamics.CRM.Label",
+          "LocalizedLabels": [
+            {
+              "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+              "Label": "No",
+              "LanguageCode": 3082
+            }
+          ]
+        }
+      }
+    },
+    "SchemaName": "cmv8_Versionable",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Versionable",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Si el tipo es versionable en Content Manager.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.BooleanAttributeMetadata",
+    "DefaultValue": false,
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.BooleanOptionSetMetadata",
+      "TrueOption": {
+        "Value": 1,
+        "Label": {
+          "@odata.type": "Microsoft.Dynamics.CRM.Label",
+          "LocalizedLabels": [
+            {
+              "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+              "Label": "Sí",
+              "LanguageCode": 3082
+            }
+          ]
+        }
+      },
+      "FalseOption": {
+        "Value": 0,
+        "Label": {
+          "@odata.type": "Microsoft.Dynamics.CRM.Label",
+          "LocalizedLabels": [
+            {
+              "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+              "Label": "No",
+              "LanguageCode": 3082
+            }
+          ]
+        }
+      }
+    },
+    "SchemaName": "cmv8_AusenteEnServidor",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Ausente en el servidor",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Content Manager dejó de publicar este tipo. Se marca, no se borra.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.BooleanAttributeMetadata",
+    "DefaultValue": false,
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.BooleanOptionSetMetadata",
+      "TrueOption": {
+        "Value": 1,
+        "Label": {
+          "@odata.type": "Microsoft.Dynamics.CRM.Label",
+          "LocalizedLabels": [
+            {
+              "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+              "Label": "Sí",
+              "LanguageCode": 3082
+            }
+          ]
+        }
+      },
+      "FalseOption": {
+        "Value": 0,
+        "Label": {
+          "@odata.type": "Microsoft.Dynamics.CRM.Label",
+          "LocalizedLabels": [
+            {
+              "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+              "Label": "No",
+              "LanguageCode": 3082
+            }
+          ]
+        }
+      }
+    },
+    "SchemaName": "cmv8_Revisado",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Revisado",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "El administrador revisó las decisiones de este tipo. Vuelve a No cuando ActualizarTipos detecta cambios.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.MemoAttributeMetadata",
+    "MaxLength": 4000,
+    "FormatName": {
+      "Value": "Text"
+    },
+    "SchemaName": "cmv8_Cambios",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Cambios",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Lista de cambios detectados por la última actualización (propiedad nueva, largo distinto, propiedad que desapareció).",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.DateTimeAttributeMetadata",
+    "Format": "DateAndTime",
+    "DateTimeBehavior": {
+      "Value": "UserLocal"
+    },
+    "SchemaName": "cmv8_DescubiertoEn",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Descubierto en",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Última vez que la Function leyó este tipo de Content Manager.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.BooleanAttributeMetadata",
+    "DefaultValue": false,
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.BooleanOptionSetMetadata",
+      "TrueOption": {
+        "Value": 1,
+        "Label": {
+          "@odata.type": "Microsoft.Dynamics.CRM.Label",
+          "LocalizedLabels": [
+            {
+              "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+              "Label": "Sí",
+              "LanguageCode": 3082
+            }
+          ]
+        }
+      },
+      "FalseOption": {
+        "Value": 0,
+        "Label": {
+          "@odata.type": "Microsoft.Dynamics.CRM.Label",
+          "LocalizedLabels": [
+            {
+              "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+              "Label": "No",
+              "LanguageCode": 3082
+            }
+          ]
+        }
+      }
+    },
+    "SchemaName": "cmv8_EnUso",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "En uso",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Solo los tipos en uso se validan, se vigilan y se ofrecen a los makers.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "MaxLength": 400,
+    "FormatName": {
+      "Value": "Text"
+    },
+    "SchemaName": "cmv8_Carpeta",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Carpeta en Content Manager",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Ruta de la carpeta destino. Derivada del nombre local o fijada a mano.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.PicklistAttributeMetadata",
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.OptionSetMetadata",
+      "IsGlobal": false,
+      "OptionSetType": "Picklist",
+      "Options": [
+        {
+          "Value": 1,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Derivada",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        },
+        {
+          "Value": 2,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Manual",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "SchemaName": "cmv8_OrigenCarpeta",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Origen de la carpeta",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Una carpeta manual no se pisa en ActualizarTipos.",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "DefaultFormValue": 1
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.PicklistAttributeMetadata",
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.OptionSetMetadata",
+      "IsGlobal": false,
+      "OptionSetType": "Picklist",
+      "Options": [
+        {
+          "Value": 1,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Content Manager",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        },
+        {
+          "Value": 2,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Solo Blob",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "SchemaName": "cmv8_Destino",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Destino",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "ApplicationRequired"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "A dónde va el archivo. Un tipo local siempre es Solo Blob.",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "DefaultFormValue": 1
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.PicklistAttributeMetadata",
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.OptionSetMetadata",
+      "IsGlobal": false,
+      "OptionSetType": "Picklist",
+      "Options": [
+        {
+          "Value": 1,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Al subir",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        },
+        {
+          "Value": 2,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Diferido",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "SchemaName": "cmv8_Momento",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Momento del archivado",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Solo con destino Content Manager. Diferido: espera en Almacenado hasta la operación Archivar.",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "DefaultFormValue": 1
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.IntegerAttributeMetadata",
+    "Format": "None",
+    "MinValue": 0,
+    "MaxValue": 2147483647,
+    "SchemaName": "cmv8_DiasRetencion",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Días de retención en Blob",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Días que el archivo queda en el depósito. Vacío = permanente.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.BooleanAttributeMetadata",
+    "DefaultValue": false,
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.BooleanOptionSetMetadata",
+      "TrueOption": {
+        "Value": 1,
+        "Label": {
+          "@odata.type": "Microsoft.Dynamics.CRM.Label",
+          "LocalizedLabels": [
+            {
+              "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+              "Label": "Sí",
+              "LanguageCode": 3082
+            }
+          ]
+        }
+      },
+      "FalseOption": {
+        "Value": 0,
+        "Label": {
+          "@odata.type": "Microsoft.Dynamics.CRM.Label",
+          "LocalizedLabels": [
+            {
+              "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+              "Label": "No",
+              "LanguageCode": 3082
+            }
+          ]
+        }
+      }
+    },
+    "SchemaName": "cmv8_Inmutable",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Inmutable (WORM)",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Política de inmutabilidad a nivel de versión al mover el blob. Exige días de retención.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  }
+]

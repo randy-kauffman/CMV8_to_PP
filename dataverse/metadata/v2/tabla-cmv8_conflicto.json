@@ -1,0 +1,72 @@
+{
+  "@odata.type": "Microsoft.Dynamics.CRM.EntityMetadata",
+  "SchemaName": "cmv8_Conflicto",
+  "DisplayName": {
+    "@odata.type": "Microsoft.Dynamics.CRM.Label",
+    "LocalizedLabels": [
+      {
+        "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+        "Label": "Conflicto de catálogo",
+        "LanguageCode": 3082
+      }
+    ]
+  },
+  "DisplayCollectionName": {
+    "@odata.type": "Microsoft.Dynamics.CRM.Label",
+    "LocalizedLabels": [
+      {
+        "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+        "Label": "Conflictos de catálogo",
+        "LanguageCode": 3082
+      }
+    ]
+  },
+  "Description": {
+    "@odata.type": "Microsoft.Dynamics.CRM.Label",
+    "LocalizedLabels": [
+      {
+        "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+        "Label": "Diferencias entre el catálogo y Content Manager detectadas por el worker o por VigilarCatalogo (ADR-003 §4.4). Una fila por conflicto; la deduplicación por tipo + propiedad + clase vive en la Azure Table.",
+        "LanguageCode": 3082
+      }
+    ]
+  },
+  "OwnershipType": "OrganizationOwned",
+  "IsActivity": false,
+  "HasNotes": false,
+  "HasActivities": false,
+  "Attributes": [
+    {
+      "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+      "SchemaName": "cmv8_Nombre",
+      "IsPrimaryName": true,
+      "MaxLength": 200,
+      "FormatName": {
+        "Value": "Text"
+      },
+      "RequiredLevel": {
+        "Value": "ApplicationRequired"
+      },
+      "DisplayName": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Nombre",
+            "LanguageCode": 3082
+          }
+        ]
+      },
+      "Description": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Resumen legible del conflicto.",
+            "LanguageCode": 3082
+          }
+        ]
+      }
+    }
+  ]
+}

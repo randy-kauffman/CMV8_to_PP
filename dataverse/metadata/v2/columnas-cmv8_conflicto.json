@@ -1,0 +1,370 @@
+[
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.PicklistAttributeMetadata",
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.OptionSetMetadata",
+      "IsGlobal": false,
+      "OptionSetType": "Picklist",
+      "Options": [
+        {
+          "Value": 1,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Catálogo desactualizado",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        },
+        {
+          "Value": 2,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Obligatoria sin origen",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        },
+        {
+          "Value": 3,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Columna inexistente",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        },
+        {
+          "Value": 4,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Carpeta inexistente",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        },
+        {
+          "Value": 5,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Tipo ausente en el servidor",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        },
+        {
+          "Value": 6,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Rechazo de CM no clasificado",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "SchemaName": "cmv8_Clase",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Clase",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "ApplicationRequired"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Qué tipo de conflicto es; define quién lo resuelve y cómo.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.PicklistAttributeMetadata",
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.OptionSetMetadata",
+      "IsGlobal": false,
+      "OptionSetType": "Picklist",
+      "Options": [
+        {
+          "Value": 1,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Bloquea",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        },
+        {
+          "Value": 2,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Aviso",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "SchemaName": "cmv8_Severidad",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Severidad",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "ApplicationRequired"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Bloquea: Content Manager rechazaría el archivado; los adjuntos quedan Detenida. Aviso: el catálogo es más estricto que CM; no detiene nada.",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "DefaultFormValue": 1
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.MemoAttributeMetadata",
+    "MaxLength": 4000,
+    "FormatName": {
+      "Value": "Text"
+    },
+    "SchemaName": "cmv8_Detalle",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Detalle",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Qué se esperaba, qué publica Content Manager y qué hay que cambiar.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.DateTimeAttributeMetadata",
+    "Format": "DateAndTime",
+    "DateTimeBehavior": {
+      "Value": "UserLocal"
+    },
+    "SchemaName": "cmv8_DetectadoEn",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Detectado en",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.PicklistAttributeMetadata",
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.OptionSetMetadata",
+      "IsGlobal": false,
+      "OptionSetType": "Picklist",
+      "Options": [
+        {
+          "Value": 1,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Abierto",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        },
+        {
+          "Value": 2,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Resuelto",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "SchemaName": "cmv8_EstadoConflicto",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Estado",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "ApplicationRequired"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Resolver dispara ReanudarConflicto.",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "DefaultFormValue": 1
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.DateTimeAttributeMetadata",
+    "Format": "DateAndTime",
+    "DateTimeBehavior": {
+      "Value": "UserLocal"
+    },
+    "SchemaName": "cmv8_ResueltoEn",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Resuelto en",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.IntegerAttributeMetadata",
+    "Format": "None",
+    "MinValue": 0,
+    "MaxValue": 2147483647,
+    "SchemaName": "cmv8_AdjuntosDetenidos",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Adjuntos detenidos",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Cantidad de adjuntos en Detenida por este conflicto, según la Azure Table.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "MaxLength": 400,
+    "FormatName": {
+      "Value": "Text"
+    },
+    "SchemaName": "cmv8_Clave",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Clave",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "tipo + propiedad + clase; la misma que usa la Azure Table para deduplicar.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  }
+]

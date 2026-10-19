@@ -1,0 +1,158 @@
+{
+  "@odata.type": "Microsoft.Dynamics.CRM.OptionSetMetadata",
+  "Name": "cmv8_estadoingesta",
+  "IsGlobal": true,
+  "OptionSetType": "Picklist",
+  "DisplayName": {
+    "@odata.type": "Microsoft.Dynamics.CRM.Label",
+    "LocalizedLabels": [
+      {
+        "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+        "Label": "Estado de ingesta CMV8",
+        "LanguageCode": 3082
+      }
+    ]
+  },
+  "Description": {
+    "@odata.type": "Microsoft.Dynamics.CRM.Label",
+    "LocalizedLabels": [
+      {
+        "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+        "Label": "Los diez estados del ciclo de vida de un adjunto (ADR-003 §2): dónde está el archivo y quién tiene que actuar. Lo entrega la solución base; cada tabla de adjuntos liga su columna estadoingesta a este choice.",
+        "LanguageCode": 3082
+      }
+    ]
+  },
+  "Options": [
+    {
+      "Value": 1,
+      "Label": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Creada",
+            "LanguageCode": 3082
+          }
+        ]
+      }
+    },
+    {
+      "Value": 2,
+      "Label": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Subido",
+            "LanguageCode": 3082
+          }
+        ]
+      }
+    },
+    {
+      "Value": 3,
+      "Label": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Procesando",
+            "LanguageCode": 3082
+          }
+        ]
+      }
+    },
+    {
+      "Value": 4,
+      "Label": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Archivado",
+            "LanguageCode": 3082
+          }
+        ]
+      }
+    },
+    {
+      "Value": 5,
+      "Label": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Rechazado",
+            "LanguageCode": 3082
+          }
+        ]
+      }
+    },
+    {
+      "Value": 6,
+      "Label": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Error",
+            "LanguageCode": 3082
+          }
+        ]
+      }
+    },
+    {
+      "Value": 7,
+      "Label": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Almacenado",
+            "LanguageCode": 3082
+          }
+        ]
+      }
+    },
+    {
+      "Value": 8,
+      "Label": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Observada",
+            "LanguageCode": 3082
+          }
+        ]
+      }
+    },
+    {
+      "Value": 9,
+      "Label": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Detenida",
+            "LanguageCode": 3082
+          }
+        ]
+      }
+    },
+    {
+      "Value": 10,
+      "Label": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Depurado",
+            "LanguageCode": 3082
+          }
+        ]
+      }
+    }
+  ]
+}

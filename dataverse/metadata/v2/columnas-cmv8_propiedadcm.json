@@ -1,0 +1,633 @@
+[
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "MaxLength": 400,
+    "FormatName": {
+      "Value": "Text"
+    },
+    "SchemaName": "cmv8_PropiedadId",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Id de propiedad CMIS",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Id de wire completo (con prefijo) tal como lo exige Content Manager.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "MaxLength": 200,
+    "FormatName": {
+      "Value": "Text"
+    },
+    "SchemaName": "cmv8_NombreVisible",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Nombre visible",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "displayName que publica Content Manager.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "MaxLength": 50,
+    "FormatName": {
+      "Value": "Text"
+    },
+    "SchemaName": "cmv8_TipoDato",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Tipo de dato CMIS",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "string, integer, decimal, datetime, boolean, id, uri, html.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.BooleanAttributeMetadata",
+    "DefaultValue": false,
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.BooleanOptionSetMetadata",
+      "TrueOption": {
+        "Value": 1,
+        "Label": {
+          "@odata.type": "Microsoft.Dynamics.CRM.Label",
+          "LocalizedLabels": [
+            {
+              "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+              "Label": "Sí",
+              "LanguageCode": 3082
+            }
+          ]
+        }
+      },
+      "FalseOption": {
+        "Value": 0,
+        "Label": {
+          "@odata.type": "Microsoft.Dynamics.CRM.Label",
+          "LocalizedLabels": [
+            {
+              "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+              "Label": "No",
+              "LanguageCode": 3082
+            }
+          ]
+        }
+      }
+    },
+    "SchemaName": "cmv8_Obligatoria",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Obligatoria en CM",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "required según Content Manager.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "MaxLength": 400,
+    "FormatName": {
+      "Value": "Text"
+    },
+    "SchemaName": "cmv8_ValorPorDefecto",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Valor por defecto en CM",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "defaultValue que publica Content Manager; si existe, se sugiere omitir.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.IntegerAttributeMetadata",
+    "Format": "None",
+    "MinValue": 0,
+    "MaxValue": 2147483647,
+    "SchemaName": "cmv8_LargoMaximo",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Largo máximo",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "maxLength según Content Manager.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.MemoAttributeMetadata",
+    "MaxLength": 4000,
+    "FormatName": {
+      "Value": "Text"
+    },
+    "SchemaName": "cmv8_ListaValores",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Lista de valores",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "choices que publica Content Manager, una por línea.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.BooleanAttributeMetadata",
+    "DefaultValue": false,
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.BooleanOptionSetMetadata",
+      "TrueOption": {
+        "Value": 1,
+        "Label": {
+          "@odata.type": "Microsoft.Dynamics.CRM.Label",
+          "LocalizedLabels": [
+            {
+              "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+              "Label": "Sí",
+              "LanguageCode": 3082
+            }
+          ]
+        }
+      },
+      "FalseOption": {
+        "Value": 0,
+        "Label": {
+          "@odata.type": "Microsoft.Dynamics.CRM.Label",
+          "LocalizedLabels": [
+            {
+              "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+              "Label": "No",
+              "LanguageCode": 3082
+            }
+          ]
+        }
+      }
+    },
+    "SchemaName": "cmv8_Heredada",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Heredada",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "La propiedad viene de un tipo padre.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.PicklistAttributeMetadata",
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.OptionSetMetadata",
+      "IsGlobal": false,
+      "OptionSetType": "Picklist",
+      "Options": [
+        {
+          "Value": 1,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Usar",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        },
+        {
+          "Value": 2,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Omitir",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "SchemaName": "cmv8_Decision",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Decisión",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "ApplicationRequired"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Usar: se envía en cada archivado y exige un origen. Omitir: gana el default del servidor. Sugerida Usar si es obligatoria sin default.",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "DefaultFormValue": 2
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.PicklistAttributeMetadata",
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.OptionSetMetadata",
+      "IsGlobal": false,
+      "OptionSetType": "Picklist",
+      "Options": [
+        {
+          "Value": 1,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Columna de la tabla de adjuntos",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        },
+        {
+          "Value": 2,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Consulta AS400",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        },
+        {
+          "Value": 3,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Sistema",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        },
+        {
+          "Value": 4,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Literal",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "SchemaName": "cmv8_Origen",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Origen del valor",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "De dónde sale el valor. Columna: nombre lógico convenido en la tabla de adjuntos. Consulta: nombre declarado en la configuración de Azure (el SQL nunca vive acá). Sistema: id, nombre de archivo, content type.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "MaxLength": 100,
+    "FormatName": {
+      "Value": "Text"
+    },
+    "SchemaName": "cmv8_NombreLogico",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Nombre lógico",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Para origen Columna: nombre sin prefijo; la Function lee <prefijo>_<nombrelogico> de la tabla de adjuntos. Para Sistema: id, nombrearchivo, contenttype.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "MaxLength": 100,
+    "FormatName": {
+      "Value": "Text"
+    },
+    "SchemaName": "cmv8_Consulta",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Consulta AS400",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Nombre de la consulta con nombre (AS400_CONSULTAS_JSON) y la columna del resultado, como consulta.columna.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "MaxLength": 400,
+    "FormatName": {
+      "Value": "Text"
+    },
+    "SchemaName": "cmv8_Literal",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Literal",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Para origen Literal: el valor fijo.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "MaxLength": 400,
+    "FormatName": {
+      "Value": "Text"
+    },
+    "SchemaName": "cmv8_Patron",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Patrón",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Expresión regular que debe cumplir el valor. Se valida en la app, en el broker y en el worker.",
+          "LanguageCode": 3082
+        }
+      ]
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.PicklistAttributeMetadata",
+    "OptionSet": {
+      "@odata.type": "Microsoft.Dynamics.CRM.OptionSetMetadata",
+      "IsGlobal": false,
+      "OptionSetType": "Picklist",
+      "Options": [
+        {
+          "Value": 1,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Al archivar",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        },
+        {
+          "Value": 2,
+          "Label": {
+            "@odata.type": "Microsoft.Dynamics.CRM.Label",
+            "LocalizedLabels": [
+              {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Antes de subir",
+                "LanguageCode": 3082
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "SchemaName": "cmv8_MomentoValidacion",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Momento de validación de existencia",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Solo para origen Consulta AS400: si la consulta es rápida, el broker la corre antes de emitir la SAS.",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "DefaultFormValue": 1
+  }
+]

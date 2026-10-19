@@ -1,0 +1,186 @@
+[
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.OneToManyRelationshipMetadata",
+    "SchemaName": "cmv8_tipodocumento_propiedadcm",
+    "ReferencedEntity": "cmv8_tipodocumento",
+    "ReferencingEntity": "cmv8_propiedadcm",
+    "AssociatedMenuConfiguration": {
+      "Behavior": "UseCollectionName",
+      "Group": "Details",
+      "Order": 10000
+    },
+    "CascadeConfiguration": {
+      "Assign": "NoCascade",
+      "Delete": "Cascade",
+      "Merge": "NoCascade",
+      "Reparent": "NoCascade",
+      "Share": "NoCascade",
+      "Unshare": "NoCascade"
+    },
+    "Lookup": {
+      "@odata.type": "Microsoft.Dynamics.CRM.LookupAttributeMetadata",
+      "SchemaName": "cmv8_TipoDocumento",
+      "DisplayName": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Tipo de documento",
+            "LanguageCode": 3082
+          }
+        ]
+      },
+      "Description": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Tipo al que pertenece la propiedad.",
+            "LanguageCode": 3082
+          }
+        ]
+      },
+      "RequiredLevel": {
+        "Value": "ApplicationRequired"
+      }
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.OneToManyRelationshipMetadata",
+    "SchemaName": "cmv8_tipodocumento_conflicto",
+    "ReferencedEntity": "cmv8_tipodocumento",
+    "ReferencingEntity": "cmv8_conflicto",
+    "AssociatedMenuConfiguration": {
+      "Behavior": "UseCollectionName",
+      "Group": "Details",
+      "Order": 10000
+    },
+    "CascadeConfiguration": {
+      "Assign": "NoCascade",
+      "Delete": "Cascade",
+      "Merge": "NoCascade",
+      "Reparent": "NoCascade",
+      "Share": "NoCascade",
+      "Unshare": "NoCascade"
+    },
+    "Lookup": {
+      "@odata.type": "Microsoft.Dynamics.CRM.LookupAttributeMetadata",
+      "SchemaName": "cmv8_TipoDocumento",
+      "DisplayName": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Tipo de documento",
+            "LanguageCode": 3082
+          }
+        ]
+      },
+      "Description": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Tipo afectado por el conflicto.",
+            "LanguageCode": 3082
+          }
+        ]
+      },
+      "RequiredLevel": {
+        "Value": "ApplicationRequired"
+      }
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.OneToManyRelationshipMetadata",
+    "SchemaName": "cmv8_propiedadcm_conflicto",
+    "ReferencedEntity": "cmv8_propiedadcm",
+    "ReferencingEntity": "cmv8_conflicto",
+    "AssociatedMenuConfiguration": {
+      "Behavior": "UseCollectionName",
+      "Group": "Details",
+      "Order": 10000
+    },
+    "CascadeConfiguration": {
+      "Assign": "NoCascade",
+      "Delete": "RemoveLink",
+      "Merge": "NoCascade",
+      "Reparent": "NoCascade",
+      "Share": "NoCascade",
+      "Unshare": "NoCascade"
+    },
+    "Lookup": {
+      "@odata.type": "Microsoft.Dynamics.CRM.LookupAttributeMetadata",
+      "SchemaName": "cmv8_PropiedadCm",
+      "DisplayName": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Propiedad",
+            "LanguageCode": 3082
+          }
+        ]
+      },
+      "Description": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Propiedad afectada, si el conflicto es de una propiedad.",
+            "LanguageCode": 3082
+          }
+        ]
+      },
+      "RequiredLevel": {
+        "Value": "None"
+      }
+    }
+  },
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.OneToManyRelationshipMetadata",
+    "SchemaName": "cmv8_tipodocumento_solicitudingesta",
+    "ReferencedEntity": "cmv8_tipodocumento",
+    "ReferencingEntity": "cmv8_solicitudingesta",
+    "AssociatedMenuConfiguration": {
+      "Behavior": "UseCollectionName",
+      "Group": "Details",
+      "Order": 10000
+    },
+    "CascadeConfiguration": {
+      "Assign": "NoCascade",
+      "Delete": "Restrict",
+      "Merge": "NoCascade",
+      "Reparent": "NoCascade",
+      "Share": "NoCascade",
+      "Unshare": "NoCascade"
+    },
+    "Lookup": {
+      "@odata.type": "Microsoft.Dynamics.CRM.LookupAttributeMetadata",
+      "SchemaName": "cmv8_TipoDocumento",
+      "DisplayName": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Tipo de documento",
+            "LanguageCode": 3082
+          }
+        ]
+      },
+      "Description": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Columna reservada v2: tipo de documento del adjunto.",
+            "LanguageCode": 3082
+          }
+        ]
+      },
+      "RequiredLevel": {
+        "Value": "None"
+      }
+    }
+  }
+]

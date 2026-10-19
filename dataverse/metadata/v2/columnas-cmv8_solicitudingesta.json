@@ -1,0 +1,31 @@
+[
+  {
+    "@odata.type": "Microsoft.Dynamics.CRM.PicklistAttributeMetadata",
+    "GlobalOptionSet@odata.bind": "/GlobalOptionSetDefinitions(Name='cmv8_estadoingesta')",
+    "SchemaName": "cmv8_EstadoIngesta",
+    "DisplayName": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Estado de ingesta",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "RequiredLevel": {
+      "Value": "None"
+    },
+    "Description": {
+      "@odata.type": "Microsoft.Dynamics.CRM.Label",
+      "LocalizedLabels": [
+        {
+          "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+          "Label": "Columna reservada v2 (ADR-003 §1.1), ligada al choice global. Reemplaza a cmv8_estado cuando la Function pase a v2.",
+          "LanguageCode": 3082
+        }
+      ]
+    },
+    "DefaultFormValue": 1
+  }
+]

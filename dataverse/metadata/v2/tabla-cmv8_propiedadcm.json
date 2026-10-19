@@ -1,0 +1,72 @@
+{
+  "@odata.type": "Microsoft.Dynamics.CRM.EntityMetadata",
+  "SchemaName": "cmv8_PropiedadCm",
+  "DisplayName": {
+    "@odata.type": "Microsoft.Dynamics.CRM.Label",
+    "LocalizedLabels": [
+      {
+        "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+        "Label": "Propiedad de Content Manager",
+        "LanguageCode": 3082
+      }
+    ]
+  },
+  "DisplayCollectionName": {
+    "@odata.type": "Microsoft.Dynamics.CRM.Label",
+    "LocalizedLabels": [
+      {
+        "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+        "Label": "Propiedades de Content Manager",
+        "LanguageCode": 3082
+      }
+    ]
+  },
+  "Description": {
+    "@odata.type": "Microsoft.Dynamics.CRM.Label",
+    "LocalizedLabels": [
+      {
+        "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+        "Label": "Propiedades escribibles de un tipo descubierto (ADR-003 §1.2). Lo descubierto lo escribe la Function; lo humano es la decisión usar/omitir y el origen del valor.",
+        "LanguageCode": 3082
+      }
+    ]
+  },
+  "OwnershipType": "OrganizationOwned",
+  "IsActivity": false,
+  "HasNotes": false,
+  "HasActivities": false,
+  "Attributes": [
+    {
+      "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+      "SchemaName": "cmv8_Nombre",
+      "IsPrimaryName": true,
+      "MaxLength": 200,
+      "FormatName": {
+        "Value": "Text"
+      },
+      "RequiredLevel": {
+        "Value": "ApplicationRequired"
+      },
+      "DisplayName": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Nombre",
+            "LanguageCode": 3082
+          }
+        ]
+      },
+      "Description": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+          {
+            "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+            "Label": "Nombre canónico de la propiedad (id de wire sin prefijo).",
+            "LanguageCode": 3082
+          }
+        ]
+      }
+    }
+  ]
+}

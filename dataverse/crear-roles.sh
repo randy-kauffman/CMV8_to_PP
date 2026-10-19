@@ -9,6 +9,8 @@
 #   CMV8 Worker      → la Function. Lee/escribe toda la tabla (Global), puede actuar en nombre de
 #                      otro usuario (impersonación) y leer usuarios/unidades para RetrievePrincipalAccess.
 #   CMV8 Solicitante → usuarios de la app. Crea/lee/escribe SUS propias solicitudes (Basic).
+#   CMV8 Administrador documental → revisa el catálogo de tipos y propiedades, resuelve conflictos,
+#                      ve los adjuntos detenidos (ADR-003). v2: Worker y Solicitante suman el catálogo.
 set -euo pipefail
 
 DV="${DATAVERSE_URL:?DATAVERSE_URL}"
@@ -16,6 +18,9 @@ APPID="${APP_CLIENT_ID:-}"
 API="$DV/api/data/v9.2"
 SOLUCION="cmv8ingesta"
 TABLA="cmv8_solicitudingesta"
+TIPO="cmv8_TipoDocumento"
+PROP="cmv8_PropiedadCm"
+CONF="cmv8_Conflicto"
 
 TOKEN="$(az account get-access-token --resource "$DV" --query accessToken -o tsv)"
 H=(-H "Authorization: Bearer $TOKEN" -H "OData-MaxVersion: 4.0" -H "OData-Version: 4.0" -H "Accept: application/json" -H "Content-Type: application/json; charset=utf-8")
@@ -66,6 +71,9 @@ ROL_WORKER=$(crear_rol "CMV8 Worker")
 agregar_privilegios "$ROL_WORKER" \
   "prvRead${TABLA}:Global" "prvWrite${TABLA}:Global" "prvAppend${TABLA}:Global" "prvAppendTo${TABLA}:Global" \
   "prvActOnBehalfOfAnotherUser:Global" \
+  "prvCreate${TIPO}:Global" "prvRead${TIPO}:Global" "prvWrite${TIPO}:Global" "prvAppend${TIPO}:Global" "prvAppendTo${TIPO}:Global" \
+  "prvCreate${PROP}:Global" "prvRead${PROP}:Global" "prvWrite${PROP}:Global" "prvAppend${PROP}:Global" "prvAppendTo${PROP}:Global" \
+  "prvCreate${CONF}:Global" "prvRead${CONF}:Global" "prvWrite${CONF}:Global" "prvAppend${CONF}:Global" "prvAppendTo${CONF}:Global" \
   "prvReadUser:Global" "prvReadBusinessUnit:Global" "prvReadOrganization:Global" "prvReadRole:Global" \
   "prvReadTeam:Global" "prvReadUserSettings:Basic" "prvWriteUserSettings:Basic"
 
@@ -73,6 +81,18 @@ echo "== CMV8 Solicitante"
 ROL_SOL=$(crear_rol "CMV8 Solicitante")
 agregar_privilegios "$ROL_SOL" \
   "prvCreate${TABLA}:Basic" "prvRead${TABLA}:Basic" "prvWrite${TABLA}:Basic" "prvAppend${TABLA}:Basic" "prvAppendTo${TABLA}:Basic" \
+  "prvRead${TIPO}:Global" "prvAppendTo${TIPO}:Global" \
+  "prvReadUser:Global" "prvReadBusinessUnit:Global" "prvReadOrganization:Global" \
+  "prvReadUserSettings:Basic" "prvWriteUserSettings:Basic"
+
+echo "== CMV8 Administrador documental"
+# Revisa el catálogo (tipos, propiedades), resuelve conflictos y ve los adjuntos detenidos (ADR-003 §1.2).
+ROL_ADMIN=$(crear_rol "CMV8 Administrador documental")
+agregar_privilegios "$ROL_ADMIN" \
+  "prvCreate${TIPO}:Global" "prvRead${TIPO}:Global" "prvWrite${TIPO}:Global" "prvDelete${TIPO}:Global" "prvAppend${TIPO}:Global" "prvAppendTo${TIPO}:Global" \
+  "prvCreate${PROP}:Global" "prvRead${PROP}:Global" "prvWrite${PROP}:Global" "prvDelete${PROP}:Global" "prvAppend${PROP}:Global" "prvAppendTo${PROP}:Global" \
+  "prvCreate${CONF}:Global" "prvRead${CONF}:Global" "prvWrite${CONF}:Global" "prvDelete${CONF}:Global" "prvAppend${CONF}:Global" "prvAppendTo${CONF}:Global" \
+  "prvRead${TABLA}:Global" \
   "prvReadUser:Global" "prvReadBusinessUnit:Global" "prvReadOrganization:Global" \
   "prvReadUserSettings:Basic" "prvWriteUserSettings:Basic"
 
