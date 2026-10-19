@@ -182,6 +182,6 @@ Se hace: tabla por tramo en la guía 23 y categoría `AppServiceAuthenticationLo
 ### Orden propuesto
 
 1. Ahora, barato: M10, M2, M1 en desarrollo.
-2. Diseño "v2 del modelo de datos" antes de construir la app real en el Banco: M8 como eje; M4, M6 y M9 como atributos del tipo de documento; M7 como tabla hija. Registrarlo como ADR-003.
+2. Diseño "v2 del modelo de datos" antes de construir la app real en el Banco: M8 como eje; M4, M6 y M9 como atributos del tipo de documento; M7 como tabla hija. Registrarlo como ADR-003. **Hecho (2026-10-19): `docs/decisiones/ADR-003-v2-modelo-de-datos.md`, con M4, M6, M7, M8, M9, M12 y los diez estados.**
 3. M5 cuando S0 responda.
 4. Las decisiones del Banco (red, token OBO al navegador, acceso condicional, plan, Defender, Key Vault, Log Analytics, DLP, Owner) en paralelo.
