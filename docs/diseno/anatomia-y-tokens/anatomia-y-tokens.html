@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Anatomía y tokens — Control de carga</title>
+<style>
+body{margin:0;background:#F7F7F6;color:#1B1B1B;font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#0F6CBD;text-decoration:none}a:hover{color:#0C3B5E;text-decoration:underline}
+@keyframes ind{0%{left:-30%}100%{left:100%}}
+</style>
+</helmet>
+<div style="max-width:1240px;margin:0 auto;padding:40px 32px 96px;display:flex;flex-direction:column;gap:56px">
+
+<header style="display:flex;flex-direction:column;gap:12px;border-bottom:1px solid #E3E3E3;padding-bottom:28px">
+  <div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#5F5F5F;font-weight:600">Control de carga de archivos · PCF · Paso 1 de 2</div>
+  <h1 style="margin:0;font-size:32px;line-height:40px;font-weight:600;letter-spacing:-.01em">Anatomía y tokens</h1>
+  <p style="margin:0;max-width:720px;font-size:15px;line-height:24px;color:#4A4A4A;text-wrap:pretty">Base común para las tres variantes y los dos anfitriones. Revisa esto antes del prototipo: cualquier cambio aquí se propaga a todo.</p>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+    <a href="tokens.json" style="font-size:13px;padding:6px 10px;border:1px solid #D6D6D6;border-radius:4px;background:#fff;font-family:ui-monospace,Consolas,monospace">tokens.json</a>
+    <a href="Anatomia.md" style="font-size:13px;padding:6px 10px;border:1px solid #D6D6D6;border-radius:4px;background:#fff;font-family:ui-monospace,Consolas,monospace">Anatomia.md</a>
+    <a href="textos.es.json" style="font-size:13px;padding:6px 10px;border:1px solid #D6D6D6;border-radius:4px;background:#fff;font-family:ui-monospace,Consolas,monospace">textos.es.json</a>
+  </div>
+</header>
+
+<section style="display:flex;flex-direction:column;gap:24px">
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <h2 style="margin:0;font-size:22px;line-height:28px;font-weight:600">1 · Tokens</h2>
+      <div style="font-size:13px;color:#5F5F5F">{{ tokenCount }} tokens · prefijo <code style="font-family:ui-monospace,Consolas,monospace">--fu-</code> · <b>M</b> = propiedad del maker</div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:12px">
+      <div role="radiogroup" aria-label="Variante" style="display:flex;border:1px solid #CFCFCF;border-radius:4px;overflow:hidden;background:#fff">
+        <sc-for list="{{ variantOpts }}" as="o" hint-placeholder-count="3">
+          <button role="radio" aria-checked="{{ o.on }}" onClick="{{ o.pick }}" style="border:0;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+        </sc-for>
+      </div>
+      <div role="radiogroup" aria-label="Modo" style="display:flex;border:1px solid #CFCFCF;border-radius:4px;overflow:hidden;background:#fff">
+        <sc-for list="{{ modeOpts }}" as="o" hint-placeholder-count="2">
+          <button role="radio" aria-checked="{{ o.on }}" onClick="{{ o.pick }}" style="border:0;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+        </sc-for>
+      </div>
+      <div role="radiogroup" aria-label="Densidad" style="display:flex;border:1px solid #CFCFCF;border-radius:4px;overflow:hidden;background:#fff">
+        <sc-for list="{{ densOpts }}" as="o" hint-placeholder-count="2">
+          <button role="radio" aria-checked="{{ o.on }}" onClick="{{ o.pick }}" style="border:0;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="border-radius:8px;padding:24px;display:flex;flex-direction:column;gap:20px;border:1px solid #E3E3E3;background:{{ pv.bg }};color:{{ pv.text }};font-family:{{ pv.font }}">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+      <span style="font-size:12px;font-weight:600;color:{{ pv.text2 }};min-width:120px">Ciclo de vida</span>
+      <sc-for list="{{ chips }}" as="c" hint-placeholder-count="10">
+        <span title="{{ c.desc }}" style="display:inline-flex;align-items:center;gap:4px;padding:0 {{ c.px }};height:{{ c.h }};box-sizing:border-box;border-radius:{{ c.r }};font-size:12px;font-weight:600;white-space:nowrap;background:{{ c.bg }};color:{{ c.fg }};border:1px {{ c.bs }} {{ c.bc }}">
+          <span aria-hidden="true" style="width:{{ c.ic }};height:{{ c.ic }};border-radius:50%;box-sizing:border-box;border:2px solid currentColor"></span>{{ c.label }}
+        </span>
+      </sc-for>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">
+      <span style="font-size:12px;font-weight:600;color:{{ pv.text2 }};min-width:120px">Controles</span>
+      <span style="display:inline-flex;align-items:center;height:{{ pv.ctrl }};padding:0 12px;border-radius:{{ pv.rmd }};background:{{ pv.primary }};color:{{ pv.onPrimary }};font-size:{{ pv.body }};white-space:nowrap;font-weight:600">Subir todo</span>
+      <span style="display:inline-flex;align-items:center;height:{{ pv.ctrl }};padding:0 12px;border-radius:{{ pv.rmd }};background:{{ pv.surface }};border:1px solid {{ pv.borderStrong }};box-sizing:border-box;white-space:nowrap;font-size:{{ pv.body }};font-weight:600">Seleccionar archivos</span>
+      <span style="font-size:{{ pv.body }};font-weight:600;color:{{ pv.primaryText }}">Reintentar</span>
+      <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:{{ pv.text2 }};font-variant-numeric:tabular-nums"><span>105,3 de 250 MB · 38,2 Mbps · 1 min restantes</span><span>42 %</span></div>
+        <div style="height:{{ pv.prog }};background:{{ pv.border }};border-radius:{{ pv.rsm }};overflow:hidden"><div style="width:42%;height:100%;background:{{ pv.primary }}"></div></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">
+      <span style="font-size:12px;font-weight:600;color:{{ pv.text2 }};min-width:120px">Superficie / tipo</span>
+      <div style="padding:12px 16px;border-radius:{{ pv.rlg }};background:{{ pv.surface }};border:1px solid {{ pv.border }};box-shadow:{{ pv.shadow }};display:flex;flex-direction:column;gap:2px;min-width:240px">
+        <span style="font-family:{{ pv.heading }};font-size:{{ pv.title }};line-height:{{ pv.titleLh }};font-weight:600">Adjuntos</span>
+        <span style="font-size:{{ pv.body }};font-weight:600">Solicitud_credito_firmada.pdf</span>
+        <span style="font-size:12px;color:{{ pv.text2 }}">2,4 MB · 14 oct. 2026 · M. Rivas</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+    <sc-for list="{{ statuses }}" as="s" hint-placeholder-count="5">
+      <div style="background:#fff;border:1px solid #E3E3E3;border-radius:6px;overflow:hidden;display:flex;flex-direction:column">
+        <div style="height:56px;display:flex;align-items:center;padding:0 14px;font-weight:600;font-size:14px;background:{{ s.bg }};color:{{ s.fg }};border-bottom:1px solid {{ s.border }}">{{ s.name }}</div>
+        <div style="padding:10px 14px;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:12px;font-family:ui-monospace,Consolas,monospace;color:#3A3A3A">
+          <span>fg</span><span>{{ s.fgv }}</span><span>bg</span><span>{{ s.bgv }}</span><span>border</span><span>{{ s.borderv }}</span>
+          <span style="font-family:'Segoe UI',sans-serif;color:#5F5F5F">fg/bg</span><span style="font-weight:600;color:{{ s.okColor }}">{{ s.ratio }} {{ s.ok }}</span>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="background:#fff;border:1px solid #E3E3E3;border-radius:6px;overflow:hidden">
+    <div style="padding:12px 16px;font-size:13px;font-weight:600;border-bottom:1px solid #E3E3E3;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><span>Color · {{ variantLabel }} · {{ modeLabel }}</span><span style="font-weight:400;color:#5F5F5F">Contraste calculado contra --fu-color-surface</span></div>
+    <sc-for list="{{ colors }}" as="t" hint-placeholder-count="17">
+      <div style="display:grid;grid-template-columns:40px minmax(180px,240px) 150px 64px minmax(0,1fr);gap:12px;align-items:center;padding:8px 16px;border-bottom:1px solid #F0F0F0;font-size:13px">
+        <span style="width:40px;height:28px;border-radius:4px;border:1px solid rgba(0,0,0,.12);background:{{ t.val }}"></span>
+        <code style="font-family:ui-monospace,Consolas,monospace;font-size:12px;overflow-wrap:anywhere">{{ t.css }} <b style="color:#0F6CBD">{{ t.maker }}</b></code>
+        <code style="font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#3A3A3A;overflow-wrap:anywhere">{{ t.val }}</code>
+        <span style="font-size:12px;font-variant-numeric:tabular-nums;color:#5F5F5F">{{ t.ratio }}</span>
+        <span style="color:#4A4A4A;text-wrap:pretty">{{ t.description }}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="background:#fff;border:1px solid #E3E3E3;border-radius:6px;overflow-x:auto">
+    <div style="min-width:860px">
+      <div style="display:grid;grid-template-columns:minmax(200px,1.2fr) repeat(3,minmax(110px,.7fr)) minmax(220px,1.6fr);gap:12px;padding:10px 16px;font-size:12px;font-weight:600;color:#5F5F5F;border-bottom:1px solid #E3E3E3;background:#FAFAFA;position:sticky;top:0">
+        <span>Token</span><span>Fluent nativo</span><span>Institucional</span><span>Moderno</span><span>Uso</span>
+      </div>
+      <sc-for list="{{ compare }}" as="t" hint-placeholder-count="20">
+        <div style="display:grid;grid-template-columns:minmax(200px,1.2fr) repeat(3,minmax(110px,.7fr)) minmax(220px,1.6fr);gap:12px;align-items:baseline;padding:7px 16px;border-bottom:1px solid #F0F0F0;font-size:13px">
+          <code style="font-family:ui-monospace,Consolas,monospace;font-size:12px;overflow-wrap:anywhere">{{ t.css }} <b style="color:#0F6CBD">{{ t.maker }}</b></code>
+          <code style="font-family:ui-monospace,Consolas,monospace;font-size:12px;overflow-wrap:anywhere;color:#3A3A3A">{{ t.f }}</code>
+          <code style="font-family:ui-monospace,Consolas,monospace;font-size:12px;overflow-wrap:anywhere;color:#3A3A3A">{{ t.i }}</code>
+          <code style="font-family:ui-monospace,Consolas,monospace;font-size:12px;overflow-wrap:anywhere;color:#3A3A3A">{{ t.m }}</code>
+          <span style="color:#4A4A4A;text-wrap:pretty">{{ t.description }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:24px">
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <h2 style="margin:0;font-size:22px;line-height:28px;font-weight:600">2 · Anatomía</h2>
+    <div style="font-size:13px;color:#5F5F5F;max-width:760px;text-wrap:pretty">Diagramas en Fluent nativo, modo claro, densidad cómoda. Cotas en <span style="color:#C2185B;font-weight:600">magenta</span> (px). Las medidas por variante están en cada tabla y completas en Anatomia.md. Los cuadros punteados marcan el ícono Fluent indicado.</div>
+  </div>
+
+  <article id="dropzone" style="background:#fff;border:1px solid #E3E3E3;border-radius:8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))">
+    <div style="padding:28px;background:#FAFAFA;border-right:1px solid #EFEFEF;display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;gap:10px;align-items:baseline"><span style="font-size:12px;font-weight:600;color:#5F5F5F">2.1</span><h3 style="margin:0;font-size:17px;font-weight:600">Zona de carga</h3></div>
+      <div style="position:relative;padding-left:36px">
+        <div style="position:absolute;left:8px;top:0;bottom:0;border-left:1px solid #C2185B;display:flex;align-items:center"><span style="transform:translateX(-50%);background:#FAFAFA;color:#C2185B;font-size:11px;font-weight:600;padding:2px 0">136</span></div>
+        <div style="min-height:136px;box-sizing:border-box;border:1px dashed #757575;border-radius:8px;background:#FAFAFA;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:24px;position:relative;outline:1px solid #fff">
+          <div style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:16px;border-radius:50%;background:#1B1B1B;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center">2</span><span style="width:24px;height:24px;border:1px dashed #9A9A9A;border-radius:3px"></span></div>
+          <div style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:16px;border-radius:50%;background:#1B1B1B;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center">3</span><span style="font-size:16px;font-weight:600;color:#242424">Arrastra archivos aquí</span></div>
+          <div style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:16px;border-radius:50%;background:#1B1B1B;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center">4</span><span style="height:32px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid #D1D1D1;border-radius:4px;background:#fff;font-size:14px;font-weight:600;color:#242424">Seleccionar archivos</span></div>
+          <div style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:16px;border-radius:50%;background:#1B1B1B;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center">5</span><span style="font-size:12px;color:#616161">PDF, JPG, MP4 · hasta 250 MB por archivo · máximo 20 archivos</span></div>
+          <span style="position:absolute;top:6px;left:6px;width:16px;height:16px;border-radius:50%;background:#1B1B1B;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center">1</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:12px;font-weight:600;color:#5F5F5F">Arrastrando encima · compacta con cola</span>
+        <div style="height:72px;box-sizing:border-box;border:2px solid #0F6CBD;border-radius:8px;background:#EBF3FC;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#0F548C">Suelta para agregar</div>
+        <div style="height:48px;box-sizing:border-box;border:1px dashed #757575;border-radius:8px;display:flex;align-items:center;gap:10px;padding:0 12px;font-size:14px;color:#242424"><span style="width:20px;height:20px;border:1px dashed #9A9A9A;border-radius:3px;flex:none"></span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Arrastra o <b style="color:#0F6CBD">selecciona más archivos</b></span><span style="font-size:12px;color:#616161;white-space:nowrap">12 de 20</span></div>
+      </div>
+    </div>
+    <div style="padding:28px;display:flex;flex-direction:column;gap:20px">
+      <ol style="margin:0;padding-left:20px;font-size:13px;line-height:20px;display:flex;flex-direction:column;gap:4px;color:#3A3A3A">
+        <li><b>Contenedor</b> · role="button", tabindex 0, borde punteado border-strong</li>
+        <li><b>Ícono</b> · ArrowUpload 24 (M: 32 en círculo 48)</li>
+        <li><b>Título</b> · subtitle semibold</li>
+        <li><b>Botón</b> · secundario (M: primario), alto size.control</li>
+        <li><b>Pista</b> · caption, text-secondary; valores del maker</li>
+      </ol>
+      <div style="font-size:12px;color:#5F5F5F;line-height:18px">Estados: reposo · hover · foco · arrastrando · lote lleno · deshabilitada · compacta (con cola).</div>
+      <div style="border:1px solid #EFEFEF;border-radius:6px;overflow:hidden">
+        <sc-for list="{{ m.dropzone }}" as="r" hint-placeholder-count="4">
+          <div style="display:grid;grid-template-columns:minmax(110px,1.3fr) repeat(3,minmax(0,1fr));gap:8px;padding:6px 10px;font-size:12px;border-bottom:1px solid #F3F3F3;font-variant-numeric:tabular-nums;font-weight:{{ r.w }};background:{{ r.bg }}"><span>{{ r.k }}</span><span>{{ r.f }}</span><span>{{ r.i }}</span><span>{{ r.m }}</span></div>
+        </sc-for>
+      </div>
+    </div>
+  </article>
+
+  <article id="filerow" style="background:#fff;border:1px solid #E3E3E3;border-radius:8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))">
+    <div style="padding:28px;background:#FAFAFA;border-right:1px solid #EFEFEF;display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;gap:10px;align-items:baseline"><span style="font-size:12px;font-weight:600;color:#5F5F5F">2.2</span><h3 style="margin:0;font-size:17px;font-weight:600">Fila de archivo</h3></div>
+      <div style="position:relative;padding-left:36px">
+        <div style="position:absolute;left:8px;top:0;bottom:0;border-left:1px solid #C2185B;display:flex;align-items:center"><span style="transform:translateX(-50%);background:#FAFAFA;color:#C2185B;font-size:11px;font-weight:600">56</span></div>
+        <div style="background:#fff;border-top:1px solid #E0E0E0;border-bottom:1px solid #E0E0E0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px 12px;min-height:56px;box-sizing:border-box">
+          <div style="display:flex;align-items:center;gap:4px"><span style="width:16px;height:16px;border-radius:50%;background:#1B1B1B;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center">1</span><span style="width:24px;height:24px;border:1px dashed #9A9A9A;border-radius:3px"></span></div>
+          <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:8px;min-width:0"><span style="width:16px;height:16px;border-radius:50%;background:#1B1B1B;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;align-self:center">2</span><span style="font-size:14px;font-weight:600;color:#242424;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">Solicitud_credito_hipotecario_firmada_v3.pdf</span><span style="font-size:12px;color:#616161;white-space:nowrap;flex:none">250 MB</span><span style="width:16px;height:16px;border-radius:50%;background:#1B1B1B;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;align-self:center">3</span></div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#616161;font-variant-numeric:tabular-nums;min-width:0"><span style="width:16px;height:16px;border-radius:50%;background:#1B1B1B;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">5</span><span style="color:#0F6CBD;font-weight:600;white-space:nowrap">Subiendo</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0">· 105,3 de 250 MB · 38,2 Mbps · 1 min restantes</span><span style="width:16px;height:16px;border-radius:50%;background:#1B1B1B;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">6</span><span style="width:40px;text-align:right;color:#242424;font-weight:600">42 %</span></div>
+            <div style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:16px;border-radius:50%;background:#1B1B1B;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">7</span><div style="flex:1;height:4px;background:#E0E0E0;border-radius:2px;overflow:hidden"><div style="width:42%;height:100%;background:#0F6CBD"></div></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px"><span style="width:16px;height:16px;border-radius:50%;background:#1B1B1B;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center">8</span><span style="width:32px;height:32px;border-radius:4px;display:flex;align-items:center;justify-content:center;border:1px solid transparent"><span style="width:20px;height:20px;border:1px dashed #9A9A9A;border-radius:3px"></span></span></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:12px;font-weight:600;color:#5F5F5F">Siete estados + rechazo de validación</span>
+        <div style="background:#fff;border:1px solid #E0E0E0;border-radius:4px">
+          <sc-for list="{{ uploadStates }}" as="s" hint-placeholder-count="8">
+            <div style="display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid #F0F0F0;background:{{ s.rowBg }}">
+              <span style="width:20px;height:20px;border:1px dashed #9A9A9A;border-radius:3px"></span>
+              <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+                <div style="display:flex;gap:8px;align-items:center;font-size:12px;min-width:0">
+                  <span style="display:inline-flex;align-items:center;gap:4px;font-weight:600;white-space:nowrap;color:{{ s.color }}"><span style="width:12px;height:12px;border-radius:50%;border:2px solid currentColor;box-sizing:border-box"></span>{{ s.label }}</span>
+                  <span style="color:#616161;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">{{ s.detail }}</span>
+                </div>
+                <sc-if value="{{ s.bar }}" hint-placeholder-val="{{ false }}">
+                  <div style="height:4px;background:#E0E0E0;border-radius:2px;overflow:hidden;position:relative"><div style="position:absolute;top:0;bottom:0;background:#0F6CBD;left:{{ s.barLeft }};width:{{ s.barW }}"></div></div>
+                </sc-if>
+              </div>
+              <span style="font-size:11px;font-family:ui-monospace,Consolas,monospace;color:#5F5F5F;white-space:nowrap">{{ s.icon }} · {{ s.actions }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:12px;font-weight:600;color:#5F5F5F">320 px · dos líneas</span>
+        <div style="width:288px;background:#fff;border:1px solid #E0E0E0;border-radius:4px;padding:10px 12px;display:grid;grid-template-columns:24px minmax(0,1fr) 44px;gap:8px 10px;align-items:center;box-sizing:border-box">
+          <span style="width:24px;height:24px;border:1px dashed #9A9A9A;border-radius:3px"></span>
+          <span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Cedula_identidad_frente.jpg</span>
+          <span style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><span style="width:20px;height:20px;border:1px dashed #9A9A9A;border-radius:3px"></span></span>
+          <span></span>
+          <div style="grid-column:2 / 4;display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;font-size:12px;color:#616161;font-variant-numeric:tabular-nums"><span><b style="color:#0F6CBD">Subiendo</b> · 1,2 de 3,4 MB</span><span style="font-weight:600;color:#242424">35 %</span></div><div style="height:4px;background:#E0E0E0;border-radius:2px;overflow:hidden"><div style="width:35%;height:100%;background:#0F6CBD"></div></div></div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:28px;display:flex;flex-direction:column;gap:20px">
+      <ol style="margin:0;padding-left:20px;font-size:13px;line-height:20px;display:flex;flex-direction:column;gap:4px;color:#3A3A3A">
+        <li><b>Ícono de tipo</b> · DocumentPdf, Image, Video, Document</li>
+        <li><b>Nombre</b> · elipsis en el nombre base, la extensión no se corta; tooltip con el nombre completo</li>
+        <li><b>Tamaño</b> · caption tabular</li>
+        <li><b>Tipo de documento</b> · solo model-driven; desplegable obligatorio en En cola (no visible en el diagrama)</li>
+        <li><b>Estado</b> · ícono 12–16 + etiqueta en color de semántica</li>
+        <li><b>Detalle / %</b> · progreso, error o motivo; % en 40 px fijos</li>
+        <li><b>Barra de progreso</b> · §2.4</li>
+        <li><b>Acciones</b> · botones de ícono cuadrados con aria-label + tooltip</li>
+      </ol>
+      <div style="font-size:12px;color:#5F5F5F;line-height:18px;text-wrap:pretty">Hasta 2 en Subiendo en paralelo. Debajo de 480 px se ocultan velocidad y ETA; las acciones crecen a 44 px.</div>
+      <div style="border:1px solid #EFEFEF;border-radius:6px;overflow:hidden">
+        <sc-for list="{{ m.filerow }}" as="r" hint-placeholder-count="6">
+          <div style="display:grid;grid-template-columns:minmax(110px,1.3fr) repeat(3,minmax(0,1fr));gap:8px;padding:6px 10px;font-size:12px;border-bottom:1px solid #F3F3F3;font-variant-numeric:tabular-nums;font-weight:{{ r.w }};background:{{ r.bg }}"><span>{{ r.k }}</span><span>{{ r.f }}</span><span>{{ r.i }}</span><span>{{ r.m }}</span></div>
+        </sc-for>
+      </div>
+    </div>
+  </article>
+
+  <article id="chip" style="background:#fff;border:1px solid #E3E3E3;border-radius:8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))">
+    <div style="padding:28px;background:#FAFAFA;border-right:1px solid #EFEFEF;display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;gap:10px;align-items:baseline"><span style="font-size:12px;font-weight:600;color:#5F5F5F">2.3</span><h3 style="margin:0;font-size:17px;font-weight:600">Chip de estado</h3></div>
+      <div style="display:flex;align-items:center;gap:20px;padding:8px 0 8px 8px">
+        <div style="position:relative;display:inline-flex">
+          <span style="display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 6px;border-radius:4px;background:#FFF9F5;color:#9A3F06;border:1px solid #9A3F06;font-size:12px;font-weight:600;box-sizing:border-box"><span style="width:12px;height:12px;border-radius:50%;border:2px solid currentColor;box-sizing:border-box"></span>Observada</span>
+          <span style="position:absolute;left:-14px;top:0;bottom:0;border-left:1px solid #C2185B"></span><span style="position:absolute;left:-30px;top:2px;font-size:11px;color:#C2185B;font-weight:600">20</span>
+          <span style="position:absolute;left:0;right:0;bottom:-10px;border-top:1px solid #C2185B"></span><span style="position:absolute;left:0;bottom:-26px;font-size:11px;color:#C2185B;font-weight:600">6 · 12 · 4 · texto · 6</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:12px">
+        <sc-for list="{{ chipsFluent }}" as="c" hint-placeholder-count="10">
+          <div style="display:flex;flex-direction:column;gap:4px;padding:8px;background:#fff;border:1px solid #EFEFEF;border-radius:4px">
+            <span style="align-self:flex-start;display:inline-flex;align-items:center;gap:4px;padding:0 6px;height:20px;box-sizing:border-box;border-radius:4px;font-size:12px;font-weight:600;white-space:nowrap;background:{{ c.bg }};color:{{ c.fg }};border:1px {{ c.bs }} {{ c.bc }}"><span aria-hidden="true" style="width:12px;height:12px;border-radius:50%;box-sizing:border-box;border:2px solid currentColor"></span>{{ c.label }}</span>
+            <span style="font-size:11px;font-family:ui-monospace,Consolas,monospace;color:#5F5F5F">{{ c.icon }} · {{ c.sem }} · {{ c.styleName }}</span>
+            <span style="font-size:11px;color:#3A3A3A">{{ c.action }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="padding:28px;display:flex;flex-direction:column;gap:16px;font-size:13px;line-height:20px;color:#3A3A3A">
+      <div><b>Partes</b>: ícono (aria-hidden) + texto. title = descripción del estado. No interactivo.</div>
+      <div><b>Tres estilos</b> con la misma semántica para separar estados vecinos: <i>tintado</i> (activo o terminal), <i>contorno</i> (intermedio o informativo), <i>punteado</i> (sin archivo todavía).</div>
+      <div><b>Observada</b>: único chip con borde en el color del texto; en la grilla, además, franja de 2 px a la izquierda de la celda Nombre y mensaje en color de advertencia. Llama la atención sin rojo.</div>
+      <div><b>Detenida</b>: info tintado + ícono PersonClock; el mensaje siempre termina con "No necesitas hacer nada".</div>
+      <div><b>Rechazado</b> es neutro (no rojo): definitivo, no hay nada que hacer.</div>
+      <div style="border:1px solid #EFEFEF;border-radius:6px;overflow:hidden">
+        <sc-for list="{{ m.chip }}" as="r" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:minmax(110px,1.3fr) repeat(3,minmax(0,1fr));gap:8px;padding:6px 10px;font-size:12px;border-bottom:1px solid #F3F3F3;font-variant-numeric:tabular-nums;font-weight:{{ r.w }};background:{{ r.bg }}"><span>{{ r.k }}</span><span>{{ r.f }}</span><span>{{ r.i }}</span><span>{{ r.m }}</span></div>
+        </sc-for>
+      </div>
+    </div>
+  </article>
+
+  <article id="progress" style="background:#fff;border:1px solid #E3E3E3;border-radius:8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))">
+    <div style="padding:28px;background:#FAFAFA;border-right:1px solid #EFEFEF;display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;gap:10px;align-items:baseline"><span style="font-size:12px;font-weight:600;color:#5F5F5F">2.4</span><h3 style="margin:0;font-size:17px;font-weight:600">Barra de progreso</h3></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;color:#5F5F5F">Determinada · F 4 px</span><div style="height:4px;background:#E0E0E0;border-radius:2px;overflow:hidden"><div style="width:62%;height:100%;background:#0F6CBD"></div></div></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;color:#5F5F5F">Indeterminada · Solicitando permiso, Verificando</span><div style="height:4px;background:#E0E0E0;border-radius:2px;overflow:hidden;position:relative"><div style="position:absolute;top:0;bottom:0;left:-30%;width:30%;background:#0F6CBD;animation:ind 1.5s cubic-bezier(.33,0,.67,1) infinite"></div></div></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;color:#5F5F5F">Institucional · 3 px, sin radio</span><div style="height:3px;background:#DDE1E6;overflow:hidden"><div style="width:62%;height:100%;background:#0F6CBD"></div></div></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;color:#5F5F5F">Moderno · 6 px, marcas de bloque (8 MB) si ≤ 32 bloques</span><div style="height:6px;background:#E2E6EC;border-radius:6px;overflow:hidden;position:relative"><div style="width:62%;height:100%;background:#0F6CBD"></div><div style="position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(12.5% - 1px),#fff calc(12.5% - 1px),#fff 12.5%)"></div></div></div>
+    </div>
+    <div style="padding:28px;display:flex;flex-direction:column;gap:12px;font-size:13px;line-height:20px;color:#3A3A3A">
+      <div>role="progressbar", aria-valuenow (sin él si es indeterminada), aria-valuetext "105,3 de 250 MB", aria-labelledby → nombre.</div>
+      <div>Avanza por bloque confirmado; transición de ancho 200 ms lineal. Al llegar al 100 % pasa a indeterminada (Verificando) y luego se oculta; el ícono de éxito ocupa su lugar.</div>
+      <div>prefers-reduced-motion: la indeterminada se vuelve un pulso de opacidad.</div>
+      <div style="border:1px solid #EFEFEF;border-radius:6px;overflow:hidden">
+        <sc-for list="{{ m.progress }}" as="r" hint-placeholder-count="4">
+          <div style="display:grid;grid-template-columns:minmax(110px,1.3fr) repeat(3,minmax(0,1fr));gap:8px;padding:6px 10px;font-size:12px;border-bottom:1px solid #F3F3F3;font-variant-numeric:tabular-nums;font-weight:{{ r.w }};background:{{ r.bg }}"><span>{{ r.k }}</span><span>{{ r.f }}</span><span>{{ r.i }}</span><span>{{ r.m }}</span></div>
+        </sc-for>
+      </div>
+    </div>
+  </article>
+
+  <article id="grid" style="background:#fff;border:1px solid #E3E3E3;border-radius:8px;display:flex;flex-direction:column">
+    <div style="padding:28px;background:#FAFAFA;border-bottom:1px solid #EFEFEF;display:flex;flex-direction:column;gap:20px;overflow-x:auto">
+      <div style="display:flex;gap:10px;align-items:baseline"><span style="font-size:12px;font-weight:600;color:#5F5F5F">2.5 · 2.6</span><h3 style="margin:0;font-size:17px;font-weight:600">Toolbar y grilla de adjuntos (model-driven)</h3></div>
+      <div style="min-width:1040px;background:#fff;border:1px solid #E0E0E0;border-radius:8px">
+        <div style="height:48px;display:flex;align-items:center;gap:16px;padding:0 12px;border-bottom:1px solid #E0E0E0">
+          <span style="font-size:16px;font-weight:600">Adjuntos <span style="font-weight:400;color:#616161;font-size:14px">25</span></span>
+          <div style="display:flex;gap:4px">
+            <span style="height:28px;display:inline-flex;align-items:center;padding:0 10px;white-space:nowrap;border-radius:4px;background:#EBF3FC;color:#0F548C;font-size:13px;font-weight:600;border:1px solid #B4D6FA">Todos 25</span>
+            <span style="height:28px;display:inline-flex;align-items:center;padding:0 10px;white-space:nowrap;border-radius:4px;font-size:13px;border:1px solid #D1D1D1">Requieren acción 3</span>
+            <span style="height:28px;display:inline-flex;align-items:center;padding:0 10px;white-space:nowrap;border-radius:4px;font-size:13px;border:1px solid #D1D1D1">En proceso 6</span>
+            <span style="height:28px;display:inline-flex;align-items:center;padding:0 10px;white-space:nowrap;border-radius:4px;font-size:13px;border:1px solid #D1D1D1">Guardados 13</span>
+            <span style="height:28px;display:inline-flex;align-items:center;padding:0 10px;white-space:nowrap;border-radius:4px;font-size:13px;border:1px solid #D1D1D1">Cerrados 3</span>
+          </div>
+          <span style="flex:1;min-width:8px"></span>
+          <span style="font-size:13px;display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="width:16px;height:16px;border:1px dashed #9A9A9A;border-radius:3px"></span>Más recientes primero</span>
+          <span style="width:32px;height:32px;display:flex;align-items:center;justify-content:center"><span style="width:20px;height:20px;border:1px dashed #9A9A9A;border-radius:3px"></span></span>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(200px,2fr) minmax(140px,1fr) 148px 88px 112px minmax(120px,1fr) 168px;height:40px;align-items:center;background:#FAFAFA;border-bottom:1px solid #E0E0E0;font-size:12px;font-weight:600;color:#424242">
+          <span style="padding:0 12px">Nombre</span><span style="padding:0 12px">Tipo de documento</span><span style="padding:0 12px">Estado</span><span style="padding:0 12px;text-align:right">Tamaño</span><span style="padding:0 12px">Fecha de subida ↓</span><span style="padding:0 12px">Subido por</span><span></span>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(200px,2fr) minmax(140px,1fr) 148px 88px 112px minmax(120px,1fr) 168px;min-height:44px;align-items:center;border-bottom:1px solid #E0E0E0;font-size:14px">
+          <span style="padding:0 12px;display:flex;gap:8px;align-items:center;min-width:0"><span style="width:20px;height:20px;border:1px dashed #9A9A9A;border-radius:3px;flex:none"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Contrato_firmado.pdf</span></span>
+          <span style="padding:0 12px">Contrato firmado</span>
+          <span style="padding:0 12px"><span style="display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 6px;border-radius:4px;background:#F1FAF1;color:#0E700E;border:1px solid #9FD89F;font-size:12px;font-weight:600;box-sizing:border-box"><span style="width:12px;height:12px;border-radius:50%;border:2px solid currentColor;box-sizing:border-box"></span>Archivado</span></span>
+          <span style="padding:0 12px;text-align:right;font-variant-numeric:tabular-nums">1,8 MB</span><span style="padding:0 12px">14/10/2026</span><span style="padding:0 12px">Marta Rivas</span>
+          <span style="padding:0 12px;display:flex;gap:4px;justify-content:flex-end"><span style="color:#0F6CBD;font-weight:600;font-size:13px;padding:4px 8px">Ver</span><span style="width:32px;height:32px;display:flex;align-items:center;justify-content:center"><span style="width:20px;height:20px;border:1px dashed #9A9A9A;border-radius:3px"></span></span></span>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(200px,2fr) minmax(140px,1fr) 148px 88px 112px minmax(120px,1fr) 168px;align-items:start;border-bottom:1px solid #E0E0E0;font-size:14px;padding:12px 0">
+          <span style="padding:0 12px;display:flex;gap:8px;align-items:center;min-width:0;border-left:2px solid #9A3F06;margin-left:0"><span style="width:20px;height:20px;border:1px dashed #9A9A9A;border-radius:3px;flex:none"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Cedula_identidad.jpg</span></span>
+          <span style="padding:0 12px">Cédula de identidad</span>
+          <span style="padding:0 12px"><span style="display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 6px;border-radius:4px;background:#FFF9F5;color:#9A3F06;border:1px solid #9A3F06;font-size:12px;font-weight:600;box-sizing:border-box"><span style="width:12px;height:12px;border-radius:50%;border:2px solid currentColor;box-sizing:border-box"></span>Observada</span></span>
+          <span style="padding:0 12px;text-align:right;font-variant-numeric:tabular-nums">640 KB</span><span style="padding:0 12px">13/10/2026</span><span style="padding:0 12px">Luis Ortega</span>
+          <span style="padding:0 12px;display:flex;justify-content:flex-end"><span style="height:28px;display:inline-flex;align-items:center;padding:0 10px;white-space:nowrap;border-radius:4px;border:1px solid #D1D1D1;font-size:13px;font-weight:600;white-space:nowrap">Corregir y reanudar</span></span>
+          <span style="grid-column:1 / 7;padding:4px 12px 0 42px;font-size:12px;color:#9A3F06;display:flex;gap:6px;align-items:center"><span style="width:12px;height:12px;border:1px dashed #C9A48A;border-radius:2px"></span>Falta la fecha de vencimiento del documento.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(200px,2fr) minmax(140px,1fr) 148px 88px 112px minmax(120px,1fr) 168px;align-items:start;font-size:14px;padding:12px 0">
+          <span style="padding:0 12px;display:flex;gap:8px;align-items:center;min-width:0"><span style="width:20px;height:20px;border:1px dashed #9A9A9A;border-radius:3px;flex:none"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Declaracion_renta_2025.pdf</span></span>
+          <span style="padding:0 12px">Declaración de renta</span>
+          <span style="padding:0 12px"><span style="display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 6px;border-radius:4px;background:#EBF3FC;color:#0F548C;border:1px solid #B4D6FA;font-size:12px;font-weight:600;box-sizing:border-box"><span style="width:12px;height:12px;border-radius:50%;border:2px solid currentColor;box-sizing:border-box"></span>Detenida</span></span>
+          <span style="padding:0 12px;text-align:right;font-variant-numeric:tabular-nums">3,2 MB</span><span style="padding:0 12px">12/10/2026</span><span style="padding:0 12px">Marta Rivas</span>
+          <span style="padding:0 12px;display:flex;justify-content:flex-end"><span style="width:32px;height:32px;display:flex;align-items:center;justify-content:center"><span style="width:20px;height:20px;border:1px dashed #9A9A9A;border-radius:3px"></span></span></span>
+          <span style="grid-column:1 / 7;padding:4px 12px 0 40px;font-size:12px;color:#0F548C;display:flex;gap:6px;align-items:center"><span style="width:12px;height:12px;border:1px dashed #8FB3E6;border-radius:2px"></span>Falta configurar el destino para este tipo de documento. Ya avisamos al administrador; no necesitas hacer nada.</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:11px;font-family:ui-monospace,Consolas,monospace;color:#C2185B">
+        <span>toolbar 48</span><span>encabezado 40</span><span>fila 44 (+ mensaje 20)</span><span>celda x 12</span><span>columnas: 2fr · 1fr · 148 · 88 · 112 · 1fr · 168</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:12px;font-weight:600;color:#5F5F5F">&lt; 600 px · tarjeta</span>
+        <div style="width:288px;background:#fff;border:1px solid #E0E0E0;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;border-left:2px solid #9A3F06">
+          <div style="display:flex;gap:8px;align-items:center"><span style="width:20px;height:20px;border:1px dashed #9A9A9A;border-radius:3px;flex:none"></span><span style="font-size:14px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Cedula_identidad.jpg</span><span style="width:32px;height:32px;display:flex;align-items:center;justify-content:center"><span style="width:20px;height:20px;border:1px dashed #9A9A9A;border-radius:3px"></span></span></div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 6px;border-radius:4px;background:#FFF9F5;color:#9A3F06;border:1px solid #9A3F06;font-size:12px;font-weight:600;box-sizing:border-box">Observada</span><span style="font-size:13px">Cédula de identidad</span></div>
+          <span style="font-size:12px;color:#616161">640 KB · 13/10/2026 · Luis Ortega</span>
+          <span style="font-size:12px;color:#9A3F06">Falta la fecha de vencimiento del documento.</span>
+          <span style="height:44px;display:flex;align-items:center;justify-content:center;border:1px solid #D1D1D1;border-radius:4px;font-size:14px;font-weight:600">Corregir y reanudar</span>
+        </div>
+      </div>
+    </div>
+    <div style="padding:28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:24px;font-size:13px;line-height:20px;color:#3A3A3A">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div><b>Toolbar</b>: título (font.family-heading) + contador · filtro rápido (radiogroup con conteos) · Ordenar · Densidad. &lt; 600: filtros en desplegable.</div>
+        <div><b>Grilla</b>: role="grid", roving tabindex, flechas entre celdas, Enter abre panel. Encabezado sticky con aria-sort.</div>
+        <div><b>Mensaje de detalle</b> (Observada, Detenida, Error, Rechazado): segunda línea bajo el nombre, abarca Nombre → Subido por, caption en color fg de la semántica.</div>
+        <div><b>Anchos</b>: 600–899 oculta Subido por y Tamaño (pasan bajo el nombre). &lt; 600 tarjetas.</div>
+        <div><b>Vacíos</b>: 0 adjuntos → título + texto, alto 160. Filtro sin resultados → texto + Quitar filtro.</div>
+      </div>
+      <div style="border:1px solid #EFEFEF;border-radius:6px;overflow:hidden;align-self:start">
+        <sc-for list="{{ m.grid }}" as="r" hint-placeholder-count="6">
+          <div style="display:grid;grid-template-columns:minmax(110px,1.3fr) repeat(3,minmax(0,1fr));gap:8px;padding:6px 10px;font-size:12px;border-bottom:1px solid #F3F3F3;font-variant-numeric:tabular-nums;font-weight:{{ r.w }};background:{{ r.bg }}"><span>{{ r.k }}</span><span>{{ r.f }}</span><span>{{ r.i }}</span><span>{{ r.m }}</span></div>
+        </sc-for>
+      </div>
+    </div>
+  </article>
+
+  <article id="panel" style="background:#fff;border:1px solid #E3E3E3;border-radius:8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))">
+    <div style="padding:28px;background:#FAFAFA;border-right:1px solid #EFEFEF;display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;gap:10px;align-items:baseline"><span style="font-size:12px;font-weight:600;color:#5F5F5F">2.7</span><h3 style="margin:0;font-size:17px;font-weight:600">Panel de detalle</h3></div>
+      <div style="width:360px;max-width:100%;background:#fff;border:1px solid #E0E0E0;border-radius:8px;display:flex;flex-direction:column;box-shadow:0 0 2px rgba(0,0,0,.12),0 8px 16px rgba(0,0,0,.14)">
+        <div style="padding:16px;display:flex;gap:10px;align-items:flex-start;border-bottom:1px solid #E0E0E0"><span style="width:24px;height:24px;border:1px dashed #9A9A9A;border-radius:3px;flex:none"></span><span style="flex:1;font-size:16px;font-weight:600;line-height:22px">Cedula_identidad.jpg</span><span style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex:none"><span style="width:20px;height:20px;border:1px dashed #9A9A9A;border-radius:3px"></span></span></div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:20px">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-size:12px;font-weight:600;color:#616161">Estado</span>
+            <div style="display:flex;gap:8px;align-items:center"><span style="display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 6px;border-radius:4px;background:#FFF9F5;color:#9A3F06;border:1px solid #9A3F06;font-size:12px;font-weight:600;box-sizing:border-box">Observada</span><span style="font-size:13px;color:#616161">Necesita una corrección tuya para continuar.</span></div>
+            <div style="padding:12px;border-radius:4px;background:#FFF9F5;border:1px solid #FDCFB4;font-size:13px;color:#242424">Falta la fecha de vencimiento del documento.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-size:12px;font-weight:600;color:#616161">Corregir datos</span>
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600">Fecha de vencimiento<span style="height:32px;border:1px solid #D1D1D1;border-bottom:2px solid #B10E1C;border-radius:4px;box-sizing:border-box"></span><span style="font-size:12px;font-weight:400;color:#B10E1C">Campo obligatorio.</span></label>
+          </div>
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:13px"><span style="color:#616161;font-size:12px">Tipo de documento</span><span>Cédula de identidad</span><span style="color:#616161;font-size:12px">Tamaño</span><span>640 KB</span><span style="color:#616161;font-size:12px">Subido por</span><span>Luis Ortega · 13/10/2026</span></div>
+        </div>
+        <div style="height:56px;padding:0 16px;display:flex;gap:8px;align-items:center;justify-content:flex-end;border-top:1px solid #E0E0E0"><span style="height:32px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid #D1D1D1;border-radius:4px;font-size:14px;font-weight:600">Cancelar</span><span style="height:32px;display:inline-flex;align-items:center;padding:0 12px;background:#0F6CBD;color:#fff;border-radius:4px;font-size:14px;font-weight:600">Guardar y reanudar</span></div>
+      </div>
+    </div>
+    <div style="padding:28px;display:flex;flex-direction:column;gap:12px;font-size:13px;line-height:20px;color:#3A3A3A">
+      <div>A la derecha de la grilla (≥ 900 de contenedor). Debajo: superpuesto con velo, foco atrapado, Esc cierra y devuelve el foco a la fila.</div>
+      <div><b>Partes</b>: encabezado (ícono + nombre 2 líneas máx + cerrar) · Estado (chip + descripción + mensaje) · Corregir datos (solo Observada) · Datos · Historial · pie fijo con acciones.</div>
+      <div>Corregir: solo metadatos (tipo de documento y campos). El campo inválido lleva aria-invalid y su mensaje debajo.</div>
+      <div style="border:1px solid #EFEFEF;border-radius:6px;overflow:hidden">
+        <sc-for list="{{ m.panel }}" as="r" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:minmax(110px,1.3fr) repeat(3,minmax(0,1fr));gap:8px;padding:6px 10px;font-size:12px;border-bottom:1px solid #F3F3F3;font-variant-numeric:tabular-nums;font-weight:{{ r.w }};background:{{ r.bg }}"><span>{{ r.k }}</span><span>{{ r.f }}</span><span>{{ r.i }}</span><span>{{ r.m }}</span></div>
+        </sc-for>
+      </div>
+    </div>
+  </article>
+
+  <div style="padding:20px 24px;border:1px solid #E3E3E3;border-radius:8px;background:#fff;font-size:14px;line-height:22px;display:flex;flex-direction:column;gap:6px">
+    <b>Siguiente paso</b>
+    <span style="color:#4A4A4A;text-wrap:pretty">Con tu visto bueno armo el prototipo: conmutador de variante, panel de personalización en vivo, claro/oscuro, simulación de subidas y galería de todos los estados, en vistas canvas y model-driven.</span>
+  </div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { tk: null, variant: 'fluent', mode: 'light', density: 'comfortable' };
+  componentDidMount() {
+    fetch('tokens.json').then(r => r.json()).then(tk => this.setState({ tk })).catch(() => {});
+  }
+  val(t, v, mode, dens) {
+    const x = t.values[v];
+    if (typeof x === 'string') return x;
+    if (x.light !== undefined) return x[mode];
+    return x[dens];
+  }
+  lum(hex) {
+    if (!hex || hex[0] !== '#') return null;
+    const n = hex.slice(1); const c = [0, 2, 4].map(i => parseInt(n.substr(i, 2), 16) / 255)
+      .map(u => u <= 0.03928 ? u / 12.92 : Math.pow((u + 0.055) / 1.055, 2.4));
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  }
+  ratio(a, b) {
+    const la = this.lum(a), lb = this.lum(b); if (la == null || lb == null) return null;
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+  renderVals() {
+    const { tk, variant, mode, density } = this.state;
+    const seg = (list, cur, key) => list.map(([id, label]) => ({ label, on: id === cur ? 'true' : 'false', bg: id === cur ? '#1B1B1B' : '#fff', fg: id === cur ? '#fff' : '#1B1B1B', pick: () => this.setState({ [key]: id }) }));
+    const VL = { fluent: 'Fluent nativo', institucional: 'Institucional sobrio', moderno: 'Moderno con tarjetas' };
+    const toks = tk ? tk.tokens : [];
+    const g = (name, v = variant) => { const t = toks.find(x => x.name === name); return t ? this.val(t, v, mode, density) : ''; };
+    const surface = g('color.surface');
+    const colors = toks.filter(t => t.group === 'color' && !t.name.startsWith('color.status')).map(t => {
+      const v = this.val(t, variant, mode, density); const r = this.ratio(v, surface);
+      return { css: t.css, maker: t.maker ? 'M' : '', val: v, description: t.description, ratio: r ? r.toFixed(2) + ':1' : '—' };
+    });
+    const SN = { success: 'Éxito', warning: 'Advertencia', info: 'Información', danger: 'Error', neutral: 'Neutro' };
+    const statuses = Object.keys(SN).map(k => {
+      const fg = g(`color.status-${k}-fg`), bg = g(`color.status-${k}-bg`), border = g(`color.status-${k}-border`);
+      const r = this.ratio(fg, bg) || 0;
+      return { name: SN[k], fg, bg, border, fgv: fg, bgv: bg, borderv: border, ratio: r.toFixed(2) + ':1', ok: r >= 4.5 ? 'AA' : 'bajo AA', okColor: r >= 4.5 ? '#0E700E' : '#B10E1C' };
+    });
+    const LC = [
+      ['Creada', 'neutral', 'dashed', 'DocumentAdd', 'Subir', 'Falta subir el archivo.'],
+      ['Subido', 'info', 'outline', 'CloudArrowUp', '—', 'Recibido. Espera su turno para archivarse.'],
+      ['Procesando', 'info', 'tint', 'ArrowSync', '—', 'Se está guardando en el gestor documental.'],
+      ['Archivado', 'success', 'tint', 'ArchiveCheckmark', 'Ver', 'Guardado en el gestor documental.'],
+      ['Almacenado', 'success', 'outline', 'CloudCheckmark', 'Ver · Archivar ahora', 'Guardado, pero todavía no está en el gestor documental.'],
+      ['Observada', 'warning', 'strong', 'Edit', 'Corregir y reanudar', 'Necesita una corrección tuya para continuar.'],
+      ['Detenida', 'info', 'tint', 'PersonClock', '— (con explicación)', 'Espera a un administrador. No necesitas hacer nada.'],
+      ['Error', 'danger', 'tint', 'ErrorCircle', 'Reintentar', 'Falló por un problema técnico. Puedes reintentar.'],
+      ['Rechazado', 'neutral', 'tint', 'Prohibited', '—', 'Rechazado de forma definitiva.'],
+      ['Depurado', 'neutral', 'outline', 'Delete', '—', 'Eliminado por la política de retención.']
+    ];
+    const STN = { tint: 'tintado', outline: 'contorno', dashed: 'punteado', strong: 'tintado + borde fg' };
+    const mkChips = (v, md) => LC.map(([label, sem, st, icon, action, desc]) => {
+      const gv = n => { const t = toks.find(x => x.name === n); return t ? this.val(t, v, md, density) : ''; };
+      const fg = gv(`color.status-${sem}-fg`), bg = gv(`color.status-${sem}-bg`), bd = gv(`color.status-${sem}-border`), sf = gv('color.surface');
+      return { label, desc, icon, action, sem, styleName: STN[st], fg,
+        bg: st === 'tint' || st === 'strong' ? bg : sf, bc: st === 'strong' ? fg : bd, bs: st === 'dashed' ? 'dashed' : 'solid',
+        h: gv('size.chip'), r: gv('radius.chip'), ic: gv('size.chip-icon'), px: v === 'moderno' ? '8px' : '6px' };
+    });
+    const pv = {
+      bg: g('color.bg'), surface, text: g('color.text'), text2: g('color.text-secondary'), primary: g('color.primary'), onPrimary: g('color.on-primary'),
+      primaryText: g('color.primary-text'), border: g('color.border'), borderStrong: g('color.border-strong'), font: g('font.family'), heading: g('font.family-heading'),
+      body: g('font.size-body'), title: g('font.size-title'), titleLh: g('font.line-title'), rsm: g('radius.sm'), rmd: g('radius.md'), rlg: g('radius.lg'),
+      ctrl: g('size.control'), prog: g('size.progress'), shadow: g('shadow.card')
+    };
+    const fmt = (t, v) => { const x = t.values[v]; if (typeof x === 'string') return x; if (x.light !== undefined) return x.light === x.dark ? x.light : `${x.light} / ${x.dark}`; return `${x.compact} / ${x.comfortable}`; };
+    const compare = toks.filter(t => t.group !== 'color' && !t.name.startsWith('space.') || /space\.row|space\.list/.test(t.name))
+      .filter(t => t.name !== 'font.family')
+      .map(t => ({ css: t.css, maker: t.maker ? 'M' : '', description: t.description, f: fmt(t, 'fluent'), i: fmt(t, 'institucional'), m: fmt(t, 'moderno') }));
+    const H = { k: 'Medida', f: 'F', i: 'I', m: 'M', w: 600, bg: '#FAFAFA' };
+    const R = (k, f, i, m) => ({ k, f, i: i ?? f, m: m ?? f, w: 400, bg: '#fff' });
+    const m = {
+      dropzone: [H, R('Alto mínimo', '96 / 136', '88 / 120', '120 / 168'), R('Relleno', '16 / 24', '12 / 16', '20 / 32'), R('Separación', '8', '4', '12'), R('Borde', '1 dashed', '1 dashed', '2 dashed'), R('Radio', '8', '2', '16'), R('Ícono', '24', '20', '32 (en 48)')],
+      filerow: [H, R('Alto mínimo', '44 / 56', '40 / 48', '56 / 72'), R('Relleno x·y', '8·6 / 12·8', '8·4 / 12·6', '12·10 / 16·14'), R('Columnas gap', '12', '8', '12'), R('Entre filas', 'divisor', 'divisor', '8 / 12'), R('Ícono tipo', '20 / 24', '20', '24 / 32'), R('Botón ícono', '24 / 32', '24 / 28', '32 / 40'), R('Nombre', '14/20 sb', '13/18 sb', '14/20 sb'), R('Meta', '12/16', '12/16', '12/16')],
+      chip: [H, R('Alto', '20', '20', '24'), R('Relleno x', '6', '6', '8'), R('Ícono', '12', '12', '14'), R('Radio', '4', '2', '999'), R('Texto', '12 sb')],
+      progress: [H, R('Grosor', '4', '3', '6'), R('Radio', '2', '0', '6'), R('Pista', 'border'), R('Indet. ciclo', '1.5 s'), R('Marcas bloque', 'no', 'no', 'sí ≤ 32')],
+      grid: [H, R('Toolbar', '40 / 48', '36 / 44', '44 / 52'), R('Encabezado', '32 / 40', '32 / 36', '36 / 44'), R('Fila', '36 / 44', '32 / 40', '44 / 56'), R('Celda x', '8 / 12', '8 / 12', '12 / 16'), R('Encab. texto', '12 sb', '12 sb MAYÚS', '12 sb'), R('Filas', 'divisor', 'divisor', 'tarjeta, gap 4')],
+      panel: [H, R('Ancho', '360', '360', '400'), R('Relleno', '16', '16', '20'), R('Entre secciones', '20'), R('Pie', '56'), R('Radio', '8 / 0 si acoplado', '2', '16')]
+    };
+    const uploadStates = [
+      { label: 'En cola', color: '#616161', detail: '250 MB', icon: 'Clock', actions: 'Quitar', bar: false },
+      { label: 'Solicitando permiso…', color: '#0F548C', detail: '', icon: 'ArrowSync', actions: 'Cancelar', bar: true, barLeft: '35%', barW: '30%' },
+      { label: 'Subiendo', color: '#0F6CBD', detail: '42 % · 105,3 de 250 MB · 38,2 Mbps · 1 min', icon: 'ArrowUpload', actions: 'Cancelar', bar: true, barLeft: '0%', barW: '42%' },
+      { label: 'Verificando…', color: '#0F548C', detail: '', icon: 'ShieldCheckmark', actions: '—', bar: true, barLeft: '60%', barW: '30%' },
+      { label: 'Subido', color: '#0E700E', detail: '250 MB', icon: 'CheckmarkCircle', actions: 'Quitar', bar: false },
+      { label: 'Error', color: '#B10E1C', detail: 'Se perdió la conexión. Revisa tu red y vuelve a intentarlo.', icon: 'ErrorCircle', actions: 'Reintentar · Quitar', bar: false },
+      { label: 'Cancelado', color: '#616161', detail: '', icon: 'DismissCircle', actions: 'Reintentar · Quitar', bar: false },
+      { label: 'No se agregó', color: '#B10E1C', detail: 'Pesa 312 MB; el máximo es 250 MB.', icon: 'Warning', actions: 'Quitar', bar: false, rowBg: '#FDF3F4' }
+    ].map(s => ({ rowBg: '#fff', barLeft: '0%', barW: '0%', ...s }));
+    return {
+      tokenCount: toks.length || '…',
+      variantOpts: seg([['fluent', 'Fluent nativo'], ['institucional', 'Institucional'], ['moderno', 'Moderno']], variant, 'variant'),
+      modeOpts: seg([['light', 'Claro'], ['dark', 'Oscuro']], mode, 'mode'),
+      densOpts: seg([['compact', 'Compacta'], ['comfortable', 'Cómoda']], density, 'density'),
+      variantLabel: VL[variant], modeLabel: mode === 'light' ? 'claro' : 'oscuro',
+      pv, colors, statuses, chips: mkChips(variant, mode), chipsFluent: mkChips('fluent', 'light'), compare, m, uploadStates
+    };
+  }
+}
+</script>
+</body>
+</html>
