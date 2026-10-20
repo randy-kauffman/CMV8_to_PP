@@ -8,7 +8,7 @@ Conector de Power Platform que llama a la Function `cmv8-func-supfcopn` (broker 
 
 | Archivo | Qué es |
 | --- | --- |
-| `cmv8-broker.swagger.json` | Definición OpenAPI 2.0: host `cmv8-func-supfcopn.azurewebsites.net`, basePath `/api`, operaciones `Salud`, `EmitirSasSubida`, `EmitirSasLectura`, `ResolverCliente`. |
+| `cmv8-broker.swagger.json` | Definición OpenAPI 2.0 v2 (ADR-003 §5): host `cmv8-func-supfcopn.azurewebsites.net`, basePath `/api`. Operaciones: `Salud`, `EmitirSasLote`, `EmitirSasLectura`, `Archivar`, `Reanudar`, `IngestarArchivo` (cuerpo binario, para flujos), `ExtenderRetencion`, `DescubrirTipos`, `ActualizarTipos`, `ValidarTipo`, `ValidarTabla`, `ReanudarConflicto`, `ConsultarAs400`. `uploadUrl` y `tokenStorage` están marcados `x-ms-visibility: internal` para que no se muestren en los diseñadores; igual viven solo en una variable de la app. |
 | `apiProperties.json` | Parámetros de conexión OAuth 2.0 con Entra ID (`identityProvider: aad`). **El secreto NO está acá**: el campo `clientSecret` lleva un marcador. |
 
 ## Las dos app registrations (tenant `7bcfee03-896e-4ad3-947b-8a2d9ce17974`)

@@ -87,7 +87,7 @@ Reglas: un estado dice DÓNDE está el archivo, no qué le va a pasar (por eso A
 
 ## 3. Estado operativo en Azure Table (cuenta de adjuntos)
 
-**Tabla `ingesta`**: PartitionKey = tabla lógica, RowKey = id del adjunto. Columnas: estado (espejo operativo), `tipodocumento`, `ruta`, `solicitanteOid`, `nombre`, `tamano`, `contentType`, `clienteJson` (metadatos resueltos), `cmisObjectId`, `intentos`, `mensaje`, `conflictoClave`, `fechaDepuracion` (nula = permanente), `sasEmitidaEn`, `subidoEn`, `procesadoEn`. La escribe el broker al emitir la SAS y el worker en cada paso. Nadie salvo la Function la lee.
+**Tabla `ingesta`**: PartitionKey = tabla lógica, RowKey = id del adjunto. Columnas (como las escribe `RegistroIngestasTabla`): `estado` (código del choice), `tipoDocumentoId`, `contenedor`, `ruta`, `solicitanteOid`, `nombreArchivo`, `tamanoBytes`, `contentType`, `valoresJson` (columnas de la fila de Dataverse al emitir la SAS: el origen "columna" de las propiedades), `cmisObjectId`, `intentos`, `mensaje`, `conflictoClave`, `fechaDepuracion` (nula = permanente), `sasEmitidaEn`, `subidoEn`, `procesadoEn`. La deduplicación de conflictos vive en la misma tabla (PartitionKey `conflicto`, RowKey = clave codificada, columna `conflictoId`). La escribe el broker al emitir la SAS y el worker en cada paso. Nadie salvo la Function la lee.
 
 **Tabla `depuracion`** (agenda): PartitionKey = día de vencimiento (`yyyy-MM-dd`), RowKey = tabla + id. Una consulta puntual por día; cambiar la fecha mueve la entrada.
 

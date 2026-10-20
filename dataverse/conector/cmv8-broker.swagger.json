@@ -2,8 +2,8 @@
   "swagger": "2.0",
   "info": {
     "title": "CMV8 Broker",
-    "description": "Broker de adjuntos CMV8: emite URLs SAS de un solo blob para subir y leer adjuntos de solicitudes de ingesta y resuelve clientes en AS400, siempre con la identidad del usuario que llama.",
-    "version": "1.0.0"
+    "description": "Broker de adjuntos de CMV8 (v2, ADR-003): SAS por lote, lectura, archivar, reanudar, ingesta desde flujos, retención, catálogo de tipos y consultas con nombre al AS400. Llama a la Function con la identidad del usuario.",
+    "version": "2.0"
   },
   "host": "cmv8-func-supfcopn.azurewebsites.net",
   "basePath": "/api",
@@ -29,150 +29,989 @@
               "$ref": "#/definitions/Salud"
             }
           }
-        }
+        },
+        "security": [
+          {
+            "oauth2_auth": [
+              "user_impersonation"
+            ]
+          }
+        ]
       }
     },
-    "/sas/subida": {
+    "/sas/lote": {
       "post": {
-        "operationId": "EmitirSasSubida",
-        "summary": "Emitir URL de subida",
-        "description": "Emite una URL SAS de delegación de usuario, de un solo blob y corta duración, para subir el adjunto de una solicitud.",
+        "operationId": "EmitirSasLote",
+        "summary": "Emitir SAS de subida para un lote de adjuntos",
+        "description": "Una SAS por adjunto y un único token de Storage del usuario. Un adjunto que falla no frena al resto: su error viaja en items[].",
+        "x-ms-visibility": "important",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
         "parameters": [
           {
             "name": "cuerpo",
             "in": "body",
             "required": true,
-            "x-ms-summary": "Datos del archivo",
-            "description": "Solicitud y archivo a subir.",
             "schema": {
-              "$ref": "#/definitions/PedidoSasSubida"
+              "$ref": "#/definitions/PedidoSasLote"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "URL de subida emitida.",
+            "description": "Lote emitido",
             "schema": {
-              "$ref": "#/definitions/SasSubida"
+              "$ref": "#/definitions/SasLote"
             }
           },
           "400": {
-            "description": "Datos inválidos.",
+            "description": "Validación",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "401": {
-            "description": "Falta el token o no es válido."
+            "description": "Sin identidad o acceso condicional (ver WWW-Authenticate)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "403": {
-            "description": "El usuario no tiene acceso a la solicitud.",
+            "description": "Sin permiso sobre la fila o sin rol",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "404": {
-            "description": "La solicitud no existe.",
+            "description": "No existe",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "409": {
-            "description": "La solicitud no está en un estado que permita subir.",
+            "description": "Estado que no admite la operación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Error interno (incidente)",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "security": [
+          {
+            "oauth2_auth": [
+              "user_impersonation"
+            ]
+          }
+        ]
       }
     },
-    "/sas/lectura/{solicitudId}": {
+    "/sas/lectura/{tabla}/{id}": {
       "get": {
         "operationId": "EmitirSasLectura",
-        "summary": "Emitir URL de lectura",
-        "description": "Emite una URL SAS de solo lectura, de un solo blob y corta duración, para descargar el adjunto de una solicitud.",
+        "summary": "Emitir SAS de lectura de un adjunto",
+        "description": "Lectura del blob en ingesta o en almacenados. 409 si el documento ya está solo en Content Manager.",
+        "x-ms-visibility": "important",
+        "produces": [
+          "application/json"
+        ],
         "parameters": [
           {
-            "name": "solicitudId",
+            "name": "tabla",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Nombre lógico de la tabla de adjuntos (por ejemplo cred_adjuntocredito)",
+            "x-ms-summary": "Tabla"
+          },
+          {
+            "name": "id",
             "in": "path",
             "required": true,
             "type": "string",
             "format": "uuid",
-            "x-ms-summary": "Id de solicitud",
-            "description": "GUID del registro cmv8_solicitudingesta."
+            "description": "Id del adjunto (GUID)",
+            "x-ms-summary": "Id"
           }
         ],
         "responses": {
           "200": {
-            "description": "URL de lectura emitida.",
+            "description": "SAS de lectura",
             "schema": {
               "$ref": "#/definitions/SasLectura"
             }
           },
           "400": {
-            "description": "El id no es un GUID.",
+            "description": "Validación",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "401": {
-            "description": "Falta el token o no es válido."
+            "description": "Sin identidad o acceso condicional (ver WWW-Authenticate)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "403": {
-            "description": "El usuario no tiene acceso a la solicitud.",
+            "description": "Sin permiso sobre la fila o sin rol",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "404": {
-            "description": "La solicitud no existe o no tiene adjunto.",
+            "description": "No existe",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "Estado que no admite la operación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Error interno (incidente)",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "security": [
+          {
+            "oauth2_auth": [
+              "user_impersonation"
+            ]
+          }
+        ]
       }
     },
-    "/clientes/resolver": {
+    "/adjuntos/{tabla}/{id}/archivar": {
       "post": {
-        "operationId": "ResolverCliente",
-        "summary": "Resolver cliente",
-        "description": "Busca un cliente en AS400 y devuelve los metadatos obligatorios para Content Manager.",
+        "operationId": "Archivar",
+        "summary": "Archivar ahora un adjunto almacenado",
+        "description": "Diferido que llegó a su evento de negocio, o promoción de un solo-blob a Content Manager (el tipo del adjunto debe tener ItemType).",
+        "x-ms-visibility": "important",
+        "produces": [
+          "application/json"
+        ],
         "parameters": [
+          {
+            "name": "tabla",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Nombre lógico de la tabla de adjuntos (por ejemplo cred_adjuntocredito)",
+            "x-ms-summary": "Tabla"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid",
+            "description": "Id del adjunto (GUID)",
+            "x-ms-summary": "Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Encolado",
+            "schema": {
+              "$ref": "#/definitions/Accion"
+            }
+          },
+          "400": {
+            "description": "Validación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sin identidad o acceso condicional (ver WWW-Authenticate)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Sin permiso sobre la fila o sin rol",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "Estado que no admite la operación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Error interno (incidente)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "202": {
+            "description": "Encolado",
+            "schema": {
+              "$ref": "#/definitions/Accion"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2_auth": [
+              "user_impersonation"
+            ]
+          }
+        ]
+      }
+    },
+    "/adjuntos/{tabla}/{id}/reanudar": {
+      "post": {
+        "operationId": "Reanudar",
+        "summary": "Reanudar un adjunto observado o en error",
+        "description": "El usuario corrigió los datos: se releen suplantando al usuario y se reencola.",
+        "x-ms-visibility": "important",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "tabla",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Nombre lógico de la tabla de adjuntos (por ejemplo cred_adjuntocredito)",
+            "x-ms-summary": "Tabla"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid",
+            "description": "Id del adjunto (GUID)",
+            "x-ms-summary": "Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Encolado",
+            "schema": {
+              "$ref": "#/definitions/Accion"
+            }
+          },
+          "400": {
+            "description": "Validación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sin identidad o acceso condicional (ver WWW-Authenticate)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Sin permiso sobre la fila o sin rol",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "Estado que no admite la operación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Error interno (incidente)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "202": {
+            "description": "Encolado",
+            "schema": {
+              "$ref": "#/definitions/Accion"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2_auth": [
+              "user_impersonation"
+            ]
+          }
+        ]
+      }
+    },
+    "/adjuntos/{tabla}/{id}/ingestar": {
+      "post": {
+        "operationId": "IngestarArchivo",
+        "summary": "Ingestar un archivo desde un flujo",
+        "description": "Para Power Automate: el flujo creó la fila y manda el contenido. Tope de 100 MB por acción. La identidad es la de la conexión.",
+        "x-ms-visibility": "important",
+        "consumes": [
+          "application/octet-stream"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "tabla",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Nombre lógico de la tabla de adjuntos (por ejemplo cred_adjuntocredito)",
+            "x-ms-summary": "Tabla"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid",
+            "description": "Id del adjunto (GUID)",
+            "x-ms-summary": "Id"
+          },
+          {
+            "name": "X-Nombre-Archivo",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "description": "Nombre original del archivo (URL-encoded)",
+            "x-ms-summary": "Nombre de archivo"
+          },
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "MIME del archivo",
+            "x-ms-summary": "Content-Type"
+          },
+          {
+            "name": "archivo",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            },
+            "description": "Contenido del archivo",
+            "x-ms-summary": "Archivo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ingresado",
+            "schema": {
+              "$ref": "#/definitions/Ingestado"
+            }
+          },
+          "400": {
+            "description": "Validación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sin identidad o acceso condicional (ver WWW-Authenticate)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Sin permiso sobre la fila o sin rol",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "Estado que no admite la operación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Error interno (incidente)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "202": {
+            "description": "Ingresado y encolado",
+            "schema": {
+              "$ref": "#/definitions/Ingestado"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2_auth": [
+              "user_impersonation"
+            ]
+          }
+        ]
+      }
+    },
+    "/adjuntos/{tabla}/{id}/retencion": {
+      "post": {
+        "operationId": "ExtenderRetencion",
+        "summary": "Extender o congelar la retención de un adjunto",
+        "description": "fecha = nueva fecha de depuración (yyyy-MM-dd); sin fecha = retención permanente (legal). Un tipo inmutable solo admite extender.",
+        "x-ms-visibility": "advanced",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "tabla",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Nombre lógico de la tabla de adjuntos (por ejemplo cred_adjuntocredito)",
+            "x-ms-summary": "Tabla"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid",
+            "description": "Id del adjunto (GUID)",
+            "x-ms-summary": "Id"
+          },
           {
             "name": "cuerpo",
             "in": "body",
             "required": true,
-            "x-ms-summary": "Cliente a buscar",
-            "description": "Identificador del cliente.",
             "schema": {
-              "$ref": "#/definitions/PedidoResolverCliente"
+              "$ref": "#/definitions/PedidoRetencion"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Cliente encontrado.",
+            "description": "Retención actualizada",
             "schema": {
-              "$ref": "#/definitions/Cliente"
+              "$ref": "#/definitions/Retencion"
             }
           },
           "400": {
-            "description": "Id de cliente vacío o demasiado largo.",
+            "description": "Validación",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "401": {
-            "description": "Falta el token o no es válido."
+            "description": "Sin identidad o acceso condicional (ver WWW-Authenticate)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Sin permiso sobre la fila o sin rol",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "404": {
-            "description": "Cliente no encontrado.",
+            "description": "No existe",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "Estado que no admite la operación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Error interno (incidente)",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "security": [
+          {
+            "oauth2_auth": [
+              "user_impersonation"
+            ]
+          }
+        ]
+      }
+    },
+    "/catalogo/descubrir": {
+      "post": {
+        "operationId": "DescubrirTipos",
+        "summary": "Descubrir los tipos de documento de Content Manager",
+        "description": "Lee el árbol de tipos por CMIS y escribe el catálogo. Conserva las decisiones humanas. Solo administrador documental.",
+        "x-ms-visibility": "advanced",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Resumen",
+            "schema": {
+              "$ref": "#/definitions/ResumenDescubrimiento"
+            }
+          },
+          "400": {
+            "description": "Validación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sin identidad o acceso condicional (ver WWW-Authenticate)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Sin permiso sobre la fila o sin rol",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "Estado que no admite la operación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Error interno (incidente)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2_auth": [
+              "user_impersonation"
+            ]
+          }
+        ]
+      }
+    },
+    "/catalogo/actualizar": {
+      "post": {
+        "operationId": "ActualizarTipos",
+        "summary": "Actualizar los tipos en uso desde Content Manager",
+        "description": "Lo mismo que descubrir, acotado a los tipos en uso. Un tipo con cambios vuelve a no revisado.",
+        "x-ms-visibility": "advanced",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Resumen",
+            "schema": {
+              "$ref": "#/definitions/ResumenDescubrimiento"
+            }
+          },
+          "400": {
+            "description": "Validación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sin identidad o acceso condicional (ver WWW-Authenticate)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Sin permiso sobre la fila o sin rol",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "Estado que no admite la operación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Error interno (incidente)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2_auth": [
+              "user_impersonation"
+            ]
+          }
+        ]
+      }
+    },
+    "/catalogo/validar": {
+      "get": {
+        "operationId": "ValidarTipo",
+        "summary": "Validar el catálogo contra Content Manager",
+        "description": "Cruza la definición viva con el catálogo. Sin tipo valida todos los en uso.",
+        "x-ms-visibility": "advanced",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Id del tipo de documento",
+            "x-ms-summary": "Tipo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informe",
+            "schema": {
+              "$ref": "#/definitions/InformeValidacion"
+            }
+          },
+          "400": {
+            "description": "Validación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sin identidad o acceso condicional (ver WWW-Authenticate)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Sin permiso sobre la fila o sin rol",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "Estado que no admite la operación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Error interno (incidente)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2_auth": [
+              "user_impersonation"
+            ]
+          }
+        ]
+      }
+    },
+    "/catalogo/validar-tabla/{tabla}": {
+      "get": {
+        "operationId": "ValidarTabla",
+        "summary": "Validar una tabla de adjuntos",
+        "description": "Herramienta del maker: columnas reservadas y columnas que piden los tipos en uso.",
+        "x-ms-visibility": "important",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "tabla",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Nombre lógico de la tabla de adjuntos (por ejemplo cred_adjuntocredito)",
+            "x-ms-summary": "Tabla"
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Validar solo contra este tipo",
+            "x-ms-summary": "Tipo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informe",
+            "schema": {
+              "$ref": "#/definitions/InformeTabla"
+            }
+          },
+          "400": {
+            "description": "Validación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sin identidad o acceso condicional (ver WWW-Authenticate)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Sin permiso sobre la fila o sin rol",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "Estado que no admite la operación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Error interno (incidente)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2_auth": [
+              "user_impersonation"
+            ]
+          }
+        ]
+      }
+    },
+    "/catalogo/conflictos/{id}/reanudar": {
+      "post": {
+        "operationId": "ReanudarConflicto",
+        "summary": "Resolver un conflicto y reencolar los adjuntos detenidos",
+        "x-ms-visibility": "advanced",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uuid",
+            "description": "Id del conflicto (GUID)",
+            "x-ms-summary": "Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resuelto",
+            "schema": {
+              "$ref": "#/definitions/ConflictoResuelto"
+            }
+          },
+          "400": {
+            "description": "Validación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sin identidad o acceso condicional (ver WWW-Authenticate)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Sin permiso sobre la fila o sin rol",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "Estado que no admite la operación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Error interno (incidente)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2_auth": [
+              "user_impersonation"
+            ]
+          }
+        ]
+      }
+    },
+    "/as400/consultas/{nombre}": {
+      "post": {
+        "operationId": "ConsultarAs400",
+        "summary": "Ejecutar una consulta con nombre al AS400",
+        "description": "Solo consultas declaradas en la configuración de Azure. Devuelve la primera fila (columnas en mayúsculas) o 404.",
+        "x-ms-visibility": "important",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "nombre",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Nombre de la consulta (por ejemplo cliente)",
+            "x-ms-summary": "Consulta"
+          },
+          {
+            "name": "parametros",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "description": "Parámetros por nombre, como las columnas lógicas de la tabla de adjuntos (por ejemplo {\"idcliente\": \"00123\"})"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Primera fila",
+            "schema": {
+              "type": "object"
+            }
+          },
+          "400": {
+            "description": "Validación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Sin identidad o acceso condicional (ver WWW-Authenticate)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Sin permiso sobre la fila o sin rol",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "Estado que no admite la operación",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Error interno (incidente)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2_auth": [
+              "user_impersonation"
+            ]
+          }
+        ]
       }
     }
   },
@@ -192,80 +1031,114 @@
         }
       }
     },
-    "PedidoSasSubida": {
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "x-ms-summary": "Error",
+          "description": "Mensaje de error."
+        }
+      }
+    },
+    "ItemSasLote": {
       "type": "object",
       "required": [
-        "solicitudId",
+        "id",
         "nombreArchivo",
-        "tamanoBytes",
-        "contentType"
+        "tamanoBytes"
       ],
       "properties": {
-        "solicitudId": {
+        "id": {
           "type": "string",
           "format": "uuid",
-          "x-ms-summary": "Id de solicitud",
-          "description": "GUID del registro cmv8_solicitudingesta."
+          "x-ms-summary": "Id del adjunto"
         },
         "nombreArchivo": {
           "type": "string",
-          "x-ms-summary": "Nombre del archivo",
-          "description": "Nombre original del archivo, con extensión."
+          "x-ms-summary": "Nombre de archivo"
         },
         "tamanoBytes": {
           "type": "integer",
           "format": "int64",
-          "x-ms-summary": "Tamaño en bytes",
-          "description": "Tamaño total del archivo."
+          "x-ms-summary": "Tamaño en bytes"
         },
         "contentType": {
           "type": "string",
-          "x-ms-summary": "Tipo MIME",
-          "description": "Tipo de contenido, por ejemplo application/pdf."
+          "x-ms-summary": "Content-Type"
         }
       }
     },
-    "SasSubida": {
+    "PedidoSasLote": {
+      "type": "object",
+      "required": [
+        "tabla",
+        "items"
+      ],
+      "properties": {
+        "tabla": {
+          "type": "string",
+          "x-ms-summary": "Tabla de adjuntos"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ItemSasLote"
+          },
+          "x-ms-summary": "Adjuntos (hasta 20)"
+        }
+      }
+    },
+    "ItemSas": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
         "uploadUrl": {
           "type": "string",
-          "format": "uri",
-          "x-ms-summary": "URL de subida",
-          "description": "URL SAS de escritura para un solo blob. No guardarla."
+          "description": "SAS de subida; nunca persistir ni mostrar",
+          "x-ms-visibility": "internal"
         },
         "rutaBlob": {
-          "type": "string",
-          "x-ms-summary": "Ruta del blob",
-          "description": "Ruta sin firmar {solicitudId}/{archivo}."
+          "type": "string"
         },
         "expiraUtc": {
           "type": "string",
-          "format": "date-time",
-          "x-ms-summary": "Expira (UTC)",
-          "description": "Vencimiento de la URL."
+          "format": "date-time"
+        },
+        "error": {
+          "type": "string"
+        },
+        "codigo": {
+          "type": "integer"
+        }
+      }
+    },
+    "SasLote": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ItemSas"
+          }
         },
         "bloqueBytes": {
-          "type": "integer",
-          "format": "int64",
-          "x-ms-summary": "Tamaño de bloque",
-          "description": "Tamaño de bloque recomendado para Put Block."
+          "type": "integer"
         },
         "versionServicio": {
-          "type": "string",
-          "x-ms-summary": "Versión de servicio",
-          "description": "Valor para el encabezado x-ms-version."
+          "type": "string"
         },
         "tokenStorage": {
           "type": "string",
-          "x-ms-summary": "Token de Storage",
-          "description": "S1b: token Entra de Azure Storage del usuario (OBO). Pasarlo a la entrada tokenStorage del PCF; se envía como Authorization: Bearer junto con la SAS ligada (sduoid). Secreto: no guardarlo ni mostrarlo. Solo viene si el broker emite SAS ligadas al usuario."
+          "description": "Token de Storage del usuario (OBO); nunca persistir ni mostrar",
+          "x-ms-visibility": "internal"
         },
         "tokenStorageExpiraUtc": {
           "type": "string",
-          "format": "date-time",
-          "x-ms-summary": "Token de Storage expira (UTC)",
-          "description": "Vencimiento del token de Storage."
+          "format": "date-time"
         }
       }
     },
@@ -297,51 +1170,142 @@
         }
       }
     },
-    "PedidoResolverCliente": {
+    "Accion": {
       "type": "object",
-      "required": [
-        "id"
-      ],
       "properties": {
-        "id": {
-          "type": "string",
-          "x-ms-summary": "Id de cliente",
-          "description": "Identificador del cliente en AS400 (máximo 50 caracteres)."
+        "adjunto": {
+          "type": "string"
+        },
+        "accion": {
+          "type": "string"
         }
       }
     },
-    "Cliente": {
+    "Ingestado": {
       "type": "object",
       "properties": {
-        "idCliente": {
-          "type": "string",
-          "x-ms-summary": "Id de cliente"
+        "adjunto": {
+          "type": "string"
         },
-        "idCliente2": {
-          "type": "string",
-          "x-ms-summary": "Id de cliente 2"
-        },
-        "nombre": {
-          "type": "string",
-          "x-ms-summary": "Nombre"
-        },
-        "afiliadoPadre": {
-          "type": "string",
-          "x-ms-summary": "Afiliado padre"
-        },
-        "idDueno": {
-          "type": "string",
-          "x-ms-summary": "Id de dueño"
+        "rutaBlob": {
+          "type": "string"
         }
       }
     },
-    "Error": {
+    "PedidoRetencion": {
       "type": "object",
       "properties": {
-        "error": {
+        "fecha": {
           "type": "string",
-          "x-ms-summary": "Error",
-          "description": "Mensaje de error."
+          "format": "date",
+          "description": "yyyy-MM-dd; vacía = permanente",
+          "x-ms-summary": "Fecha de depuración"
+        }
+      }
+    },
+    "Retencion": {
+      "type": "object",
+      "properties": {
+        "adjunto": {
+          "type": "string"
+        },
+        "retencionHasta": {
+          "type": "string"
+        }
+      }
+    },
+    "ResumenDescubrimiento": {
+      "type": "object",
+      "properties": {
+        "nuevos": {
+          "type": "integer"
+        },
+        "actualizados": {
+          "type": "integer"
+        },
+        "sinCambios": {
+          "type": "integer"
+        },
+        "ausentes": {
+          "type": "integer"
+        },
+        "avisos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Hallazgo": {
+      "type": "object",
+      "properties": {
+        "nivel": {
+          "type": "string"
+        },
+        "tipo": {
+          "type": "string"
+        },
+        "propiedad": {
+          "type": "string"
+        },
+        "mensaje": {
+          "type": "string"
+        }
+      }
+    },
+    "InformeValidacion": {
+      "type": "object",
+      "properties": {
+        "criticos": {
+          "type": "integer"
+        },
+        "avisos": {
+          "type": "integer"
+        },
+        "hallazgos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Hallazgo"
+          }
+        }
+      }
+    },
+    "InformeTabla": {
+      "type": "object",
+      "properties": {
+        "tabla": {
+          "type": "string"
+        },
+        "prefijo": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "faltantes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "avisos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ConflictoResuelto": {
+      "type": "object",
+      "properties": {
+        "conflictoId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "reencolados": {
+          "type": "integer"
         }
       }
     }
