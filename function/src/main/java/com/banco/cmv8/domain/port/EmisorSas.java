@@ -5,12 +5,13 @@ import com.banco.cmv8.domain.SasEmitida;
 
 import java.time.Duration;
 
-/** Emite SAS de delegación de usuario para UN blob. */
+/**
+ * SAS de delegación de usuario para UN blob, ligada al usuario ({@code sduoid}) cuando la política lo exige.
+ * La subida siempre va al contenedor de ingesta; la lectura puede ser de ingesta o de almacenados.
+ */
 public interface EmisorSas {
 
-    /** SAS de creación + escritura (Put Block / Put Block List). */
-    SasEmitida emitirSubida(String rutaBlob, Duration vigencia, ContextoLlamador llamador);
+    SasEmitida emitirSubida(String contenedor, String ruta, Duration vigencia, ContextoLlamador llamador);
 
-    /** SAS de solo lectura. */
-    SasEmitida emitirLectura(String rutaBlob, Duration vigencia, ContextoLlamador llamador);
+    SasEmitida emitirLectura(String contenedor, String ruta, Duration vigencia, ContextoLlamador llamador);
 }

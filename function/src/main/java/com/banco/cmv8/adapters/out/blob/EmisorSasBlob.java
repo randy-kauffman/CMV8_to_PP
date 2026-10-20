@@ -2,7 +2,6 @@ package com.banco.cmv8.adapters.out.blob;
 
 import com.azure.core.util.Context;
 import com.azure.storage.blob.BlobClient;
-import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceVersion;
 import com.azure.storage.blob.models.UserDelegationKey;
@@ -10,6 +9,7 @@ import com.azure.storage.blob.options.BlobGetUserDelegationKeyOptions;
 import com.azure.storage.blob.sas.BlobSasPermission;
 import com.azure.storage.blob.sas.BlobServiceSasSignatureValues;
 import com.azure.storage.common.sas.SasProtocol;
+import com.banco.cmv8.domain.ClaveAdjunto;
 import com.banco.cmv8.domain.ContextoLlamador;
 import com.banco.cmv8.domain.PoliticaSas;
 import com.banco.cmv8.domain.SasEmitida;
@@ -20,7 +20,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -28,8 +27,11 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <ul>
  *   <li>Un blob, HTTPS, vigencia corta (PoliticaSas).</li>
- *   <li>scid = solicitudId (correlación en los logs de Storage).</li>
- *   <li>saoid = oid del llamador cuando llega (auditoría).</li>
+ *   <li>Contenedor explícito por llamada (ADR-003 §7): la subida va a ingesta; la lectura, a ingesta o a
+ *       almacenados. La firma cubre {@code <contenedor>/<ruta>}.</li>
+ *   <li>scid = id del adjunto tomado de la ruta {@code <tabla>/<id>/<archivo>} (correlación en los logs de
+ *       Storage).</li>
+ *   <li>saoid: no se usa (ver el comentario en {@code emitir}).</li>
  *   <li>sduoid = oid del llamador si SAS_LIGADA_USUARIO=true (S1b): la SAS solo sirve junto con un token
  *       Entra de ese usuario. Requiere versión de servicio 2025-07-05 o superior.</li>
  * </ul>
@@ -42,38 +44,33 @@ public class EmisorSasBlob implements EmisorSas {
     private static final String SIN_TENANT = "-";
 
     private final BlobServiceClient servicio;
-    private final BlobContainerClient contenedor;
     private final String blobEndpoint;
-    private final String nombreContenedor;
     private final PoliticaSas politica;
     private final boolean ligadaUsuario;
     private final Map<String, UserDelegationKey> clavesPorTenant = new ConcurrentHashMap<>();
 
-    public EmisorSasBlob(BlobServiceClient servicio, String blobEndpoint, String nombreContenedor,
-                         PoliticaSas politica, boolean ligadaUsuario) {
+    public EmisorSasBlob(BlobServiceClient servicio, String blobEndpoint, PoliticaSas politica, boolean ligadaUsuario) {
         this.servicio = servicio;
-        this.contenedor = servicio.getBlobContainerClient(nombreContenedor);
         this.blobEndpoint = blobEndpoint.endsWith("/") ? blobEndpoint : blobEndpoint + "/";
-        this.nombreContenedor = nombreContenedor;
         this.politica = politica;
         this.ligadaUsuario = ligadaUsuario;
     }
 
     @Override
-    public SasEmitida emitirSubida(String rutaBlob, Duration vigencia, ContextoLlamador llamador) {
+    public SasEmitida emitirSubida(String contenedor, String rutaBlob, Duration vigencia, ContextoLlamador llamador) {
         BlobSasPermission permisos = new BlobSasPermission()
                 .setCreatePermission(true)
                 .setWritePermission(true);
-        return emitir(rutaBlob, vigencia, llamador, permisos);
+        return emitir(contenedor, rutaBlob, vigencia, llamador, permisos);
     }
 
     @Override
-    public SasEmitida emitirLectura(String rutaBlob, Duration vigencia, ContextoLlamador llamador) {
+    public SasEmitida emitirLectura(String contenedor, String rutaBlob, Duration vigencia, ContextoLlamador llamador) {
         BlobSasPermission permisos = new BlobSasPermission().setReadPermission(true);
-        return emitir(rutaBlob, vigencia, llamador, permisos);
+        return emitir(contenedor, rutaBlob, vigencia, llamador, permisos);
     }
 
-    private SasEmitida emitir(String rutaBlob, Duration vigencia, ContextoLlamador llamador,
+    private SasEmitida emitir(String contenedor, String rutaBlob, Duration vigencia, ContextoLlamador llamador,
                               BlobSasPermission permisos) {
         OffsetDateTime inicio = politica.calcularInicio();
         OffsetDateTime expira = politica.calcularExpiracion(vigencia);
@@ -85,8 +82,7 @@ public class EmisorSasBlob implements EmisorSas {
         BlobServiceSasSignatureValues valores = new BlobServiceSasSignatureValues(expira, permisos)
                 .setStartTime(inicio)
                 .setProtocol(SasProtocol.HTTPS_ONLY);
-        Optional<UUID> solicitudId = PoliticaSas.solicitudDeRuta(rutaBlob);
-        solicitudId.ifPresent(id -> valores.setCorrelationId(id.toString()));
+        ClaveAdjunto.deRuta(rutaBlob).ifPresent(c -> valores.setCorrelationId(c.id().toString()));
         // NO se usa saoid: Storage exige que la identidad firmante tenga runAsSuperUser (Blob Data Owner) para
         // aceptarlo, y rompería el mínimo privilegio (Contributor en el contenedor). Verificado en S2/S7: 403
         // AuthorizationPermissionMismatch. La correlación de auditoría va por scid + traza del llamador.
@@ -94,10 +90,16 @@ public class EmisorSasBlob implements EmisorSas {
             valores.setDelegatedUserObjectId(llamador.objectId().get());
         }
 
-        BlobClient blob = contenedor.getBlobClient(rutaBlob);
+        BlobClient blob = servicio.getBlobContainerClient(contenedor).getBlobClient(rutaBlob);
         String sas = blob.generateUserDelegationSas(valores, clave);
-        String url = blobEndpoint + nombreContenedor + "/" + rutaBlob + "?" + sas;
+        String url = urlBlob(blobEndpoint, contenedor, rutaBlob) + "?" + sas;
         return new SasEmitida(url, expira, BlobServiceVersion.getLatest().getVersion());
+    }
+
+    /** {@code <endpoint>/<contenedor>/<ruta>}: el mismo recurso que firma la SAS (sr=b). */
+    static String urlBlob(String blobEndpoint, String contenedor, String rutaBlob) {
+        String base = blobEndpoint.endsWith("/") ? blobEndpoint : blobEndpoint + "/";
+        return base + contenedor + "/" + rutaBlob;
     }
 
     private UserDelegationKey clave(OffsetDateTime expiraSas, Optional<String> tenantDelegado) {

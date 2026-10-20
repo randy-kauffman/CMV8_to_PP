@@ -1,9 +1,10 @@
 package com.banco.cmv8.adapters.in;
 
 import com.banco.cmv8.application.EmitirSasLectura;
-import com.banco.cmv8.application.EmitirSasSubida;
+import com.banco.cmv8.application.EmitirSasLote;
 import com.banco.cmv8.config.Fabrica;
 import com.banco.cmv8.config.Json;
+import com.banco.cmv8.domain.ClaveAdjunto;
 import com.banco.cmv8.domain.ContextoLlamador;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.microsoft.azure.functions.ExecutionContext;
@@ -18,39 +19,52 @@ import com.microsoft.azure.functions.annotation.HttpTrigger;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.logging.Logger;
 
 /**
- * Broker de SAS. ANONYMOUS a nivel de Functions: la autenticación Entra la impone la autenticación
- * integrada de App Service (S7). Nunca se loguea la URL con SAS, el bearer ni el tokenStorage (S1b).
+ * Broker de SAS v2 (ADR-003 §4.1 y §5). ANONYMOUS a nivel de Functions: la autenticación Entra la impone Easy
+ * Auth. Nunca se loguea la URL con SAS, el bearer ni el tokenStorage.
  */
 public class SasHttp {
 
-    @FunctionName("SasSubida")
-    public HttpResponseMessage subida(
+    /** POST /api/sas/lote {"tabla": "...", "items": [{"id", "nombreArchivo", "tamanoBytes", "contentType"}]} */
+    @FunctionName("SasLote")
+    public HttpResponseMessage lote(
             @HttpTrigger(name = "req", methods = {HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS,
-                    route = "sas/subida") HttpRequestMessage<Optional<String>> req,
+                    route = "sas/lote") HttpRequestMessage<Optional<String>> req,
             ExecutionContext ctx) {
         Logger log = ctx.getLogger();
         try {
-            EmitirSasSubida.Peticion peticion = leerPeticion(req.getBody().orElse(""));
+            EmitirSasLote.Peticion peticion = leer(req.getBody().orElse(""), EmitirSasLote.Peticion.class);
             if (peticion == null) {
                 return RespuestasHttp.error(req, HttpStatus.BAD_REQUEST, "Cuerpo JSON inválido");
             }
             ContextoLlamador llamador = LectorLlamador.desde(req.getHeaders());
-            EmitirSasSubida.Resultado r = Fabrica.get().emitirSasSubida().ejecutar(peticion, llamador, log);
-
+            EmitirSasLote.Resultado r = Fabrica.get().emitirSasLote().ejecutar(peticion, llamador, log);
+            List<Map<String, Object>> items = new ArrayList<>();
+            for (EmitirSasLote.ItemResultado i : r.items()) {
+                Map<String, Object> item = new LinkedHashMap<>();
+                item.put("id", i.id());
+                if (i.exitoso()) {
+                    item.put("uploadUrl", i.uploadUrl());
+                    item.put("rutaBlob", i.rutaBlob());
+                    item.put("expiraUtc", iso(i.expiraUtc()));
+                } else {
+                    item.put("error", i.error());
+                    item.put("codigo", i.codigoError());
+                }
+                items.add(item);
+            }
             Map<String, Object> cuerpo = new LinkedHashMap<>();
-            cuerpo.put("uploadUrl", r.uploadUrl());
-            cuerpo.put("rutaBlob", r.rutaBlob());
-            cuerpo.put("expiraUtc", iso(r.expiraUtc()));
+            cuerpo.put("items", items);
             cuerpo.put("bloqueBytes", r.bloqueBytes());
             cuerpo.put("versionServicio", r.versionServicio());
-            // S1b: solo con SAS ligada al usuario. El PCF lo manda como Authorization: Bearer a Storage.
+            // Un solo token: es del usuario, no del archivo. El PCF lo manda como Authorization: Bearer a Storage.
             if (r.tokenStorage() != null) {
                 cuerpo.put("tokenStorage", r.tokenStorage());
                 cuerpo.put("tokenStorageExpiraUtc", iso(r.tokenStorageExpiraUtc()));
@@ -61,23 +75,19 @@ public class SasHttp {
         }
     }
 
+    /** GET /api/sas/lectura/{tabla}/{id} */
     @FunctionName("SasLectura")
     public HttpResponseMessage lectura(
             @HttpTrigger(name = "req", methods = {HttpMethod.GET}, authLevel = AuthorizationLevel.ANONYMOUS,
-                    route = "sas/lectura/{solicitudId}") HttpRequestMessage<Optional<String>> req,
-            @BindingName("solicitudId") String solicitudId,
+                    route = "sas/lectura/{tabla}/{id}") HttpRequestMessage<Optional<String>> req,
+            @BindingName("tabla") String tabla,
+            @BindingName("id") String id,
             ExecutionContext ctx) {
         Logger log = ctx.getLogger();
         try {
-            UUID id;
-            try {
-                id = UUID.fromString(solicitudId);
-            } catch (IllegalArgumentException e) {
-                return RespuestasHttp.error(req, HttpStatus.BAD_REQUEST, "solicitudId no es un GUID");
-            }
+            ClaveAdjunto clave = ClaveAdjunto.de(tabla, id);
             ContextoLlamador llamador = LectorLlamador.desde(req.getHeaders());
-            EmitirSasLectura.Resultado r = Fabrica.get().emitirSasLectura().ejecutar(id, llamador, log);
-
+            EmitirSasLectura.Resultado r = Fabrica.get().emitirSasLectura().ejecutar(clave, llamador, log);
             Map<String, Object> cuerpo = new LinkedHashMap<>();
             cuerpo.put("downloadUrl", r.downloadUrl());
             cuerpo.put("expiraUtc", iso(r.expiraUtc()));
@@ -91,18 +101,18 @@ public class SasHttp {
         }
     }
 
-    private static EmitirSasSubida.Peticion leerPeticion(String cuerpo) {
+    static <T> T leer(String cuerpo, Class<T> tipo) {
         if (cuerpo == null || cuerpo.isBlank()) {
             return null;
         }
         try {
-            return Json.MAPPER.readValue(cuerpo, EmitirSasSubida.Peticion.class);
+            return Json.MAPPER.readValue(cuerpo, tipo);
         } catch (JsonProcessingException e) {
             return null;
         }
     }
 
-    private static String iso(OffsetDateTime fecha) {
-        return DateTimeFormatter.ISO_INSTANT.format(fecha.toInstant());
+    static String iso(OffsetDateTime fecha) {
+        return fecha == null ? null : DateTimeFormatter.ISO_INSTANT.format(fecha.toInstant());
     }
 }

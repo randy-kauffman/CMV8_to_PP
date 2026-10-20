@@ -1,53 +1,77 @@
 package com.banco.cmv8.application;
 
+import com.banco.cmv8.domain.Adjunto;
+import com.banco.cmv8.domain.ClaveAdjunto;
+import com.banco.cmv8.domain.EstadoIngesta;
 import com.banco.cmv8.domain.MensajeIngesta;
-import com.banco.cmv8.domain.PoliticaSas;
+import com.banco.cmv8.domain.RegistroIngesta;
 import com.banco.cmv8.domain.ResultadoEscaneo;
 import com.banco.cmv8.domain.port.AlmacenAdjuntos;
 import com.banco.cmv8.domain.port.ColaIngesta;
-import com.banco.cmv8.domain.port.RepositorioSolicitudes;
+import com.banco.cmv8.domain.port.RegistroIngestas;
+import com.banco.cmv8.domain.port.RepositorioAdjuntos;
 
-import java.util.UUID;
+import java.time.Clock;
+import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 /**
- * Caso de uso: reaccionar al resultado del antivirus (o a BlobCreated en el modo sin Defender).
- * Limpio → encola. Malicioso → rechaza y borra. Desconocido → se ignora (queda registrado en el log).
+ * Reacción a BlobCreated (o al resultado del antivirus): limpio → marca Subido en el registro operativo y encola;
+ * malicioso → Rechazado y borra; desconocido → se ignora. Dataverse no se toca en el camino feliz: el Subido lo
+ * escribe la app con la identidad del usuario (ADR-003 §4.1).
  */
 public class RegistrarResultadoEscaneo {
 
-    public record EventoEscaneo(UUID solicitudId, String rutaBlob, ResultadoEscaneo resultado, String detalle,
+    public record EventoEscaneo(ClaveAdjunto clave, String rutaBlob, ResultadoEscaneo resultado, String detalle,
                                 String origen) {
     }
 
-    private final RepositorioSolicitudes repositorio;
+    private final RegistroIngestas registros;
+    private final RepositorioAdjuntos repositorio;
     private final AlmacenAdjuntos almacen;
+    private final String contenedorIngesta;
+    private final Clock reloj;
 
-    public RegistrarResultadoEscaneo(RepositorioSolicitudes repositorio, AlmacenAdjuntos almacen) {
+    public RegistrarResultadoEscaneo(RegistroIngestas registros, RepositorioAdjuntos repositorio,
+                                     AlmacenAdjuntos almacen, String contenedorIngesta, Clock reloj) {
+        this.registros = registros;
         this.repositorio = repositorio;
         this.almacen = almacen;
+        this.contenedorIngesta = contenedorIngesta;
+        this.reloj = reloj;
     }
 
     public void ejecutar(EventoEscaneo evento, ColaIngesta cola, Logger log) {
-        UUID id = evento.solicitudId();
+        ClaveAdjunto clave = evento.clave();
         String ruta = evento.rutaBlob();
-        if (id == null || !PoliticaSas.rutaPerteneceA(ruta, id)) {
-            log.warning(() -> "Evento ignorado: ruta fuera del esquema {solicitudId}/{archivo}. rutaBlob=" + ruta);
+        if (clave == null || !clave.esSuRuta(ruta)) {
+            log.warning(() -> "Evento ignorado: ruta fuera del esquema <tabla>/<id>/<archivo>. ruta=" + ruta);
+            return;
+        }
+        Optional<RegistroIngesta> registro = registros.obtener(clave);
+        if (registro.isEmpty()) {
+            log.warning(() -> "Blob sin registro operativo (no pasó por el broker); se ignora. adjunto=" + clave);
             return;
         }
         switch (evento.resultado()) {
             case LIMPIO -> {
-                cola.encolar(new MensajeIngesta(id, ruta, evento.origen()));
-                log.info(() -> "Solicitud encolada para archivar. solicitudId=" + id + " origen=" + evento.origen());
+                if (registro.get().estado() == EstadoIngesta.CREADA) {
+                    registros.guardar(registro.get().subido(reloj.instant()));
+                }
+                cola.encolar(new MensajeIngesta(clave, contenedorIngesta, ruta, evento.origen()));
+                log.info(() -> "Adjunto encolado para procesar. adjunto=" + clave + " origen=" + evento.origen());
             }
             case MALICIOSO -> {
                 String detalle = evento.detalle() == null || evento.detalle().isBlank() ? "" : " (" + evento.detalle() + ")";
-                repositorio.marcarRechazado(id, "Malware detectado por el antivirus" + detalle);
-                almacen.borrar(ruta);
-                log.warning(() -> "Archivo malicioso rechazado y borrado. solicitudId=" + id + " rutaBlob=" + ruta);
+                String motivo = "Malware detectado por el antivirus" + detalle;
+                repositorio.actualizar(clave, Map.of(Adjunto.COL_ESTADO, EstadoIngesta.RECHAZADO, Adjunto.COL_MENSAJE, motivo));
+                registros.guardar(registro.get().conEstado(EstadoIngesta.RECHAZADO).conMensaje(motivo));
+                almacen.borrar(contenedorIngesta, ruta);
+                log.warning(() -> "Archivo malicioso rechazado y borrado. adjunto=" + clave);
             }
-            case DESCONOCIDO -> log.warning(() -> "Resultado de escaneo desconocido; se ignora. solicitudId=" + id
-                    + " rutaBlob=" + ruta + " detalle=" + evento.detalle());
+            case DESCONOCIDO -> log.warning(() -> "Resultado de escaneo desconocido; se ignora. adjunto=" + clave
+                    + " detalle=" + evento.detalle());
         }
     }
 }

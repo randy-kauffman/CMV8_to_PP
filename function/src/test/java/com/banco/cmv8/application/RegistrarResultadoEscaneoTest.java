@@ -1,82 +1,125 @@
 package com.banco.cmv8.application;
 
+import com.banco.cmv8.domain.Adjunto;
+import com.banco.cmv8.domain.ClaveAdjunto;
+import com.banco.cmv8.domain.EstadoIngesta;
 import com.banco.cmv8.domain.MensajeIngesta;
+import com.banco.cmv8.domain.RegistroIngesta;
 import com.banco.cmv8.domain.ResultadoEscaneo;
 import com.banco.cmv8.domain.port.AlmacenAdjuntos;
 import com.banco.cmv8.domain.port.ColaIngesta;
-import com.banco.cmv8.domain.port.RepositorioSolicitudes;
+import com.banco.cmv8.domain.port.RegistroIngestas;
+import com.banco.cmv8.domain.port.RepositorioAdjuntos;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.logging.Logger;
 
+import static com.banco.cmv8.Datos.AHORA;
+import static com.banco.cmv8.Datos.INGESTA;
+import static com.banco.cmv8.Datos.LOG;
+import static com.banco.cmv8.Datos.RELOJ;
+import static com.banco.cmv8.Datos.TABLA;
+import static com.banco.cmv8.Datos.registro;
+import static com.banco.cmv8.Datos.ruta;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class RegistrarResultadoEscaneoTest {
 
-    private static final UUID ID = UUID.fromString("11111111-2222-3333-4444-555555555555");
-    private static final String RUTA = ID + "/doc.pdf";
-    private static final Logger LOG = Logger.getAnonymousLogger();
-
     @Mock
-    RepositorioSolicitudes repositorio;
+    private RegistroIngestas registros;
     @Mock
-    AlmacenAdjuntos almacen;
+    private RepositorioAdjuntos repositorio;
     @Mock
-    ColaIngesta cola;
+    private AlmacenAdjuntos almacen;
+    @Mock
+    private ColaIngesta cola;
 
-    private RegistrarResultadoEscaneo casoDeUso() {
-        return new RegistrarResultadoEscaneo(repositorio, almacen);
+    private final ClaveAdjunto clave = com.banco.cmv8.Datos.clave();
+    private final String ruta = ruta(clave);
+
+    private RegistrarResultadoEscaneo servicio() {
+        return new RegistrarResultadoEscaneo(registros, repositorio, almacen, INGESTA, RELOJ);
     }
 
-    private static RegistrarResultadoEscaneo.EventoEscaneo evento(ResultadoEscaneo r, String ruta) {
-        return new RegistrarResultadoEscaneo.EventoEscaneo(ID, ruta, r, "detalle", "escaneo");
+    private RegistrarResultadoEscaneo.EventoEscaneo evento(ResultadoEscaneo resultado, String detalle) {
+        return new RegistrarResultadoEscaneo.EventoEscaneo(clave, ruta, resultado, detalle, "escaneo");
     }
 
-    @Test
-    void limpioEncola() {
-        casoDeUso().ejecutar(evento(ResultadoEscaneo.LIMPIO, RUTA), cola, LOG);
-
-        verify(cola).encolar(new MensajeIngesta(ID, RUTA, "escaneo"));
-        verifyNoInteractions(repositorio, almacen);
-    }
-
-    @Test
-    void maliciosoRechazaYBorra() {
-        casoDeUso().ejecutar(evento(ResultadoEscaneo.MALICIOSO, RUTA), cola, LOG);
-
-        verify(repositorio).marcarRechazado(eq(ID), argThat(m -> m.contains("Malware")));
-        verify(almacen).borrar(RUTA);
-        verifyNoInteractions(cola);
-    }
-
-    @Test
-    void desconocidoSeIgnora() {
-        casoDeUso().ejecutar(evento(ResultadoEscaneo.DESCONOCIDO, RUTA), cola, LOG);
-
-        verifyNoInteractions(repositorio, almacen, cola);
+    private void registroEn(EstadoIngesta estado) {
+        when(registros.obtener(clave)).thenReturn(Optional.of(registro(clave, estado, UUID.randomUUID(), INGESTA, Map.of())));
     }
 
     @Test
     void rutaAjenaSeIgnora() {
-        casoDeUso().ejecutar(evento(ResultadoEscaneo.MALICIOSO, UUID.randomUUID() + "/x.pdf"), cola, LOG);
+        servicio().ejecutar(new RegistrarResultadoEscaneo.EventoEscaneo(clave, TABLA + "/" + UUID.randomUUID() + "/x.pdf",
+                ResultadoEscaneo.LIMPIO, null, "escaneo"), cola, LOG);
+        servicio().ejecutar(new RegistrarResultadoEscaneo.EventoEscaneo(null, ruta, ResultadoEscaneo.LIMPIO, null, "escaneo"),
+                cola, LOG);
+        verifyNoInteractions(registros, repositorio, almacen, cola);
+    }
 
+    @Test
+    void blobSinRegistroOperativoSeIgnora() {
+        when(registros.obtener(clave)).thenReturn(Optional.empty());
+        servicio().ejecutar(evento(ResultadoEscaneo.LIMPIO, null), cola, LOG);
         verifyNoInteractions(repositorio, almacen, cola);
     }
 
     @Test
-    void textoDeDefenderSeInterpreta() {
-        assertEquals(ResultadoEscaneo.LIMPIO, ResultadoEscaneo.desdeTexto("No threats found"));
-        assertEquals(ResultadoEscaneo.MALICIOSO, ResultadoEscaneo.desdeTexto("Malicious"));
-        assertEquals(ResultadoEscaneo.DESCONOCIDO, ResultadoEscaneo.desdeTexto("Error"));
-        assertEquals(ResultadoEscaneo.DESCONOCIDO, ResultadoEscaneo.desdeTexto(null));
+    void limpioSobreCreadaMarcaSubidoEnLaTablaYEncolaSinTocarDataverse() {
+        registroEn(EstadoIngesta.CREADA);
+        servicio().ejecutar(evento(ResultadoEscaneo.LIMPIO, null), cola, LOG);
+
+        ArgumentCaptor<RegistroIngesta> guardado = ArgumentCaptor.forClass(RegistroIngesta.class);
+        verify(registros).guardar(guardado.capture());
+        assertEquals(EstadoIngesta.SUBIDO, guardado.getValue().estado());
+        assertEquals(AHORA, guardado.getValue().subidoEn());
+        verify(cola).encolar(new MensajeIngesta(clave, INGESTA, ruta, "escaneo"));
+        verifyNoInteractions(repositorio, almacen);
+    }
+
+    @Test
+    void limpioSobreSubidoSoloEncola() {
+        registroEn(EstadoIngesta.SUBIDO);
+        servicio().ejecutar(evento(ResultadoEscaneo.LIMPIO, null), cola, LOG);
+        verify(registros, never()).guardar(any());
+        verify(cola).encolar(new MensajeIngesta(clave, INGESTA, ruta, "escaneo"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void maliciosoRechazaYBorra() {
+        registroEn(EstadoIngesta.CREADA);
+        servicio().ejecutar(evento(ResultadoEscaneo.MALICIOSO, "Trojan:Win32"), cola, LOG);
+
+        ArgumentCaptor<Map<String, Object>> cambios = ArgumentCaptor.forClass(Map.class);
+        verify(repositorio).actualizar(org.mockito.ArgumentMatchers.eq(clave), cambios.capture());
+        assertEquals(EstadoIngesta.RECHAZADO, cambios.getValue().get(Adjunto.COL_ESTADO));
+        assertEquals("Malware detectado por el antivirus (Trojan:Win32)", cambios.getValue().get(Adjunto.COL_MENSAJE));
+        ArgumentCaptor<RegistroIngesta> guardado = ArgumentCaptor.forClass(RegistroIngesta.class);
+        verify(registros).guardar(guardado.capture());
+        assertEquals(EstadoIngesta.RECHAZADO, guardado.getValue().estado());
+        verify(almacen).borrar(INGESTA, ruta);
+        verifyNoInteractions(cola);
+    }
+
+    @Test
+    void desconocidoNoHaceNada() {
+        registroEn(EstadoIngesta.CREADA);
+        servicio().ejecutar(evento(ResultadoEscaneo.DESCONOCIDO, "timeout"), cola, LOG);
+        verifyNoInteractions(repositorio, almacen, cola);
+        verify(registros, never()).guardar(any());
     }
 }

@@ -4,7 +4,7 @@ import com.banco.cmv8.adapters.out.cola.ColaIngestaSalida;
 import com.banco.cmv8.application.RegistrarResultadoEscaneo;
 import com.banco.cmv8.config.Fabrica;
 import com.banco.cmv8.config.Json;
-import com.banco.cmv8.domain.PoliticaSas;
+import com.banco.cmv8.domain.ClaveAdjunto;
 import com.banco.cmv8.domain.ResultadoEscaneo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.microsoft.azure.functions.ExecutionContext;
@@ -16,13 +16,12 @@ import com.microsoft.azure.functions.annotation.QueueOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.logging.Logger;
 
 /**
  * Entradas de Event Grid. Los nombres de función coinciden con las suscripciones de infra/main.bicep
  * (functions/OnScanResult y functions/OnBlobCreated). Si el caso de uso falla, la excepción se propaga
- * y Event Grid reintenta según su política.
+ * y Event Grid reintenta según su política. La ruta es {@code <tabla>/<id>/<archivo>} (ADR-003 §1.1).
  */
 public class EventosEventGrid {
 
@@ -50,7 +49,7 @@ public class EventosEventGrid {
                 malware.isEmpty() ? resultadoTexto : String.join(", ", malware), "escaneo", salida, log);
     }
 
-    /** Respaldo sin Defender: BlobCreated del tópico de sistema. Se trata como limpio (no hay escaneo). */
+    /** Sin Defender: BlobCreated del tópico de sistema. Se trata como limpio (no hay escaneo). */
     @FunctionName("OnBlobCreated")
     public void onBlobCreated(
             @EventGridTrigger(name = "evento") String evento,
@@ -63,8 +62,7 @@ public class EventosEventGrid {
             log.warning(() -> "OnBlobCreated: evento ignorado (tipo inesperado o JSON inválido)");
             return;
         }
-        procesar(e.path("data").path("url").asText(null), ResultadoEscaneo.LIMPIO, null, "blob-creado",
-                salida, log);
+        procesar(e.path("data").path("url").asText(null), ResultadoEscaneo.LIMPIO, null, "blob-creado", salida, log);
     }
 
     private static void procesar(String urlBlob, ResultadoEscaneo resultado, String detalle, String origen,
@@ -72,18 +70,15 @@ public class EventosEventGrid {
         Fabrica fabrica = Fabrica.get();
         String contenedor = fabrica.configuracion().contenedor();
         Optional<String> ruta = UbicacionBlob.rutaRelativa(urlBlob, contenedor);
-        Optional<UUID> solicitudId = ruta.flatMap(PoliticaSas::solicitudDeRuta);
-        if (ruta.isEmpty() || solicitudId.isEmpty()) {
-            log.warning(() -> "Evento de un blob fuera del contenedor o del esquema {solicitudId}/{archivo}; se ignora");
+        Optional<ClaveAdjunto> clave = ruta.flatMap(ClaveAdjunto::deRuta);
+        if (ruta.isEmpty() || clave.isEmpty()) {
+            log.warning(() -> "Evento de un blob fuera del contenedor de ingesta o del esquema <tabla>/<id>/<archivo>; se ignora");
             return;
         }
         ColaIngestaSalida cola = new ColaIngestaSalida();
         fabrica.registrarResultadoEscaneo().ejecutar(
-                new RegistrarResultadoEscaneo.EventoEscaneo(solicitudId.get(), ruta.get(), resultado, detalle, origen),
-                cola, log);
-        if (!cola.vacia()) {
-            salida.setValue(cola.mensajes());
-        }
+                new RegistrarResultadoEscaneo.EventoEscaneo(clave.get(), ruta.get(), resultado, detalle, origen), cola, log);
+        AdjuntosHttp.entregar(cola, salida);
     }
 
     private static JsonNode leer(String json) {

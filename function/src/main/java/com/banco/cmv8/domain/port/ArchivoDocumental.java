@@ -1,22 +1,29 @@
 package com.banco.cmv8.domain.port;
 
-import com.banco.cmv8.domain.SolicitudIngesta;
+import com.banco.cmv8.domain.DocumentoAArchivar;
+import com.banco.cmv8.domain.catalogo.DefinicionTipoCmis;
 
 import java.io.InputStream;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
-/** Sistema de registro documental (IBM Content Manager V8 vía CMIS). */
+/** Content Manager por CMIS (ADR-003 §4.2 y §6): archivar, buscar, descubrir tipos y compensar. */
 public interface ArchivoDocumental {
 
-    /**
-     * Crea el documento y devuelve su objectId.
-     *
-     * @param propiedades propiedades adicionales ya resueltas (se suman al mapeo configurado)
-     */
-    String archivar(SolicitudIngesta solicitud, InputStream contenido, long tamano, Map<String, Object> propiedades);
+    /** Crea el documento en streaming y devuelve el objectId. */
+    String archivar(DocumentoAArchivar documento, InputStream contenido, long tamano);
 
-    /** Busca un documento ya creado para la solicitud (idempotencia ante caídas entre archivar y marcar). */
-    Optional<String> buscarPorSolicitud(SolicitudIngesta solicitud);
+    /** Idempotencia: documento con ese nombre, de ese tipo, en esa carpeta (caída entre archivar y marcar). */
+    Optional<String> buscarPorNombre(String tipoCmisId, String carpeta, String nombre);
+
+    /** Árbol completo de tipos de documento con sus propiedades escribibles ({@code typeDescendants}). */
+    List<DefinicionTipoCmis> descubrirTipos();
+
+    /** Definición viva de un tipo; vacío si el servidor ya no lo publica. OpenCMIS la cachea en la sesión. */
+    Optional<DefinicionTipoCmis> definicionTipo(String tipoCmisId);
+
+    boolean existeCarpeta(String ruta);
+
+    /** Compensación: el PATCH final a Dataverse falló y el documento recién creado no debe quedar en CM. */
+    void borrar(String cmisObjectId);
 }

@@ -106,6 +106,47 @@ public final class Configuracion {
         return conDefecto("ADJUNTOS_CONTAINER", "cmv8-ingesta");
     }
 
+    /** Contenedor de lo que se queda en Blob: retenidos, solo-blob, diferidos en espera (ADR-003 §7). */
+    public String contenedorAlmacenados() {
+        return conDefecto("ADJUNTOS_CONTAINER_ALMACENADOS", "cmv8-almacenados");
+    }
+
+    /** Termina en '/'. */
+    public String tableEndpoint() {
+        String url = requerido("ADJUNTOS_TABLE_ENDPOINT");
+        return url.endsWith("/") ? url : url + "/";
+    }
+
+    public String tablaIngesta() {
+        return conDefecto("TABLA_INGESTA", "ingesta");
+    }
+
+    public String tablaDepuracion() {
+        return conDefecto("TABLA_DEPURACION", "depuracion");
+    }
+
+    /** Días que un adjunto en Observada espera corrección antes de pasar a Rechazado (ADR-003 §4.5). */
+    public int observadaDias() {
+        return (int) entero("OBSERVADA_DIAS", 30);
+    }
+
+    public boolean wormHabilitado() {
+        return booleano("WORM_HABILITADO", false);
+    }
+
+    public boolean wormBloquear() {
+        return booleano("WORM_BLOQUEAR", true);
+    }
+
+    public Duration catalogoCache() {
+        return minutos("CATALOGO_CACHE_MINUTOS", 10);
+    }
+
+    /** Tope de adjuntos por lote de SAS (ADR-003 §4.1). */
+    public int loteMaximo() {
+        return (int) entero("SAS_LOTE_MAXIMO", 20);
+    }
+
     public Duration vigenciaSasSubida() {
         return minutos("SAS_UPLOAD_MINUTOS", 15);
     }
@@ -180,17 +221,8 @@ public final class Configuracion {
         return opcional("CMIS_REPOSITORY_ID");
     }
 
-    public String cmisCarpeta() {
-        return requerido("CMIS_FOLDER_PATH");
-    }
 
-    public String cmisTipo() {
-        return conDefecto("CMIS_TYPE_ID", "cmis:document");
-    }
 
-    public String cmisPropiedadesJson() {
-        return conDefecto("CMIS_PROPIEDADES_JSON", "{}");
-    }
 
     // ---------------------------------------------------------------- AS400
 
@@ -223,12 +255,37 @@ public final class Configuracion {
         return minutos("AS400_POOL_VIDA_MAX_MINUTOS", 10);
     }
 
-    public String as400SqlCliente() {
-        String sql = requerido("AS400_SQL_CLIENTE");
-        long marcadores = sql.chars().filter(c -> c == '?').count();
-        if (marcadores != 1) {
-            throw new IllegalStateException("AS400_SQL_CLIENTE debe tener exactamente un marcador '?'");
-        }
-        return sql;
+    /** v1: una sola consulta con un '?'. En v2 es la consulta con nombre "cliente" si no hay AS400_CONSULTAS_JSON. */
+    public Optional<String> as400SqlCliente() {
+        return opcional("AS400_SQL_CLIENTE");
+    }
+
+    /**
+     * v2 (ADR-003 §6): consultas con nombre como JSON {@code {"nombre": "SELECT ... WHERE X = :parametro"}}.
+     * Los parámetros se escriben {@code :nombre} y se pasan por nombre desde el catálogo. El SQL vive solo acá.
+     */
+    public String as400ConsultasJson() {
+        return conDefecto("AS400_CONSULTAS_JSON", "");
+    }
+
+    // ---------------------------------------------------------------- CMIS v2
+    /** Prefijo a quitar del id de wire para obtener el nombre canónico; vacío = regla por defecto (último '.' o ':'). */
+    public Optional<String> cmisPrefijoPropiedades() {
+        return opcional("CMIS_PREFIJO_PROPIEDADES");
+    }
+
+    /** Nombre canónico de la propiedad que trae el ID corto del tipo (regla de CMCourier); vacío = solo el nombre visible. */
+    public Optional<String> cmisPropiedadIdCorto() {
+        return opcional("CMIS_PROPIEDAD_ID_CORTO");
+    }
+
+    /** Plantilla de la carpeta derivada de un tipo descubierto; {localName} se reemplaza. Por defecto {@code /{localName}}. */
+    public String cmisCarpetaPlantilla() {
+        return conDefecto("CMIS_CARPETA_PLANTILLA", "/{localName}");
+    }
+
+    /** Minutos de antigüedad para que VigilarCatalogo considere vencida su última corrida (evita solapes). */
+    public Duration vigilanciaCatalogo() {
+        return minutos("VIGILAR_CATALOGO_MINUTOS", 60);
     }
 }

@@ -1,24 +1,35 @@
 package com.banco.cmv8.domain.port;
 
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.Optional;
 
-/** Acceso del worker a los blobs del contenedor de ingesta. */
+/**
+ * Blobs de la cuenta de adjuntos con la identidad administrada (ADR-003 §7): el contenedor de ingesta (en vuelo)
+ * y el de almacenados (lo que se queda). Toda operación recibe el contenedor explícito.
+ */
 public interface AlmacenAdjuntos {
 
-    /** Stream de lectura; el llamador lo cierra. No carga el blob en memoria. */
-    InputStream abrir(String rutaBlob);
+    InputStream abrir(String contenedor, String ruta);
 
-    long tamano(String rutaBlob);
+    long tamano(String contenedor, String ruta);
 
-    boolean existe(String rutaBlob);
+    boolean existe(String contenedor, String ruta);
 
-    /** Borrado idempotente: no falla si el blob ya no existe. */
-    void borrar(String rutaBlob);
+    void borrar(String contenedor, String ruta);
+
+    /** Escribe un blob completo desde un stream (ingesta desde Power Automate, ADR-003 §4.7). */
+    void escribir(String contenedor, String ruta, InputStream contenido, long tamano, String contentType);
+
+    /** Copia del lado del servidor y borrado del origen. Mover no dispara BlobCreated en ingesta. */
+    void mover(String contenedorOrigen, String rutaOrigen, String contenedorDestino, String rutaDestino);
 
     /**
-     * Resultado del antivirus guardado por Defender en la etiqueta de índice
-     * "Malware Scanning scan result", si existe.
+     * Política de inmutabilidad a nivel de versión hasta {@code hasta}; bloqueada si {@code bloquear}
+     * (solo bloqueada cumple regulación; bloqueada solo se extiende, nunca se acorta ni se borra).
      */
-    Optional<String> resultadoEscaneo(String rutaBlob);
+    void ponerInmutable(String contenedor, String ruta, Instant hasta, boolean bloquear);
+
+    /** Resultado del escaneo de Defender (etiqueta de índice), si hay. */
+    Optional<String> resultadoEscaneo(String contenedor, String ruta);
 }

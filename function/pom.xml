@@ -114,6 +114,11 @@
             <groupId>com.azure</groupId>
             <artifactId>azure-storage-blob</artifactId>
         </dependency>
+        <!-- Azure Tables: estado operativo y agenda de depuración (ADR-003 §3); versión del BOM -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-data-tables</artifactId>
+        </dependency>
 
         <!-- MSAL4J: On-Behalf-Of hacia Azure Storage para la SAS ligada al usuario (S1b) -->
         <dependency>

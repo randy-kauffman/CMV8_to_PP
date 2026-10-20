@@ -63,6 +63,14 @@ public class ClienteDataverse {
         return enviar("PATCH", rutaRelativa, cuerpoJson, Map.of("If-Match", "*"));
     }
 
+    /**
+     * POST con {@code Prefer: return=representation}: Dataverse devuelve 201 con la fila creada (acotada por el
+     * $select de la ruta), así el id se lee del cuerpo sin una segunda request.
+     */
+    public Respuesta crear(String rutaRelativa, String cuerpoJson) {
+        return enviar("POST", rutaRelativa, cuerpoJson, Map.of("Prefer", "return=representation"));
+    }
+
     public Respuesta enviar(String metodo, String rutaRelativa, String cuerpoJson, Map<String, String> encabezados) {
         HttpRequest.Builder req = HttpRequest.newBuilder(URI.create(baseApi + rutaRelativa))
                 .timeout(TIMEOUT)

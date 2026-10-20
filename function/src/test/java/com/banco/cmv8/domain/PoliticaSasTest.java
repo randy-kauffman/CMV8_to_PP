@@ -7,7 +7,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -66,8 +65,9 @@ class PoliticaSasTest {
     }
 
     @Test
-    void construyeRutaConSolicitudYNombreSaneado() {
-        assertEquals(ID + "/mi_archivo.pdf", politica.construirRuta(ID, "mi archivo.pdf"));
+    void construyeRutaConTablaIdYNombreSaneado() {
+        ClaveAdjunto clave = new ClaveAdjunto("cred_adjuntocredito", ID);
+        assertEquals("cred_adjuntocredito/" + ID + "/mi_archivo.pdf", politica.construirRuta(clave, "mi archivo.pdf"));
     }
 
     @Test
@@ -102,20 +102,5 @@ class PoliticaSasTest {
     void rechazaVigenciaNoPositiva() {
         assertThrows(IllegalArgumentException.class, () -> politica.calcularExpiracion(Duration.ZERO));
         assertThrows(IllegalArgumentException.class, () -> politica.calcularExpiracion(Duration.ofMinutes(-1)));
-    }
-
-    @Test
-    void extraeSolicitudDeLaRuta() {
-        assertEquals(Optional.of(ID), PoliticaSas.solicitudDeRuta(ID + "/a.pdf"));
-        assertEquals(Optional.empty(), PoliticaSas.solicitudDeRuta("no-es-guid/a.pdf"));
-        assertEquals(Optional.empty(), PoliticaSas.solicitudDeRuta("sin-barra"));
-    }
-
-    @Test
-    void verificaPertenenciaDeRuta() {
-        assertTrue(PoliticaSas.rutaPerteneceA(ID + "/a.pdf", ID));
-        assertFalse(PoliticaSas.rutaPerteneceA(ID + "/", ID));
-        assertFalse(PoliticaSas.rutaPerteneceA(ID + "/../otro/a.pdf", ID));
-        assertFalse(PoliticaSas.rutaPerteneceA(UUID.randomUUID() + "/a.pdf", ID));
     }
 }

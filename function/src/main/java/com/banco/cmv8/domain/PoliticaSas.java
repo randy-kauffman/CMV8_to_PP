@@ -4,26 +4,20 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.Optional;
-import java.util.UUID;
 
 /**
- * Reglas puras del broker de SAS: ruta del blob, saneo del nombre de archivo,
- * límite de tamaño y vigencia. Sin dependencias de Azure.
+ * Reglas puras del broker de SAS: ruta del blob, saneo del nombre de archivo, límite de tamaño y vigencia.
+ * Sin dependencias de Azure. La ruta es {@code <tabla>/<id>/<archivo>} (ADR-003 §1.1).
  */
 public final class PoliticaSas {
 
     /** 1 GB. */
     public static final long LIMITE_POR_DEFECTO_BYTES = 1L << 30;
-
     /** Igual a sasPolicy.sasExpirationPeriod de la cuenta de adjuntos (infra/main.bicep). */
     public static final Duration VIGENCIA_MAXIMA = Duration.ofHours(1);
-
     /** Margen hacia atrás por desfase de relojes entre la Function, el navegador y Storage. */
     public static final Duration MARGEN_RELOJ = Duration.ofMinutes(5);
-
     public static final int LARGO_MAXIMO_NOMBRE = 200;
-
     private static final int LARGO_MAXIMO_EXTENSION = 20;
 
     private final long limiteBytes;
@@ -88,12 +82,12 @@ public final class PoliticaSas {
         return nombre.substring(0, LARGO_MAXIMO_NOMBRE);
     }
 
-    /** Ruta relativa al contenedor: {@code {solicitudId}/{nombreArchivoSaneado}}. */
-    public String construirRuta(UUID solicitudId, String nombreArchivo) {
-        if (solicitudId == null) {
-            throw new ValidacionException("El solicitudId es obligatorio");
+    /** Ruta relativa al contenedor: {@code <tabla>/<id>/<nombreArchivoSaneado>}. */
+    public String construirRuta(ClaveAdjunto clave, String nombreArchivo) {
+        if (clave == null) {
+            throw new ValidacionException("La clave del adjunto es obligatoria");
         }
-        return solicitudId + "/" + sanearNombre(nombreArchivo);
+        return clave.ruta(sanearNombre(nombreArchivo));
     }
 
     public void validarTamano(Long tamanoBytes) {
@@ -121,29 +115,5 @@ public final class PoliticaSas {
 
     private OffsetDateTime ahora() {
         return OffsetDateTime.now(reloj).withOffsetSameInstant(ZoneOffset.UTC);
-    }
-
-    /** Extrae el solicitudId del primer segmento de la ruta del blob. */
-    public static Optional<UUID> solicitudDeRuta(String rutaBlob) {
-        if (rutaBlob == null) {
-            return Optional.empty();
-        }
-        int barra = rutaBlob.indexOf('/');
-        if (barra <= 0) {
-            return Optional.empty();
-        }
-        try {
-            return Optional.of(UUID.fromString(rutaBlob.substring(0, barra)));
-        } catch (IllegalArgumentException e) {
-            return Optional.empty();
-        }
-    }
-
-    /** true si la ruta está bajo el prefijo de la solicitud y no intenta salir de él. */
-    public static boolean rutaPerteneceA(String rutaBlob, UUID solicitudId) {
-        return rutaBlob != null
-                && !rutaBlob.contains("..")
-                && solicitudDeRuta(rutaBlob).map(solicitudId::equals).orElse(false)
-                && rutaBlob.length() > solicitudId.toString().length() + 1;
     }
 }

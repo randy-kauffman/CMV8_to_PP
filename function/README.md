@@ -1,44 +1,48 @@
 # Function CMV8 (Java 21, Flex Consumption)
 
-Broker de SAS para la carga directa a Blob, resolución de cliente en AS400 (jt400) y worker que lleva el
-archivo a IBM Content Manager V8 por CMIS 1.1 Browser binding (OpenCMIS). Ver `docs/plan-solucion.md`.
+Broker de SAS para la carga directa a Blob, worker dirigido por el catálogo de tipos de documento que lleva el
+archivo a IBM Content Manager V8 por CMIS 1.1 Browser binding (OpenCMIS), resolución de metadatos en AS400 (jt400)
+y operaciones de administración del catálogo. Es la v2 del modelo de datos: `docs/decisiones/ADR-003-v2-modelo-de-datos.md`.
 
 ## Flujo
 
-1. Power Apps crea la fila `SolicitudIngesta` (estado Creada) y pide `POST /api/sas/subida`.
-2. La Function verifica en Dataverse que el usuario puede escribir la fila, guarda `cmv8_rutablob` y
-   devuelve una SAS de delegación de usuario (create + write, un blob, HTTPS, 15 min).
-3. El PCF sube en bloques de 4 MiB directo a Blob y la app pone la fila en Subido.
-4. Defender for Storage escanea y publica en el tópico de Event Grid → `OnScanResult`.
-   Sin Defender: `OnBlobCreated` desde el tópico de sistema (no hay escaneo).
-5. Limpio → mensaje a la cola `COLA_INGESTA`. Malicioso → fila Rechazado y blob borrado.
-6. `ProcesarIngesta` (cola): Procesando → (AS400 si falta el segundo id) → CMIS createDocument en streaming
-   → Archivado + `cmv8_cmisobjectid` → borra el blob. Ante falla: Error y reintento de la cola
-   (5 intentos, luego `<cola>-poison`).
-7. `Watchdog` (cada 15 min) reencola las filas en Subido sin cambios hace más de 15 min.
+1. La app crea N filas en SU tabla de adjuntos (lookup al registro padre, columnas reservadas) y pide `POST /api/sas/lote`.
+2. Por cada adjunto el broker hace UNA llamada a Dataverse suplantando al usuario (PATCH de `rutablob` con
+   representación: 403 = no puede escribir) y devuelve N SAS de delegación de usuario y UN token de Storage (OBO).
+   Escribe el registro operativo en la Azure Table `ingesta`.
+3. El PCF sube en bloques directo a Blob con las dos llaves y la app pone la fila en Subido.
+4. `OnBlobCreated` (o `OnScanResult` con Defender) marca Subido en la Azure Table y encola. Dataverse no se toca.
+5. `ProcesarIngesta` (cola): lee el registro operativo y el catálogo en caché; resuelve y valida las propiedades
+   contra la definición VIVA del tipo; según el tipo archiva en CM (`<id>_<archivo>`), mueve a `cmv8-almacenados`
+   (solo-blob, diferido, retenido) o detiene por conflicto de catálogo / observa por datos. UN PATCH a Dataverse con el resultado.
+6. `Watchdog` (15 min) reencola lo estancado leyendo la Azure Table; `VigilarCatalogo` (hora) cruza CM con el
+   catálogo y registra conflictos; `Depurar` (día) ejecuta la agenda de retención respetando los estados.
 
 ## Estructura (hexagonal)
 
 ```
 src/main/java/com/banco/cmv8/
 ├── domain/                 Modelo y reglas puras (sin Azure)
-│   ├── SolicitudIngesta, EstadoSolicitud, Cliente, ContextoLlamador, MensajeIngesta, SasEmitida
-│   ├── PoliticaSas         ruta {solicitudId}/{nombreSaneado}, saneo, límite de tamaño, vigencia
-│   ├── ResultadoEscaneo
-│   └── port/               RepositorioSolicitudes, AutorizadorSolicitud, EmisorSas, AlmacenAdjuntos,
-│                           ArchivoDocumental, ResolutorCliente, ColaIngesta
-├── application/            Casos de uso: EmitirSasSubida, EmitirSasLectura, ProcesarIngesta,
-│                           RegistrarResultadoEscaneo, ReencolarEstancadas, ResolverCliente
-├── adapters/in/            Funciones: SasHttp, ClientesHttp, SaludHttp, EventosEventGrid,
-│                           ColaIngestaFunction, WatchdogTimer (+ LectorLlamador, UbicacionBlob)
+│   ├── ClaveAdjunto        tabla + id; prefijo del publisher derivado; ruta <tabla>/<id>/<archivo>
+│   ├── Adjunto, EstadoIngesta (10 estados), RegistroIngesta (fila de la Azure Table), MensajeIngesta,
+│   │   DocumentoAArchivar, PoliticaSas, ContextoLlamador, SasEmitida, TokenUsuario, ResultadoEscaneo
+│   ├── catalogo/           TipoDocumento, PropiedadCm, DefinicionTipoCmis, Conflicto, ConflictoRegistrado
+│   └── port/               RepositorioAdjuntos, CatalogoTipos, RegistroIngestas, AgendaDepuracion, EmisorSas,
+│                           AlmacenAdjuntos, ArchivoDocumental, ResolutorAs400, ColaIngesta, IntercambiadorTokenUsuario
+├── application/            EmitirSasLote, EmitirSasLectura, ProcesarIngesta, RegistrarResultadoEscaneo,
+│   │                       ReencolarEstancadas, ArchivarAlmacenado, Reanudar, IngestarArchivo, Depurar, ExtenderRetencion
+│   └── catalogo/           CatalogoEnCache, ResolverPropiedades, ConversorCmis, AnalizadorCatalogo, Conflictos,
+│                           ReglasDescubrimiento, DescubrirTipos, ValidarTipo, ValidarTabla, ReanudarConflicto, VigilarCatalogo
+├── adapters/in/            SasHttp, AdjuntosHttp, CatalogoHttp, SaludHttp, EventosEventGrid, ColaIngestaFunction,
+│                           Temporizadores (+ LectorLlamador, UbicacionBlob, RespuestasHttp)
 ├── adapters/out/
-│   ├── blob/               EmisorSasBlob, AlmacenAdjuntosBlob (azure-storage-blob + identidad administrada)
-│   ├── dataverse/          ClienteDataverse (OData v4 con java.net.http), RepositorioSolicitudesDataverse,
-│   │                       AutorizadorSolicitudDataverse, AutorizadorPermisivo, NombresDataverse
-│   ├── cmis/               ArchivoDocumentalCmis, MapeoPropiedadesCmis (OpenCMIS Browser binding)
-│   ├── as400/              ResolutorClienteJt400
-│   ├── cola/               ColaIngestaSalida (acumula mensajes para @QueueOutput)
-│   └── memoria/            RepositorioSinDataverse (solo spike S1)
+│   ├── blob/               EmisorSasBlob, AlmacenAdjuntosBlob (dos contenedores, mover, inmutabilidad)
+│   ├── tabla/              RegistroIngestasTabla, AgendaDepuracionTabla (azure-data-tables)
+│   ├── dataverse/          ClienteDataverse, RepositorioAdjuntosDataverse (cualquier tabla), CatalogoTiposDataverse
+│   ├── cmis/               ArchivoDocumentalCmis (archivar, buscar, descubrir tipos, definición viva, borrar)
+│   ├── as400/              ConsultasAs400 (consultas con nombre), ResolutorAs400Jt400, FuenteConexionesAs400
+│   ├── entra/              IntercambiadorTokenObo
+│   └── cola/               ColaIngestaSalida
 └── config/                 Configuracion (app settings), Fabrica (raíz de composición), Json
 ```
 
@@ -46,72 +50,58 @@ src/main/java/com/banco/cmv8/
 
 | Función | Ruta | Respuesta |
 | --- | --- | --- |
-| `SasSubida` | `POST /api/sas/subida` `{solicitudId, nombreArchivo, tamanoBytes, contentType}` | 200 `{uploadUrl, rutaBlob, expiraUtc, bloqueBytes, versionServicio}`; 400 validación; 403 sin acceso; 404 sin fila; 409 estado |
-| `SasLectura` | `GET /api/sas/lectura/{solicitudId}` | 200 `{downloadUrl, expiraUtc}`; 409 si ya está archivado (lectura desde CM pendiente) |
-| `ResolverCliente` | `POST /api/clientes/resolver` `{id}` | 200 `Cliente`; 404 |
+| `SasLote` | `POST /api/sas/lote` `{tabla, items:[{id, nombreArchivo, tamanoBytes, contentType}]}` | 200 `{items:[{id, uploadUrl, rutaBlob, expiraUtc} o {id, error, codigo}], bloqueBytes, versionServicio, tokenStorage, tokenStorageExpiraUtc}`; 400 lote inválido; 401 sin identidad |
+| `SasLectura` | `GET /api/sas/lectura/{tabla}/{id}` | 200 `{downloadUrl, expiraUtc, tokenStorage…}`; 403; 404; 409 si ya está solo en CM |
+| `Archivar` | `POST /api/adjuntos/{tabla}/{id}/archivar` | 202; 409 si no está Almacenado o el tipo no va a CM |
+| `Reanudar` | `POST /api/adjuntos/{tabla}/{id}/reanudar` | 202; 409 si no está Observada ni en Error |
+| `Ingestar` | `POST /api/adjuntos/{tabla}/{id}/ingestar` (cuerpo = archivo; `Content-Type`; `X-Nombre-Archivo`) | 202 `{rutaBlob}`; para Power Automate, tope 100 MB |
+| `ExtenderRetencion` | `POST /api/adjuntos/{tabla}/{id}/retencion` `{fecha}` (nula = congelar) | 200 |
+| `DescubrirTipos` / `ActualizarTipos` | `POST /api/catalogo/descubrir` / `POST /api/catalogo/actualizar` | 200 `{nuevos, actualizados, sinCambios, ausentes, avisos}`; 403 sin rol de administrador documental |
+| `ValidarTipo` | `GET /api/catalogo/validar?tipo={id}` | 200 `{criticos, avisos, hallazgos:[{nivel, tipo, propiedad, mensaje}]}` |
+| `ValidarTabla` | `GET /api/catalogo/validar-tabla/{tabla}?tipo={id}` | 200 `{tabla, prefijo, ok, faltantes, avisos}` |
+| `ReanudarConflicto` | `POST /api/catalogo/conflictos/{id}/reanudar` | 200 `{reencolados}` |
 | `Salud` | `GET /api/salud` | `{estado:"ok", version}` |
-| `OnScanResult` | Event Grid `Microsoft.Security.MalwareScanningResult` | encola o rechaza |
-| `OnBlobCreated` | Event Grid `Microsoft.Storage.BlobCreated` | encola |
+| `OnScanResult` / `OnBlobCreated` | Event Grid | encola o rechaza |
 | `ProcesarIngesta` | cola `%COLA_INGESTA%` | worker |
-| `Watchdog` | timer `0 */15 * * * *` | reencola |
+| `Watchdog` / `VigilarCatalogo` / `Depurar` | timers `0 */15 * * * *` / `0 5 * * * *` / `0 30 2 * * *` | ver Flujo |
 
 Los nombres `OnScanResult` y `OnBlobCreated` coinciden con las suscripciones de `infra/main.bicep`.
 
 ### Autenticación de los endpoints HTTP
 
-Los HTTP triggers son `AuthorizationLevel.ANONYMOUS`: la autenticación Entra la impone la autenticación
-integrada de App Service (Easy Auth) en S7. La Function toma la identidad así:
-
-1. `X-MS-CLIENT-PRINCIPAL-ID` / `X-MS-CLIENT-PRINCIPAL` (los inyecta App Service después de validar el token).
-2. Si no están, los claims `oid` y `tid` del bearer **sin validar la firma**, solo para reenviarlos.
-
-Hasta que S7 active Easy Auth, el `oid` es declarativo: cualquiera puede fabricar un token con otro `oid`.
-No exponer la Function con datos reales antes de S7.
+Los HTTP triggers son `AuthorizationLevel.ANONYMOUS`: la autenticación Entra la impone Easy Auth. La Function toma
+la identidad de `X-MS-CLIENT-PRINCIPAL-ID` / `X-MS-CLIENT-PRINCIPAL` (los inyecta App Service después de validar el
+token) o, si no están, de los claims `oid`/`tid` del bearer sin validar la firma. Toda operación autoriza en
+Dataverse suplantando ese `oid`; las de administración exigen además el rol de administrador documental (lectura
+suplantada de `cmv8_conflicto`).
 
 ## App settings
 
-Las que ya define `infra/main.bicep`:
-
-| Setting | Uso |
-| --- | --- |
-| `AzureWebJobsStorage__accountName` / `__credential` / `__clientId` | Storage del host, colas y timers (identidad) |
-| `AZURE_CLIENT_ID` | Identidad administrada asignada por el usuario para `DefaultAzureCredential` |
-| `ADJUNTOS_STORAGE_ACCOUNT` | Nombre de la cuenta de adjuntos (informativo) |
-| `ADJUNTOS_BLOB_ENDPOINT` | `https://<cuenta>.blob.core.windows.net/` |
-| `ADJUNTOS_CONTAINER` | `cmv8-ingesta` |
-| `DATAVERSE_URL` | `https://<org>.crm.dynamics.com` |
-| `SAS_UPLOAD_MINUTOS` | Vigencia de la SAS de subida (15). Tope: 60, igual a `sasPolicy` de la cuenta |
-| `SAS_READ_MINUTOS` | Vigencia de la SAS de lectura (5) |
-| `SAS_BLOQUE_MB` | Tamaño de bloque en MiB que el broker recomienda al PCF (4). Rango 1 a 100; sirve para experimentar throughput sin republicar el PCF |
-
-Nuevas (agregar a Bicep o a la configuración de la Function App):
+Las define `infra/main.bicep`:
 
 | Setting | Defecto | Uso |
 | --- | --- | --- |
-| `COLA_INGESTA` | `ingesta-pendiente` | Nombre de la cola. **Obligatoria como app setting**: las anotaciones usan `%COLA_INGESTA%` y el host no arranca esas funciones si no existe |
-| `AUTORIZACION_MODO` | `dataverse` | `dataverse` = suplantación con `CallerObjectId` + `RetrievePrincipalAccess`. `ninguna` = permite todo (solo spike S1; si además falta `DATAVERSE_URL`, usa un repositorio sustituto) |
-| `SAS_LIGADA_USUARIO` | `false` | `true` = SAS ligada al usuario (`sduoid`, S1b). Exige `oid` + bearer del llamador (si faltan, 401) y devuelve `tokenStorage` / `tokenStorageExpiraUtc` obtenidos por OBO |
-| `BROKER_CLIENT_ID` | — | Client id de la app registration del broker (audiencia de Easy Auth). Obligatoria con `SAS_LIGADA_USUARIO=true` |
-| `BROKER_TENANT_ID` | — | Tenant Entra del broker (autoridad del OBO). Obligatoria con `SAS_LIGADA_USUARIO=true` |
-| `BROKER_CLIENT_SECRET` | — | **Solo desarrollo local.** En Azure no existe: la app registration del broker confía en la identidad administrada (`AZURE_CLIENT_ID`) como credencial federada (audiencia `api://AzureADTokenExchange`) y el OBO se firma con un token de esa identidad. Si está presente, la Function lo usa y avisa en el log |
-| `TAMANO_MAXIMO_BYTES` | `1073741824` | Límite de tamaño declarado (1 GB) |
-| `ESTANCADA_MINUTOS` | `15` | Antigüedad para el watchdog |
-| `ESCANEO_REQUERIDO` | `false` | `true` = el worker exige la etiqueta de Defender `Malware Scanning scan result = No threats found` antes de archivar. Activar cuando Defender esté habilitado |
-| `CMIS_URL` | — | URL del Browser binding, por ejemplo `https://cm/cmis/browser` |
-| `CMIS_USER` / `CMIS_PASSWORD` | — | Usuario de servicio de Content Manager. En Azure la contraseña es la referencia `@Microsoft.KeyVault(VaultName=…;SecretName=cmis-password)` que pone el Bicep; el valor se carga con `infra/cargar-secretos.sh` |
-| `CMIS_REPOSITORY_ID` | vacío | Vacío = primer repositorio |
-| `CMIS_FOLDER_PATH` | — | Carpeta destino, por ejemplo `/Ingesta` |
-| `CMIS_TYPE_ID` | `cmis:document` | Tipo de documento de CM |
-| `CMIS_PROPIEDADES_JSON` | `{}` | Mapa `propiedadCM → "${campo}"` o literal. Campos: `idCliente`, `idCliente2`, `nombreCliente`, `afiliadoPadre`, `idDueno`, `solicitudId`, `nombreArchivo`, `contentType` |
-| `AS400_HOST` / `AS400_USER` / `AS400_PASSWORD` | — | Perfil de solo lectura. En Azure la contraseña es la referencia `@Microsoft.KeyVault(VaultName=…;SecretName=as400-password)` que pone el Bicep; el valor se carga con `infra/cargar-secretos.sh`. Verificado el 2026-10-14 contra PUB400 desde la Function |
-| `AS400_SECURE` | `true` | TLS (puertos 9471/9476) |
-| `AS400_POOL_MAX` | `4` | Conexiones máximas del pool HikariCP por instancia (`FuenteConexionesAs400`) |
-| `AS400_POOL_VIDA_MAX_MINUTOS` | `10` | Vida máxima de una conexión del pool; menor que el timeout de inactividad del job QZDASOINIT y del firewall |
-| `AS400_SQL_CLIENTE` | — | SQL con un solo `?` que devuelve `IDCLIENTE, IDCLIENTE2, NOMBRE, AFILIADOPADRE, IDDUENO` |
+| `AzureWebJobsStorage__accountName` / `__credential` / `__clientId` | — | Storage del host, colas y timers (identidad) |
+| `AZURE_CLIENT_ID` | — | Identidad administrada asignada por el usuario para `DefaultAzureCredential` |
+| `ADJUNTOS_BLOB_ENDPOINT` / `ADJUNTOS_TABLE_ENDPOINT` | — | `https://<cuenta>.blob.core.windows.net/` y `.table.core.windows.net/` |
+| `ADJUNTOS_CONTAINER` / `ADJUNTOS_CONTAINER_ALMACENADOS` | `cmv8-ingesta` / `cmv8-almacenados` | En vuelo / lo que se queda |
+| `TABLA_INGESTA` / `TABLA_DEPURACION` | `ingesta` / `depuracion` | Azure Tables del estado operativo y la agenda |
+| `DATAVERSE_URL` | — | `https://<org>.crm.dynamics.com` |
+| `SAS_UPLOAD_MINUTOS` / `SAS_READ_MINUTOS` / `SAS_BLOQUE_MB` / `SAS_LOTE_MAXIMO` | 15 / 5 / 4 / 20 | SAS y lote |
+| `SAS_LIGADA_USUARIO` | `false` | `true` = SAS con `sduoid` + token de Storage por OBO (`BROKER_CLIENT_ID`, `BROKER_TENANT_ID`; `BROKER_CLIENT_SECRET` solo en local) |
+| `TAMANO_MAXIMO_BYTES` | 1 GB | Límite de tamaño declarado |
+| `COLA_INGESTA` / `ESTANCADA_MINUTOS` | `ingesta-pendiente` / 15 | Cola y Watchdog |
+| `ESCANEO_REQUERIDO` | `false` | `true` = exigir la etiqueta de Defender antes de procesar |
+| `OBSERVADA_DIAS` | 30 | Días para corregir una Observada antes de pasar a Rechazado |
+| `WORM_HABILITADO` / `WORM_BLOQUEAR` | `false` / `true` | Inmutabilidad por tipo (exige versionado e inmutabilidad en el contenedor, Bicep) |
+| `CATALOGO_CACHE_MINUTOS` | 10 | Caché del catálogo en memoria (cero requests por archivo) |
+| `CMIS_URL` / `CMIS_USER` / `CMIS_PASSWORD` / `CMIS_REPOSITORY_ID` | — | Browser binding y usuario de servicio (contraseña por referencia a Key Vault) |
+| `CMIS_PREFIJO_PROPIEDADES` / `CMIS_PROPIEDAD_ID_CORTO` / `CMIS_CARPETA_PLANTILLA` | — / — / `/{localName}` | Reglas de descubrimiento (nombre canónico, ID corto, carpeta derivada) |
+| `AS400_HOST` / `AS400_USER` / `AS400_PASSWORD` / `AS400_SECURE` / `AS400_POOL_MAX` / `AS400_POOL_VIDA_MAX_MINUTOS` | — | Como en v1 (contraseña por referencia a Key Vault) |
+| `AS400_CONSULTAS_JSON` | vacío | `{"nombre": "SELECT ... WHERE A = :parametro"}`; los parámetros se llaman como las columnas lógicas de la tabla de adjuntos. El SQL vive solo acá. Vacío = `AS400_SQL_CLIENTE` (v1, un `?`) como consulta `cliente` con parámetro `idcliente` |
 
-Nombre del documento en CM: si `CMIS_PROPIEDADES_JSON` mapea alguna propiedad a `${solicitudId}`, se usa el
-nombre de archivo y la idempotencia consulta esa propiedad. Si no, el nombre lleva el `solicitudId` como
-prefijo (`<id>_<archivo>`) para que dos archivos homónimos de solicitudes distintas no se confundan.
+La tabla `cmv8_solicitudingesta` de los spikes es la primera tabla de adjuntos (ADR-003 §12): sus columnas
+reservadas llevan el prefijo `cmv8_`.
 
 ## Qué ejercita cada spike
 

@@ -26,7 +26,8 @@ public class ColaIngestaFunction {
         if (m == null) {
             return;
         }
-        log.info(() -> "Procesando ingesta. solicitudId=" + m.solicitudId() + " origen=" + m.origen());
+        log.info(() -> "Procesando ingesta. adjunto=" + m.tabla() + "/" + m.id() + " contenedor=" + m.contenedor()
+                + " origen=" + m.origen());
         Fabrica.get().procesarIngesta().ejecutar(m, log);
     }
 
