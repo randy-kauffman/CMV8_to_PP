@@ -79,8 +79,33 @@ param autorizacionModo string = 'dataverse'
 @maxValue(100)
 param bloqueMb int = 4
 
-@description('Días de retención de los adjuntos en Storage antes del borrado automático (red de seguridad).')
-param diasRetencionAdjuntos int = 7
+@description('''Días que un blob puede quedar en el contenedor de ingesta antes del borrado automático. Es la última red:
+la fecha de depuración de la Azure Table manda (ADR-003 §4.5), por eso 60 y no 7. En spikes sin la v2 de la Function, 7.''')
+param diasRetencionAdjuntos int = 60
+
+@description('Contenedor de lo que se queda en Blob: retenidos tras archivar, solo-blob y diferidos en espera (ADR-003 §7).')
+param contenedorAlmacenados string = 'cmv8-almacenados'
+
+@description('Días en Hot antes de bajar a Cool en el contenedor de almacenados. Nunca Archive: la SAS de lectura no serviría.')
+param diasACool int = 30
+
+@description('Días en Cool antes de bajar a Cold en el contenedor de almacenados.')
+param diasACold int = 180
+
+@description('''Inmutabilidad WORM por tipo de documento (ADR-003 §4.5): habilita versionado en la cuenta e inmutabilidad a nivel de versión
+en el contenedor de almacenados, y da Storage Blob Data Owner a la identidad SOLO sobre ese contenedor (Set Blob Immutability Policy
+exige blobs/immutableStorage/runAsSuperUser/action; Owner es el rol integrado mínimo que lo incluye, Learn). Una vez habilitada
+la inmutabilidad en el contenedor no se puede deshabilitar. Decisión del Banco.''')
+param wormHabilitado bool = false
+
+@description('Con WORM: la Function bloquea la política al ponerla (solo bloqueada cumple regulación). false solo en pruebas.')
+param wormBloquear bool = true
+
+@description('Días que un adjunto en Observada espera corrección antes de pasar a Rechazado (ADR-003 §4.5). Decisión del Banco.')
+param observadaDias int = 30
+
+@description('Minutos que la Function cachea el catálogo de tipos de documento en memoria (ADR-003 §6).')
+param catalogoCacheMinutos int = 10
 
 @description('''Secretos en Key Vault (hallazgo 6b). Las contraseñas de AS400 y CMIS NUNCA van en parámetros ni en app settings:
 se cargan fuera de banda con infra/cargar-secretos.sh (secretos as400-password y cmis-password) y la Function las lee
@@ -95,6 +120,10 @@ param as400Host string = ''
 param as400Usuario string = ''
 @description('SQL con un solo ? que devuelve IDCLIENTE, IDCLIENTE2, NOMBRE, AFILIADOPADRE, IDDUENO.')
 param as400SqlCliente string = ''
+
+@description('''v2: consultas con nombre al AS400 como JSON {"nombre": "SELECT ... WHERE X = :parametro"} (ADR-003 §6). El SQL vive
+solo acá, nunca en Dataverse. Si está vacío, la Function usa as400SqlCliente como consulta "cliente".''')
+param as400ConsultasJson string = ''
 
 @description('CMIS (Content Manager). Vacío: la Function no recibe configuración CMIS. La contraseña viene de Key Vault.')
 param cmisUrl string = ''
@@ -134,6 +163,7 @@ var ajustesAs400 = empty(as400Host) ? {} : {
   AS400_USER: as400Usuario
   AS400_SECURE: 'true'
   AS400_SQL_CLIENTE: as400SqlCliente
+  AS400_CONSULTAS_JSON: as400ConsultasJson
   AS400_PASSWORD: '@Microsoft.KeyVault(VaultName=${nombreKeyVault};SecretName=as400-password)'
 }
 var ajustesCmis = empty(cmisUrl) ? {} : {
@@ -244,6 +274,8 @@ resource storageAdjuntos 'Microsoft.Storage/storageAccounts@2026-06-01' = {
     properties: {
       deleteRetentionPolicy: { enabled: true, days: 7 }
       containerDeleteRetentionPolicy: { enabled: true, days: 7 }
+      // WORM a nivel de versión exige versionado (Learn). Sin WORM no se paga por versiones.
+      isVersioningEnabled: wormHabilitado
       cors: {
         corsRules: [
           {
@@ -260,14 +292,33 @@ resource storageAdjuntos 'Microsoft.Storage/storageAccounts@2026-06-01' = {
       name: contenedorAdjuntos
       properties: { publicAccess: 'None' }
     }
+    resource almacenados 'containers' = {
+      name: contenedorAlmacenados
+      properties: {
+        publicAccess: 'None'
+        immutableStorageWithVersioning: { enabled: wormHabilitado }
+      }
+    }
+  }
+
+  // Estado operativo de la ingesta (ADR-003 §3): la verdad operativa vive acá, Dataverse guarda la de negocio.
+  resource tablas 'tableServices' = {
+    name: 'default'
+    resource ingesta 'tables' = {
+      name: 'ingesta'
+    }
+    resource depuracion 'tables' = {
+      name: 'depuracion'
+    }
   }
 
   resource lifecycle 'managementPolicies' = {
     name: 'default'
     properties: {
       policy: {
-        rules: [
+        rules: concat([
           {
+            // Última red del contenedor de ingesta: lo que está en vuelo lo gobierna la fecha de depuración (timer Depurar).
             name: 'borrar-adjuntos-huerfanos'
             enabled: true
             type: 'Lifecycle'
@@ -283,7 +334,43 @@ resource storageAdjuntos 'Microsoft.Storage/storageAccounts@2026-06-01' = {
               }
             }
           }
-        ]
+          {
+            // Almacenados: sin borrado por ciclo de vida (lo hace el timer Depurar respetando estados); solo niveles de acceso.
+            name: 'niveles-almacenados'
+            enabled: true
+            type: 'Lifecycle'
+            definition: {
+              filters: {
+                blobTypes: ['blockBlob']
+                prefixMatch: ['${contenedorAlmacenados}/']
+              }
+              actions: {
+                baseBlob: {
+                  tierToCool: { daysAfterModificationGreaterThan: diasACool }
+                  tierToCold: { daysAfterModificationGreaterThan: diasACold }
+                }
+              }
+            }
+          }
+        ], wormHabilitado ? [
+          {
+            // Con versionado, una resubida al mismo nombre en ingesta deja versiones viejas: se limpian.
+            name: 'borrar-versiones-viejas-ingesta'
+            enabled: true
+            type: 'Lifecycle'
+            definition: {
+              filters: {
+                blobTypes: ['blockBlob']
+                prefixMatch: ['${contenedorAdjuntos}/']
+              }
+              actions: {
+                version: {
+                  delete: { daysAfterCreationGreaterThan: 7 }
+                }
+              }
+            }
+          }
+        ] : [])
       }
     }
   }
@@ -344,6 +431,38 @@ resource rolAdjuntosContenedor 'Microsoft.Authorization/roleAssignments@2022-04-
   scope: storageAdjuntos::blobs::ingesta
   properties: {
     roleDefinitionId: rolBlobDataContributor
+    principalId: identidad.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Almacenados: Contributor, o Data Owner acotado al contenedor cuando hay WORM (Set Blob Immutability Policy lo exige).
+resource rolAlmacenadosContenedor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(storageAdjuntos::blobs::almacenados.id, identidad.id, wormHabilitado ? rolBlobDataOwner : rolBlobDataContributor)
+  scope: storageAdjuntos::blobs::almacenados
+  properties: {
+    roleDefinitionId: wormHabilitado ? rolBlobDataOwner : rolBlobDataContributor
+    principalId: identidad.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Tablas de estado operativo: Table Data Contributor acotado a cada tabla, no a la cuenta.
+resource rolTablaIngesta 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(storageAdjuntos::tablas::ingesta.id, identidad.id, rolTableDataContributor)
+  scope: storageAdjuntos::tablas::ingesta
+  properties: {
+    roleDefinitionId: rolTableDataContributor
+    principalId: identidad.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource rolTablaDepuracion 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(storageAdjuntos::tablas::depuracion.id, identidad.id, rolTableDataContributor)
+  scope: storageAdjuntos::tablas::depuracion
+  properties: {
+    roleDefinitionId: rolTableDataContributor
     principalId: identidad.properties.principalId
     principalType: 'ServicePrincipal'
   }
@@ -497,6 +616,14 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       ADJUNTOS_STORAGE_ACCOUNT: storageAdjuntos.name
       ADJUNTOS_BLOB_ENDPOINT: storageAdjuntos.properties.primaryEndpoints.blob
       ADJUNTOS_CONTAINER: contenedorAdjuntos
+      ADJUNTOS_CONTAINER_ALMACENADOS: contenedorAlmacenados
+      ADJUNTOS_TABLE_ENDPOINT: storageAdjuntos.properties.primaryEndpoints.table
+      TABLA_INGESTA: 'ingesta'
+      TABLA_DEPURACION: 'depuracion'
+      OBSERVADA_DIAS: string(observadaDias)
+      WORM_HABILITADO: wormHabilitado ? 'true' : 'false'
+      WORM_BLOQUEAR: wormBloquear ? 'true' : 'false'
+      CATALOGO_CACHE_MINUTOS: string(catalogoCacheMinutos)
       DATAVERSE_URL: dataverseUrl
       SAS_UPLOAD_MINUTOS: '15'
       SAS_READ_MINUTOS: '5'
@@ -605,6 +732,8 @@ output identidadPrincipalId string = identidad.properties.principalId
 output storageAdjuntosName string = storageAdjuntos.name
 output storageAdjuntosBlobEndpoint string = storageAdjuntos.properties.primaryEndpoints.blob
 output contenedorAdjuntosName string = contenedorAdjuntos
+output contenedorAlmacenadosName string = contenedorAlmacenados
+output storageAdjuntosTableEndpoint string = storageAdjuntos.properties.primaryEndpoints.table
 output storageHostName string = storageHost.name
 output appInsightsName string = appInsights.name
 output keyVaultName string = keyVault.name
