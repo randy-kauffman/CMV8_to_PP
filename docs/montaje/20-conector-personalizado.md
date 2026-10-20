@@ -6,10 +6,32 @@
 
 El conector **CMV8 Broker** es la puerta por la que la canvas app llama a la Function **con el token del usuario**. Está definido por dos archivos del repo:
 
-- `dataverse/conector/cmv8-broker.swagger.json`: OpenAPI 2.0, `basePath` `/api`, operaciones `Salud`, `EmitirSasSubida`, `EmitirSasLectura`, `ResolverCliente`. El `host` apunta al sandbox y se reemplaza por el del ambiente.
+- `dataverse/conector/cmv8-broker.swagger.json`: OpenAPI 2.0, versión 2.0 (v2, ADR-003), `basePath` `/api`, trece operaciones (tabla de abajo). El `host` apunta al sandbox y se reemplaza por el del ambiente.
 - `dataverse/conector/apiProperties.json`: OAuth 2.0 con Entra (`identityProvider: aad`), `clientId` de la app del conector, `resourceUri` = `api://<appId del broker>`, tenant. El `clientSecret` lleva un **marcador**: el secreto nunca está en el repo.
 
-Al crear la conexión, el usuario inicia sesión con Entra; el conector pide un token para `resourceUri` y lo manda como `Authorization: Bearer` a la Function, donde Easy Auth lo valida (guía 15). La respuesta de `EmitirSasSubida` trae juntos la SAS y el token de Storage del usuario obtenido por OBO.
+Al crear la conexión, el usuario inicia sesión con Entra; el conector pide un token para `resourceUri` y lo manda como `Authorization: Bearer` a la Function, donde Easy Auth lo valida (guía 15). La respuesta de `EmitirSasLote` trae N SAS (una por adjunto) y UN token de Storage del usuario obtenido por OBO.
+
+### Operaciones v2
+
+| Operación | Ruta | Quién la llama | Visibilidad en el swagger |
+| --- | --- | --- | --- |
+| `Salud` | `GET /salud` | Prueba del conector; sin token (ruta excluida de Easy Auth) | por defecto |
+| `EmitirSasLote` | `POST /sas/lote` | App canvas, PCF. Un adjunto que falla no frena al resto: su error viaja en `items[]` | important |
+| `EmitirSasLectura` | `GET /sas/lectura/{tabla}/{id}` | App, PCF. 409 si el documento ya está solo en Content Manager | important |
+| `Archivar` | `POST /adjuntos/{tabla}/{id}/archivar` | App, PCF, flujo: diferido que llegó a su evento de negocio, o promoción de un Solo Blob a CM | important |
+| `Reanudar` | `POST /adjuntos/{tabla}/{id}/reanudar` | App, PCF: el usuario corrigió un adjunto Observada o en Error | important |
+| `IngestarArchivo` | `POST /adjuntos/{tabla}/{id}/ingestar` | Power Automate: el flujo creó la fila y manda el contenido. Tope de 100 MB por acción; la identidad es la de la conexión | important |
+| `ExtenderRetencion` | `POST /adjuntos/{tabla}/{id}/retencion` | Administrador documental: nueva fecha (`yyyy-MM-dd`) o sin fecha = permanente. Un tipo inmutable solo admite extender | advanced |
+| `DescubrirTipos` | `POST /catalogo/descubrir` | Administrador documental: lee el árbol de tipos de CM y escribe el catálogo, conservando las decisiones humanas | advanced |
+| `ActualizarTipos` | `POST /catalogo/actualizar` | Administrador documental: lo mismo, acotado a los tipos en uso | advanced |
+| `ValidarTipo` | `GET /catalogo/validar` | Administrador documental: cruza la definición viva con el catálogo; sin tipo valida todos los en uso | advanced |
+| `ValidarTabla` | `GET /catalogo/validar-tabla/{tabla}` | Maker, antes de publicar (guía 18) | important |
+| `ReanudarConflicto` | `POST /catalogo/conflictos/{id}/reanudar` | Administrador documental: resolvió un conflicto y reencola los adjuntos detenidos | advanced |
+| `ConsultarAs400` | `POST /as400/consultas/{nombre}` | Solo consultas declaradas en la configuración de Azure (`AS400_CONSULTAS_JSON`); devuelve la primera fila o 404 | important |
+
+`EmitirSasSubida` y `ResolverCliente` de v1 ya no existen (`EmitirSasSubida` es `EmitirSasLote` de un elemento, ADR-003 §5). Todas pasan por Easy Auth y se autorizan en Dataverse suplantando al usuario; las de administración exigen además el rol CMV8 Administrador documental. `EmitirSasLote` sigue prohibida desde flujos (ADR-003 §4.7): un flujo usa `IngestarArchivo`.
+
+**`uploadUrl` y `tokenStorage` son internos.** En la respuesta de `EmitirSasLote`, los dos campos llevan `x-ms-visibility: internal` (descripción: "nunca persistir ni mostrar"): son detalle de plomería entre el broker y el PCF, no datos para el usuario ni para un flujo. La app los pasa al PCF sin mostrarlos ni guardarlos (verificar en la app que Power Fx los siga exponiendo para pasarlos al componente). En `EmitirSasLectura`, `tokenStorage` no está marcado como interno.
 
 La **política DLP** del entorno decide con qué otros conectores puede combinarse en una misma app: tiene que quedar en el mismo grupo que Dataverse.
 
@@ -18,7 +40,7 @@ La **política DLP** del entorno decide con qué otros conectores puede combinar
 **Veredicto: Imprescindible**
 
 - Qué aporta: es el único camino para que la canvas app llame a la Function con la identidad del usuario (y así el broker pueda hacer OBO con ESE usuario). La conexión es por usuario, nunca compartida.
-- Qué pasa si no está: la app no tiene cómo pedir la SAS ni el token de Storage; el componente no tiene qué subir.
+- Qué pasa si no está: la app no tiene cómo pedir las SAS ni el token de Storage; el componente no tiene qué subir. Tampoco hay operaciones de catálogo para el administrador documental ni `IngestarArchivo` para los flujos.
 - Qué decisión lo haría prescindible (o distinto): que el componente llame directo al broker con un token propio (`urlBroker` + `tokenBroker`, entradas que el PCF todavía tiene). Exigiría que el PCF obtenga el token del broker con MSAL en el navegador, lo mismo que se descartó en S1b.
 - Alternativa y su tradeoff: **Custom API de Dataverse + plugin que llame a la Function**. Se descartó: el plugin llamaría con SU identidad, no con la del usuario; el broker no podría hacer OBO del usuario hacia Storage y se rompe el diseño de dos llaves.
 - **Política DLP**: imprescindible si el entorno tiene una política DLP. Un conector personalizado sin clasificar cae en el grupo por defecto (normalmente Non-business) y la app no puede combinarlo con Dataverse (Business). Si el entorno no tiene ninguna política, no hace falta tocar nada, pero un entorno administrado de banca normalmente la tiene.

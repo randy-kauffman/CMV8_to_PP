@@ -6,22 +6,23 @@
 
 Cuando el componente PCF termina de subir un archivo (el `Put Block List` que confirma los bloques), Azure Storage publica un evento `Microsoft.Storage.BlobCreated`. Un **system topic** de Event Grid, creado sobre la cuenta de adjuntos, es el recurso que expone esos eventos; una **suscripción** (`a-function-onblobcreated`) los filtra y los entrega a la función `OnBlobCreated` de la Function App.
 
-- Filtro: solo `Microsoft.Storage.BlobCreated` y solo blobs cuyo subject empieza con `/blobServices/default/containers/cmv8-ingesta/`. Las demás soluciones que compartan la cuenta (un contenedor por solución, ADR-002) no disparan este worker.
+- Filtro: solo `Microsoft.Storage.BlobCreated` y solo blobs cuyo subject empieza con `/blobServices/default/containers/cmv8-ingesta/`. Las demás soluciones que compartan la cuenta (un contenedor por solución, ADR-002) no disparan este worker, y tampoco el contenedor `cmv8-almacenados`: cuando el worker mueve un blob ahí, no hay evento que lo vuelva a procesar.
+- **`BlobDeleted` no hace falta** (ADR-003 §7): los borrados los hace la propia Function (el worker al archivar, el timer `Depurar` al vencer la retención) y ella misma actualiza la Azure Table y Dataverse. Nadie tiene que enterarse de un borrado por evento.
 - Entrega: destino de tipo `AzureFunction` (`<sitio>/functions/OnBlobCreated`), un evento por lote (`maxEventsPerBatch: 1`, `preferredBatchSizeInKilobytes: 64`), esquema `EventGridSchema`.
-- Qué hace la función (`function/src/main/java/com/banco/cmv8/adapters/in/EventosEventGrid.java`): valida el tipo de evento, extrae de `data.url` la ruta `{solicitudId}/{archivo}`, ignora blobs de otro contenedor o con otra forma, registra el resultado como **limpio** (no hay escaneo) y encola un mensaje en `%COLA_INGESTA%`. Si el caso de uso lanza una excepción, la propaga y Event Grid reintenta.
+- Qué hace la función (`function/src/main/java/com/banco/cmv8/adapters/in/EventosEventGrid.java`): valida el tipo de evento, extrae de `data.url` la ruta `<tabla>/<id>/<archivo>` (tabla lógica de adjuntos + id de la fila), ignora blobs de otro contenedor o con otra forma, registra el resultado como **limpio** (no hay escaneo), marca Subido en la Azure Table `ingesta` y encola un mensaje en `%COLA_INGESTA%`. Dataverse no se toca. Si el caso de uso lanza una excepción, la propaga y Event Grid reintenta.
 
 Por qué se crea **después** de publicar el código: al crear una suscripción con destino `AzureFunction`, Event Grid valida que el recurso `…/sites/<function>/functions/OnBlobCreated` exista. Sobre una Function sin código la creación falla. Por eso el Bicep la condiciona a `crearSuscripcionEventGrid=true` y se activa en un **segundo despliegue**, después de la guía 16.
 
 **Reintentos.** Si la Function no responde o devuelve error, Event Grid reintenta con backoff exponencial (10 s, 30 s, 1 min, 5 min, 10 min, 30 min, 1 h, 3 h, 6 h y luego cada 12 h) hasta 30 intentos o 24 horas (1.440 minutos), lo que ocurra primero. Para destinos de recursos de Azure, un 400, 403 o 413 no se reintenta. Al agotarse, el evento va a **dead-letter** si hay un contenedor configurado; si no, **se descarta**. La suscripción del Bicep **no** define `retryPolicy` (usa esos defaults) **ni dead-letter**: un evento que no se entrega en 24 horas se pierde.
 
-**Lo que cubre la pérdida: el Watchdog.** `WatchdogTimer` corre cada 15 minutos (`0 */15 * * * *`) y reencola las solicitudes que quedaron en Subido más de `ESTANCADA_MINUTOS` (15). El estado Subido lo escribe la app en Dataverse al terminar la carga, independiente de Event Grid. Un evento perdido demora la ingesta hasta el siguiente ciclo del Watchdog; no la pierde. El worker es idempotente (no sube a CMIS si la solicitud ya tiene `cmisObjectId`), así que un evento duplicado tampoco duplica el documento.
+**Lo que cubre la pérdida: el Watchdog.** El timer `Watchdog` corre cada 15 minutos (`0 */15 * * * *`) y lee la Azure Table `ingesta` (no Dataverse): reencola lo estancado más de `ESTANCADA_MINUTOS` (15) y detecta SAS emitidas y nunca subidas. Un evento perdido demora la ingesta hasta el siguiente ciclo del Watchdog; no la pierde. El worker es idempotente (descarta mensajes de filas en Archivado o Rechazado), así que un evento duplicado tampoco duplica el documento.
 
 ## ¿Imprescindible?
 
 **Veredicto: Imprescindible** (para el disparador elegido en ADR-002).
 
 - Qué aporta: dispara la ingesta en segundos sin que la app ni Power Automate intervengan; no consume Power Platform requests; reintentos de 24 horas y dead-letter nativos (este último a configurar); filtra por contenedor y tipo de evento sin código.
-- Qué pasa si no está: ningún blob dispara `OnBlobCreated`. Las solicitudes quedan en Subido y solo el Watchdog las procesa, con hasta 15 minutos de demora más el umbral de `ESTANCADA_MINUTOS`. Funciona, pero como modo degradado: el Watchdog es la red, no el camino principal.
+- Qué pasa si no está: ningún blob dispara `OnBlobCreated`. Los adjuntos quedan sin procesar y solo el Watchdog los recoge desde la Azure Table, con hasta 15 minutos de demora más el umbral de `ESTANCADA_MINUTOS`. Funciona, pero como modo degradado: el Watchdog es la red, no el camino principal.
 - Qué decisión lo haría prescindible (o distinto): que el Banco prefiera que la app llame a un endpoint HTTP de la Function al terminar la subida, o un flujo de Power Automate disparado por el cambio de estado en Dataverse (el diseño de ADR-001). Con Defender habilitado el disparador cambia: el evento lo publica Defender en un tópico propio y lo recibe `OnScanResult` (guía 12); este system topic no se crea.
 - Alternativa y su tradeoff: **llamada HTTP desde la app o flujo de Power Automate**. Ventaja: un recurso de Azure menos y nada que crear en un segundo despliegue. Costo: cada disparo consume requests del pool del usuario (el flujo además depende de su licencia y de la conexión), se pierden los reintentos y el dead-letter nativos (si la llamada falla, la app tiene que reintentar o el usuario se entera), y la ingesta depende de que el navegador siga abierto hasta llamar. El Watchdog cubriría los huecos con la misma demora de arriba.
 
@@ -41,7 +42,7 @@ Por qué se crea **después** de publicar el código: al crear una suscripción 
 
 ## Con Bicep
 
-Está en `infra/main.bicep`, sección "Fallback si Defender no está aprobado": `topicoSistemaAdjuntos` (líneas 569 a 576, `Microsoft.EventGrid/systemTopics@2025-02-15`) y `suscripcionBlobCreated` (líneas 578 a 596, `Microsoft.EventGrid/systemTopics/eventSubscriptions@2025-02-15`). Los dos se crean solo si `!habilitarDefender && crearSuscripcionEventGrid`.
+Está en `infra/main.bicep`, sección "Fallback si Defender no está aprobado": `topicoSistemaAdjuntos` (líneas 696 a 703, `Microsoft.EventGrid/systemTopics@2025-02-15`) y `suscripcionBlobCreated` (líneas 705 a 723, `Microsoft.EventGrid/systemTopics/eventSubscriptions@2025-02-15`). Los dos se crean solo si `!habilitarDefender && crearSuscripcionEventGrid`.
 
 | Parámetro | Qué gobierna | Valor recomendado en el Banco |
 | --- | --- | --- |
@@ -158,7 +159,7 @@ az eventgrid system-topic event-subscription show -g "$RG" --system-topic-name "
 # esperado: Succeeded, [Microsoft.Storage.BlobCreated], /blobServices/default/containers/cmv8-ingesta/, AzureFunction, .../functions/OnBlobCreated, 1, 30 / 1440
 ```
 
-Prueba de punta a punta (§10 "Humo y entrega" de `docs/guia-montaje-banco.md`): subir un archivo desde la app y verificar en Application Insights la traza de `OnBlobCreated` y de `ProcesarIngesta` para ese `solicitudId`. Las métricas del system topic en el portal (**Metrics** → **Delivered Events**, **Delivery Failed Events**, **Dropped Events**) muestran si hubo eventos perdidos.
+Prueba de punta a punta (§10 "Humo y entrega" de `docs/guia-montaje-banco.md`): subir un archivo desde la app y verificar en Application Insights la traza de `OnBlobCreated` y de `ProcesarIngesta` para ese adjunto (tabla + id). Las métricas del system topic en el portal (**Metrics** → **Delivered Events**, **Delivery Failed Events**, **Dropped Events**) muestran si hubo eventos perdidos.
 
 Estado del sandbox (2026-10-14): **no hay system topic** en `rg-cmv8-spikes`; `crearSuscripcionEventGrid=false`. Las pruebas del worker se hicieron llamando al caso de uso directamente.
 
@@ -170,7 +171,8 @@ No hay errores reales registrados: la suscripción no se creó en el sandbox. Lo
 | --- | --- | --- |
 | El despliegue falla en `suscripcionBlobCreated` con un error de validación del destino | `crearSuscripcionEventGrid=true` antes de publicar el código: `OnBlobCreated` no existe | Publicar (guía 16) y redesplegar |
 | Eventos con `Delivery Failed` y 401 | Easy Auth exige token y `/runtime/webhooks/eventgrid` no está en `excludedPaths` | Guía 15 |
-| Eventos entregados pero la función los ignora ("evento de un blob fuera del contenedor") | Blob subido fuera de `cmv8-ingesta` o sin la forma `{solicitudId}/{archivo}` | Revisar la ruta que arma el broker; el filtro ya excluye otros contenedores |
+| Eventos entregados pero la función los ignora ("evento de un blob fuera del contenedor") | Blob subido fuera de `cmv8-ingesta` o sin la forma `<tabla>/<id>/<archivo>` | Revisar la ruta que arma el broker; el filtro ya excluye otros contenedores |
+| Alguien agregó `Blob Deleted` a la suscripción (anticipado) | El portal lo marca por defecto | Quitarlo: la v2 no lo usa y `OnBlobCreated` lo descarta |
 | El system topic no se crea: ya existe uno sobre la cuenta | Una cuenta admite un solo system topic (pudo crearlo el portal o Defender) | Reutilizar el existente: `--system-topic-name <existente>` |
-| Solicitudes que tardan hasta 30 minutos en archivarse | Eventos descartados (sin dead-letter) y recuperados por el Watchdog | Revisar `Dropped Events`; configurar dead-letter |
-| Dos ingestas del mismo blob en los logs | Reintento de Event Grid tras un timeout (entrega al menos una vez) | Nada: el worker es idempotente por `cmisObjectId` |
+| Adjuntos que tardan hasta 30 minutos en procesarse | Eventos descartados (sin dead-letter) y recuperados por el Watchdog | Revisar `Dropped Events`; configurar dead-letter |
+| Dos ingestas del mismo blob en los logs | Reintento de Event Grid tras un timeout (entrega al menos una vez) | Nada: el worker descarta mensajes de filas en Archivado o Rechazado |

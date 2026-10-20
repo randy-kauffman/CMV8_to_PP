@@ -69,8 +69,8 @@ w('<defs>'
   '</defs>')
 w(f'<rect width="{W}" height="{H}" fill="#F7F8FA"/>')
 w(f'<text x="30" y="42" font-size="24" font-weight="700" fill="{C["ink"]}">CMV8_to_PP · Arquitectura de ingesta de documentos hacia IBM Content Manager V8</text>')
-w(f'<text x="30" y="66" font-size="13" fill="{C["muted"]}">Power Apps sube el binario directo a Blob Storage con una SAS ligada al usuario; una Function en Azure lo archiva en Content Manager con metadatos de IBM i. '
-  f'Regla del diseño: Dataverse decide, la Function emite, Storage verifica.</text>')
+w(f'<text x="30" y="66" font-size="13" fill="{C["muted"]}">Power Apps sube lotes directo a Blob Storage con SAS ligadas al usuario; una Function guiada por el catálogo de tipos descubierto de Content Manager archiva, guarda, observa o detiene. '
+  f'Regla: Dataverse decide, la Function emite, Storage verifica (ADR-002, ADR-003).</text>')
 
 # ---------------------------------------------------------------- zonas
 zone(30, 90, 1370, 200, C["entra"], C["entra_bg"], "ENTRA ID · TENANT DEL BANCO")
@@ -102,21 +102,25 @@ box(1130, 130, 250, 130, C["entra"], "Acceso condicional del Banco", [
 # ---------------------------------------------------------------- Power Platform
 box(60, 360, 360, 110, C["pp"], "Conector personalizado · CMV8 Broker", [
     "OAuth 2.0 con la app Conector; token del usuario, no de servicio",
-    "Operaciones: EmitirSasSubida · EmitirSasLectura ·",
-    "ResolverCliente · Salud. Política DLP: grupo Business",
+    "13 operaciones: EmitirSasLote · EmitirSasLectura ·",
+    "Archivar · Reanudar · IngestarArchivo · catálogo · AS400",
+    "Política DLP: grupo Business",
 ])
 box(130, 500, 290, 160, C["pp"], "Dataverse", [
-    "Tabla cmv8_solicitudingesta (solución cmv8ingesta)",
-    "Estados: Creada → Subido → Archivado",
-    "          | Rechazado | Estancada",
-    "Rol CMV8 Solicitante (usuarios piloto)",
+    "Tabla de adjuntos de cada solución (del maker)",
+    "Base: choice cmv8_estadoingesta (10 estados),",
+    "catálogo de tipos, propiedades CM, conflictos",
+    "App CMV8 Administración documental",
+    "Roles: usuarios, Worker, Administrador documental",
     "Usuario de aplicación = identidad administrada",
     "(la Function suplanta al usuario: CallerObjectId)",
+    "2 requests por archivo: autorizar y resultado",
 ], body_size=10.5, lh=14)
 box(60, 690, 360, 310, C["pp"], "Navegador del usuario · app canvas", [
     "**PCF Banco.CargaAdjuntoBlob",
-    "Recibe uploadUrl (SAS) + tokenStorage del conector",
-    "Sube en bloques de 4 MiB: Put Block × N + Put Block List",
+    "Recibe N uploadUrl (SAS) + UN tokenStorage del conector",
+    "Sube cada archivo del lote en bloques de 4 MiB:",
+    "Put Block × N + Put Block List",
     "Cada PUT lleva las DOS llaves:",
     "   · la SAS en la URL (firmada con sduoid = oid del usuario)",
     "   · Authorization: Bearer <token de Storage del usuario>",
@@ -133,9 +137,9 @@ box(60, 690, 360, 310, C["pp"], "Navegador del usuario · app canvas", [
 box(60, 1030, 360, 150, C["pp"], "Licencias y límites", [
     "Todos los usuarios con Power Apps Premium.",
     "Las operaciones del conector cuentan como Power Platform",
-    "requests del usuario; la ingesta (Event Grid) no consume",
-    "ninguna. Dataverse: pool de 25.000/día documentado como",
-    "riesgo hasta que Microsoft publique el reporte (S5).",
+    "requests del usuario. Dataverse: 2 requests del usuario de",
+    "aplicación por archivo en el camino feliz (v1: ~8). Pool del",
+    "tenant (25.000/día con solo Power Apps) a confirmar (S5).",
 ], body_size=10.5, lh=14)
 
 # ---------------------------------------------------------------- Azure
@@ -144,17 +148,17 @@ box(560, 360, 420, 300, C["azure"], "Azure Function · Flex Consumption · Java 
     "Identidad: cmv8-mi (asignada por el usuario). Cero secretos.",
     "",
     "**Broker (HTTP; lo llama el conector en nombre del usuario)",
-    "POST /api/sas/subida → autoriza en Dataverse, OBO, firma SAS",
-    "GET /api/sas/lectura/{id} · POST /api/clientes/resolver",
+    "POST /api/sas/lote → PATCH suplantado por id, OBO, N SAS",
+    "Archivar · Reanudar · Ingestar · Retención · Catálogo · AS400",
     "GET /api/salud (sin autenticación; es el chequeo de vida)",
     "",
-    "**Worker (no consume Power Platform requests)",
-    "OnBlobCreated (Event Grid) → cola ingesta-pendiente →",
-    "ProcesarIngesta: lee el blob con la identidad, pide los",
-    "metadatos al AS400, createDocument en CM V8, marca",
-    "Archivado + cmisObjectId en Dataverse y borra el blob.",
-    "Watchdog (timer): Subido > 15 min → reencola o Estancada.",
-    "Idempotente: no vuelve a subir si ya hay cmisObjectId.",
+    "**Worker (dirigido por el catálogo de tipos)",
+    "OnBlobCreated → Azure Table + cola → ProcesarIngesta: lee",
+    "el registro operativo y el catálogo en caché, valida contra",
+    "el tipo vivo de CM; archiva, almacena, observa o detiene.",
+    "UN PATCH a Dataverse con el resultado. Idempotente.",
+    "**Timers",
+    "Watchdog (15 min) · VigilarCatalogo (hora) · Depurar (día)",
 ], body_size=10.5, lh=14)
 box(1010, 360, 170, 140, C["azure"], "Identidad administrada", [
     "cmv8-mi (user-assigned)",
@@ -175,17 +179,18 @@ box(1200, 360, 180, 140, C["azure"], "Key Vault · cmv8-kv", [
     "Banco: privado + endpoint",
 ], body_size=10.5, lh=13.5)
 box(1010, 520, 370, 230, C["azure"], "Storage de adjuntos · cmv8adj (cuenta endurecida)", [
-    "Contenedor cmv8-ingesta · blob = {solicitudId}/{archivo}",
-    "Shared Key OFF · sin acceso anónimo · solo OAuth · TLS 1.2 · HTTPS",
+    "cmv8-ingesta (en vuelo) · cmv8-almacenados (lo que queda)",
+    "blob = <tabla>/<id>/<archivo> · Tablas: ingesta, depuracion",
+    "Shared Key OFF · sin acceso anónimo · solo OAuth · TLS 1.2",
     "Política de cuenta: SAS máx. 1 h (Block) · SAS ligada a usuario",
-    "La Function pide la clave de delegación con la identidad y firma",
-    "la SAS con sduoid: Storage exige el bearer del MISMO usuario.",
-    "CORS GET/HEAD/PUT/OPTIONS (orígenes *.powerapps.com variables)",
-    "Soft delete 7 d · ciclo de vida: borra huérfanos a los 7 d",
+    "Clave de delegación con la identidad; SAS con sduoid: Storage",
+    "exige el bearer del MISMO usuario. CORS GET/HEAD/PUT/OPTIONS",
+    "Ciclo de vida: ingesta 60 d (red) · almacenados Cool 30, Cold 180",
+    "WORM por versión opcional en almacenados · soft delete 7 d",
     "Firewall de IP opcional (S0) · Diagnósticos → Log Analytics",
-    "(StorageBlobLogs: RequesterUpn, scid = solicitudId, IP)",
-    "**Roles de la identidad: Blob Data Contributor SOLO en el",
-    "**contenedor · Blob Delegator en la cuenta",
+    "**Identidad: Blob Data Contributor por contenedor (Owner",
+    "**en almacenados con WORM) · Table Data Contributor por",
+    "**tabla · Blob Delegator en la cuenta",
 ], body_size=10.5, lh=14)
 box(560, 840, 320, 100, C["azure"], "Observabilidad", [
     "Log Analytics (30 d) + Application Insights",
@@ -196,10 +201,10 @@ box(560, 840, 320, 100, C["azure"], "Observabilidad", [
 box(1010, 840, 170, 112, C["azure"], "Event Grid", [
     "System topic de la cuenta",
     "de adjuntos. Suscripción",
-    "BlobCreated filtrada al",
-    "contenedor → OnBlobCreated.",
+    "BlobCreated filtrada a",
+    "cmv8-ingesta → OnBlobCreated.",
     "Reintentos 24 h; dead-letter",
-    "pendiente en el Bicep.",
+    "pendiente. Sin BlobDeleted.",
 ], body_size=10.5, lh=13.5)
 box(1210, 840, 170, 100, C["azure"], "Storage host", [
     "Runtime de Functions:",
@@ -217,28 +222,28 @@ box(1010, 990, 370, 80, C["opt"], "Pendiente · Red (S0, dentro del Banco)", [
     "Key Vault). Sin esto el worker no llega a IBM i ni a CM V8.",
 ], dashed=True, body_size=10.5, lh=14, fill="#FAFAFA")
 w(f'<rect x="560" y="1095" width="820" height="95" rx="10" fill="{C["azure"]}" opacity="0.92"/>')
-label(580, 1118, "Reglas del diseño (ADR-002)", size=12.5, color="#FFFFFF", bold=True)
-label(580, 1138, "Dataverse decide quién puede subir qué · la Function emite una SAS ligada a ese usuario · Storage verifica las dos llaves en cada PUT.", size=11, color="#FFFFFF")
-label(580, 1156, "Ningún secreto en el repo ni en el código; el broker no tiene secreto y las contraseñas viven en Key Vault.", size=11, color="#FFFFFF")
-label(580, 1174, "En la subida, el binario entra a Storage: nunca pasa por Dataverse ni por la Function. La ingesta no consume Power Platform requests.", size=11, color="#FFFFFF")
+label(580, 1118, "Reglas del diseño (ADR-002 y ADR-003)", size=12.5, color="#FFFFFF", bold=True)
+label(580, 1138, "Dataverse decide al autorizar y al recibir el resultado · la Function emite una SAS ligada al usuario · Storage verifica las dos llaves.", size=11, color="#FFFFFF")
+label(580, 1156, "El estado operativo vive en Azure Table y el catálogo se descubre de CM. Ningún secreto en el repo ni en el código.", size=11, color="#FFFFFF")
+label(580, 1174, "En la subida el binario entra a Storage: nunca pasa por Dataverse ni por la Function. Dos requests del usuario de aplicación por archivo.", size=11, color="#FFFFFF")
 
 # ---------------------------------------------------------------- Banco
 box(1450, 360, 240, 150, C["banco"], "AS400 / IBM i", [
-    "Metadatos obligatorios del",
-    "documento (cliente, afiliado,",
-    "dueño) vía jt400, JDBC",
-    "seguro (TLS 9471). Usuario",
-    "técnico; contraseña en",
-    "Key Vault, rotación según",
+    "Consultas con nombre que el",
+    "catálogo referencia; el SQL",
+    "vive solo en Azure. jt400,",
+    "JDBC seguro (TLS 9471).",
+    "Usuario técnico; contraseña",
+    "en Key Vault, rotación según",
     "política del Banco.",
 ], body_size=10.5, lh=13.5)
 box(1450, 560, 320, 170, C["banco"], "IBM Content Manager V8", [
     "API CMIS 1.1, Browser binding (JSON), solo",
     "en red interna. Cliente OpenCMIS desde la Function:",
-    "createDocument con el stream del blob + metadatos",
-    "del IBM i en la carpeta y tipo configurados",
-    "(CMIS_REPOSITORY_ID, CMIS_FOLDER_PATH, CMIS_TYPE_ID).",
-    "Devuelve cmisObjectId → queda en la solicitud.",
+    "DescubrirTipos lee el árbol de tipos. El worker",
+    "valida contra la definición viva y crea el documento",
+    "en la carpeta y el tipo del catálogo. VigilarCatalogo",
+    "compara cada hora. cmisObjectId → queda en el adjunto.",
     "Riesgo a validar (S4a): Transfer-Encoding chunked.",
 ], body_size=10.5, lh=14)
 box(1450, 780, 320, 120, C["banco"], "Conectividad (decisión de red S0)", [
@@ -261,7 +266,7 @@ label(1466, 1110, "sduoid: oid del usuario ligado a la SAS", size=10.5, color=C[
 label(1466, 1126, "PCF: Power Apps component framework", size=10.5, color=C["muted"])
 label(1466, 1142, "Flex Consumption: plan serverless de Functions", size=10.5, color=C["muted"])
 label(1466, 1158, "Guías de montaje por componente: docs/montaje/", size=10.5, color=C["muted"])
-label(1466, 1174, "Decisiones: docs/decisiones/ADR-001 y ADR-002", size=10.5, color=C["muted"])
+label(1466, 1174, "Decisiones: docs/decisiones/ADR-001 a ADR-003", size=10.5, color=C["muted"])
 
 # ---------------------------------------------------------------- flechas de identidad/config (punteadas)
 arrow("M 240 260 V 358", dashed=True)                       # app conector -> conector personalizado
@@ -277,28 +282,28 @@ label(708, 790, "trazas y auditoría", size=10, color=C["muted"])
 # 1 y 7: navegador <-> dataverse
 arrow("M 250 690 V 662", both=True)
 step(214, 676, 1); step(236, 676, 7)
-label(262, 673, "1: crea la solicitud (Creada)", size=10)
-label(262, 687, "7: marca Subido (tamaño, hash)", size=10)
+label(262, 673, "1: crea N adjuntos (Creada)", size=10)
+label(262, 687, "7: marca cada uno Subido", size=10)
 
 # 2: navegador -> conector (carril izquierdo)
 arrow("M 100 690 V 472", both=True)
 step(100, 580, 2)
-label(86, 580, "EmitirSasSubida → SAS + token", size=10.5, anchor="middle", rotate=-90)
+label(86, 580, "EmitirSasLote → N SAS + 1 token", size=10.5, anchor="middle", rotate=-90)
 # 3: conector -> function
 arrow("M 420 415 H 558", both=True)
 step(489, 400, 3); label(489, 436, "bearer del usuario", size=9.5, anchor="middle")
-label(489, 448, "← SAS + token", size=9.5, anchor="middle")
+label(489, 448, "← N SAS + token", size=9.5, anchor="middle")
 # 4: function -> dataverse (autoriza)
 arrow("M 560 540 H 422")
-step(489, 526, 4); label(489, 556, "¿es del usuario?", size=9.5, anchor="middle")
-label(489, 568, "Dataverse decide", size=9.5, anchor="middle")
+step(489, 526, 4); label(489, 556, "PATCH suplantado", size=9.5, anchor="middle")
+label(489, 568, "por id: Dataverse decide", size=9.5, anchor="middle")
 # 5: function -> entra (OBO)
 arrow("M 760 360 V 262", both=True)
 step(760, 312, 5); label(746, 316, "OBO → token de Storage del usuario", size=10.5, anchor="end")
 # 6: pcf -> storage adjuntos
 arrow("M 420 720 H 1008", width=2.2)
 step(620, 720, 6); w('<rect x="632" y="697" width="345" height="16" rx="3" fill="#EEF4FB" opacity="0.95"/>')
-label(636, 709, "Put Block × N + Put Block List: SAS + Bearer → 201", size=10.5, bold=True)
+label(636, 709, "Por archivo: Put Block × N + Put Block List, SAS + Bearer", size=10.5, bold=True)
 # SAS: function -> storage (clave de delegación)
 arrow("M 980 600 H 1008", dashed=True)
 # 8: storage -> event grid
@@ -306,18 +311,18 @@ arrow("M 1095 750 V 838")
 step(1095, 790, 8); label(1110, 794, "BlobCreated", size=10.5)
 # event grid -> function (worker)
 arrow("M 1010 890 H 920 V 728 A 8 8 0 0 1 920 712 V 662")
-label(928, 790, "OnBlobCreated →", size=10, color=C["muted"])
+label(928, 790, "OnBlobCreated → tabla", size=10, color=C["muted"])
 label(928, 802, "cola → ProcesarIngesta", size=10, color=C["muted"])
 # 9: worker -> AS400
 arrow("M 880 360 V 300 H 1670 V 358")
-step(1100, 300, 9); label(1116, 295, "jt400: resuelve los metadatos del cliente en IBM i (TLS 9471)", size=10.5)
+step(1100, 300, 9); label(1116, 295, "jt400: consultas con nombre que pide el tipo de documento (TLS 9471)", size=10.5)
 # 10: worker -> CM V8
 arrow("M 910 360 V 312 H 1740 V 558")
-step(1462, 540, 10); label(1478, 544, "OpenCMIS: createDocument → cmisObjectId", size=10.5)
+step(1462, 540, 10); label(1478, 544, "OpenCMIS: tipo vivo + createDocument", size=10.5)
 # 11: function -> dataverse (Archivado)
 arrow("M 560 610 H 422")
-step(489, 596, 11); label(489, 626, "Archivado", size=9.5, anchor="middle")
-label(489, 638, "+ cmisObjectId", size=9.5, anchor="middle")
+step(489, 596, 11); label(489, 626, "1 PATCH: Archivado,", size=9.5, anchor="middle")
+label(489, 638, "Almacenado, Observada…", size=9.5, anchor="middle")
 
 w('</svg>')
 sys.stdout.write("\n".join(out) + "\n")

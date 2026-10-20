@@ -41,10 +41,10 @@ La v1 (ADR-002) resolvió cómo sube un archivo con seguridad. Al explicarla de 
 - El prefijo del publisher se deriva del nombre lógico de la tabla (`cred_adjuntocredito` → `cred_`). Regla de la guía: las columnas reservadas se crean en la misma solución que la tabla. Cero requests para resolverlo.
 - Los **valores de metadatos** que exige un tipo de documento son columnas reales de esta tabla, con nombre lógico convenido por el catálogo (`<prefijo>_<nombrelogico>`). El maker arma un formulario normal; Dataverse valida obligatorio, tipo y largo; el broker recibe todos los valores en su única lectura.
 - Lookup al registro padre: la define el maker. El broker verifica solo la fila del adjunto; la regla de negocio la ponen los roles del maker sobre esa tabla.
-- Roles en la solución del maker: rol de usuarios (Create/Read/Write/Append/AppendTo con la profundidad que decida) y rol «CMV8 Worker - <solución>» (Read/Write/Append/AppendTo Global, sin Create ni Delete). La asignación del rol Worker al usuario de aplicación es un paso posterior a la importación, no un componente de solución.
+- Roles en la solución del maker: rol de usuarios (Create/Read/Write/Append/AppendTo con la profundidad que decida, más Read y AppendTo Global sobre `cmv8_tipodocumento` para elegir el tipo) y rol «CMV8 Worker - <solución>» (Read/Write/Append/AppendTo Global, sin Create ni Delete). La asignación del rol Worker al usuario de aplicación es un paso posterior a la importación, no un componente de solución.
 - Validación del nombre de tabla que manda el cliente: `^[a-z][a-z0-9_]{1,63}$`. La lista de permitidas son los privilegios de Dataverse: otra tabla, 403.
 
-### 1.2 Catálogo (solución base `cmv8`)
+### 1.2 Catálogo (solución base `cmv8ingesta`, publisher `banco_cmv8`, prefijo `cmv8`)
 
 **`cmv8_tipodocumento`**
 
@@ -151,7 +151,8 @@ El mismo PCF, ligado como **control de dataset a la subcuadrícula de adjuntos**
 | `IngestarArchivo(tabla, id, contenido)` | Flujo | 1 |
 | `ValidarTabla(tabla)` | Maker, antes de publicar | Metadata, fuera del flujo |
 | `DescubrirTipos`, `ActualizarTipos`, `ValidarTipo`, `ReanudarConflicto`, `ExtenderRetencion` | Administrador documental | Centenas una vez; después a demanda |
-| `GET /api/salud`, `POST /api/clientes/resolver` | Sin cambios | — |
+| `ConsultarAs400(nombre, parametros)` | App (mostrar datos antes de subir) | Ninguna (AS400); reemplaza a `ResolverCliente` de v1 |
+| `GET /api/salud` | Sin cambios | — |
 
 Todas con Easy Auth y rol verificado por suplantación. `EmitirSasSubida(solicitudId)` de v1 desaparece (es `EmitirSasLote` de un elemento).
 
@@ -169,7 +170,7 @@ Todas con Easy Auth y rol verificado por suplantación. `EmitirSasSubida(solicit
 | `cmv8-ingesta` | Solo lo que está en vuelo | Borrado a 60 días como última red (la fecha de depuración manda) |
 | `cmv8-almacenados` | Lo que se queda: retenidos tras archivar, solo-blob, diferidos en espera | Sin borrado por ciclo de vida; Cool a 30 días, Cold a 180, nunca Archive (rehidratación de horas; la SAS de lectura no serviría). Inmutabilidad a nivel de versión habilitada |
 
-Versionado en la cuenta (requisito de WORM por versión; regla para borrar versiones viejas de ingesta). Soft delete 7 días se queda. Event Grid `BlobCreated` sigue filtrado a `cmv8-ingesta`; `BlobDeleted` no hace falta.
+Versionado en la cuenta e inmutabilidad en el contenedor solo con `wormHabilitado` (las versiones cuestan; sin WORM no hacen falta). Soft delete 7 días se queda. Event Grid `BlobCreated` sigue filtrado a `cmv8-ingesta`; `BlobDeleted` no hace falta.
 
 ## 8. Presupuesto de requests (usuario de aplicación)
 
@@ -197,7 +198,7 @@ Desvíos declarados:
 
 ## 10. Cambios de infraestructura (Bicep)
 
-Contenedor `cmv8-almacenados`; Blob Data Contributor de la identidad sobre los dos contenedores; versionado e inmutabilidad a nivel de versión; reglas de ciclo de vida (ingesta 60 días, niveles en almacenados, versiones viejas); tablas `ingesta` y `depuracion` con Table Data Contributor acotado; permiso para políticas de inmutabilidad (a verificar: rol personalizado o Blob Data Owner acotado al contenedor); app settings `AS400_CONSULTAS_JSON`, `OBSERVADA_DIAS`, `WORM_BLOQUEAR`, `CATALOGO_CACHE_MINUTOS`; timers nuevos; alerta de Application Insights para conflictos; app registration «CMV8 PCF» (fuera del Bicep, guía 01 bis).
+Contenedor `cmv8-almacenados`; Blob Data Contributor de la identidad sobre los dos contenedores; versionado e inmutabilidad a nivel de versión; reglas de ciclo de vida (ingesta 60 días, niveles en almacenados, versiones viejas); tablas `ingesta` y `depuracion` con Table Data Contributor acotado; permiso para políticas de inmutabilidad (a verificar: rol personalizado o Blob Data Owner acotado al contenedor); app settings `AS400_CONSULTAS_JSON`, `OBSERVADA_DIAS`, `WORM_BLOQUEAR`, `CATALOGO_CACHE_MINUTOS`; timers nuevos; alerta de Application Insights para conflictos; app registration «CMV8 PCF» (fuera del Bicep; guía a escribir junto con el modo model-driven del PCF).
 
 ## 11. Decisiones que quedan en el Banco
 
@@ -206,6 +207,7 @@ Contenedor `cmv8-almacenados`; Blob Data Contributor de la identidad sobre los d
 - Aceptar la cuenta técnica de la conexión como actor auditado en la ingesta por flujo.
 - Aceptar una app registration de cliente público para el PCF en model-driven.
 - Qué consultas con nombre al AS400 existen y cuáles son rápidas (validación antes de subir).
+- Correo del administrador documental para la alerta de conflictos (`correoAlertas`).
 
 ## 12. Consecuencias y migración desde v1
 
@@ -221,3 +223,5 @@ Contenedor `cmv8-almacenados`; Blob Data Contributor de la identidad sobre los d
 - PCF con MSAL en la app móvil de Dynamics y en Teams.
 - Que un PATCH suplantado con `Prefer: return=representation` cuente como una sola request.
 - Tamaño real que soporta `IngestarArchivo` de punta a punta (acción de flujo, conector, límite HTTP de la Function).
+- Retención legal (legal hold por versión) para tipos inmutables: hoy congelar solo saca el adjunto de la agenda.
+- Vistas de detenidos y observados para el administrador: la app de administración solo ve la tabla de la solución base; cada solución del maker agrega sus propias vistas sobre su tabla de adjuntos.

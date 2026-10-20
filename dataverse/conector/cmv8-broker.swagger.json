@@ -1149,7 +1149,8 @@
           "type": "string",
           "format": "uri",
           "x-ms-summary": "URL de descarga",
-          "description": "URL SAS de lectura para un solo blob. No guardarla."
+          "description": "URL SAS de lectura para un solo blob. No guardarla.",
+          "x-ms-visibility": "internal"
         },
         "expiraUtc": {
           "type": "string",
@@ -1160,7 +1161,8 @@
         "tokenStorage": {
           "type": "string",
           "x-ms-summary": "Token de Storage",
-          "description": "S1b: token Entra de Azure Storage del usuario (OBO) para usar como Authorization: Bearer junto con la SAS ligada. Secreto: no guardarlo."
+          "description": "S1b: token Entra de Azure Storage del usuario (OBO) para usar como Authorization: Bearer junto con la SAS ligada. Secreto: no guardarlo.",
+          "x-ms-visibility": "internal"
         },
         "tokenStorageExpiraUtc": {
           "type": "string",

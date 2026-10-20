@@ -4,10 +4,11 @@
 
 ## Qué es y qué hace en esta solución
 
-La Function App Java 21 es la única pieza de código del lado de Azure. Cumple dos papeles en el mismo sitio:
+La Function App Java 21 es la única pieza de código del lado de Azure. Es la v2 del modelo de datos (ADR-003; detalle en `function/README.md`). Cumple tres papeles en el mismo sitio:
 
-- **Broker de SAS** (HTTP, detrás de Easy Auth): verifica en Dataverse, suplantando al usuario, que la fila de `cmv8_solicitudingesta` es suya y está en el estado correcto; pide una clave de delegación de usuario con su identidad administrada; emite una SAS de un solo blob ligada al usuario (`sduoid`); y obtiene por OBO el token de Storage del usuario que el componente PCF manda junto con la SAS (ADR-002, "Diseño de dos llaves").
-- **Worker de ingesta**: `OnBlobCreated` (o `OnScanResult` con Defender) recibe el evento de Event Grid y encola un mensaje en `%COLA_INGESTA%`; `ProcesarIngesta` toma el mensaje de la cola, lee el blob como stream, resuelve metadatos en el IBM i (jt400), crea el documento en Content Manager (OpenCMIS), actualiza Dataverse y borra el blob; `Watchdog` corre cada 15 minutos y reencola las solicitudes que quedaron en Subido.
+- **Broker de SAS** (HTTP, detrás de Easy Auth): recibe un lote (`POST /api/sas/lote` con la tabla lógica y los ids) y, por cada adjunto, hace UNA llamada a Dataverse suplantando al usuario: PATCH de `rutablob` con representación (403 = no puede escribir esa fila de SU tabla de adjuntos). Pide una clave de delegación de usuario con su identidad administrada, emite una SAS de un solo blob `<tabla>/<id>/<archivo>` ligada al usuario (`sduoid`) por adjunto, obtiene por OBO UN token de Storage del usuario para todo el lote (ADR-002, "Diseño de dos llaves") y escribe el registro operativo en la Azure Table `ingesta`. Además expone `Archivar`, `Reanudar`, `Ingestar` (Power Automate), `ExtenderRetencion`, las operaciones del catálogo (`DescubrirTipos`, `ActualizarTipos`, `ValidarTipo`, `ValidarTabla`, `ReanudarConflicto`) y las consultas con nombre al AS400.
+- **Worker de ingesta**: `OnBlobCreated` (o `OnScanResult` con Defender) recibe el evento de Event Grid, marca Subido en la Azure Table y encola un mensaje en `%COLA_INGESTA%`; `ProcesarIngesta` lee el registro operativo y el catálogo en caché, resuelve y valida las propiedades contra la definición viva del tipo en Content Manager y, según el tipo, archiva en CM, mueve a `cmv8-almacenados`, observa o detiene. UN PATCH a Dataverse con el resultado.
+- **Tres timers** (sección "Timers").
 
 El plan es **Flex Consumption** (`FC1`, Linux): escala por evento hasta `maximumInstanceCount` y a cero sin tráfico; el paquete de la app vive en un contenedor blob del storage host, al que la plataforma accede con la identidad asignada por el usuario (sin connection string). El runtime de Functions (`AzureWebJobsStorage`) también usa esa identidad. No hay ningún secreto en la configuración: las contraseñas son referencias de Key Vault (guía 09) y el OBO usa la identidad como credencial federada (guía 14).
 
@@ -37,11 +38,13 @@ El plan es **Flex Consumption** (`FC1`, Linux): escala por evento hasta `maximum
 | `STORAGE_ADJ`, `CONTENEDOR_ADJ` | Consume | Salidas `storageAdjuntosName`, `contenedorAdjuntosName` (`cmv8-ingesta`) |
 | `APPI_NAME`, `APPI_CONN` | Consume | `${PREFIJO}-appi-${SUFIJO}`; `az resource show -g "$RG" -n "$APPI_NAME" --resource-type Microsoft.Insights/components --query properties.ConnectionString -o tsv` |
 | `KV_NAME` | Consume | Guía 09 |
-| `AS400_HOST`, `AS400_USER`, `AS400_SQL`, `CMIS_URL`, `CMIS_USER`, `CMIS_REPO`, `CMIS_CARPETA`, `CMIS_TIPO` | Consume | Los entregan IBM i y Content Manager (no son secretos; las contraseñas van a Key Vault) |
+| `STORAGE_ADJ_TABLE_ENDPOINT`, `CONTENEDOR_ALM` | Consume | Salidas `storageAdjuntosTableEndpoint`, `contenedorAlmacenadosName` (`cmv8-almacenados`), guía 07 |
+| `WORM_HABILITADO`, `WORM_BLOQUEAR`, `OBSERVADA_DIAS` | Consume | Decisiones del Banco (guía 07 y ADR-003 §11); en spikes `false`, `true`, `30` |
+| `AS400_HOST`, `AS400_USER`, `AS400_SQL`, `AS400_CONSULTAS_JSON`, `CMIS_URL`, `CMIS_USER`, `CMIS_REPO` | Consume | Los entregan IBM i y Content Manager (no son secretos; las contraseñas van a Key Vault). `AS400_CONSULTAS_JSON` lo arma el Banco con las consultas con nombre que el catálogo va a referenciar |
 
 ## Con Bicep
 
-Está en `infra/main.bicep`, sección "Function App en Flex Consumption": plan `plan` (líneas 419 a 430, `Microsoft.Web/serverfarms@2024-04-01`), sitio `functionApp` (líneas 432 a 483, `Microsoft.Web/sites@2024-04-01`) y su hijo `configuracion` (`config/appsettings`, líneas 484 a 512). El sitio espera (`dependsOn`) a los roles de la identidad sobre el storage host (Blob Data Owner, Queue y Table Data Contributor) y al rol de Key Vault: así el primer arranque ya puede leer el paquete, las colas y las referencias.
+Está en `infra/main.bicep`, sección "Function App en Flex Consumption": plan `plan` (líneas 538 a 549, `Microsoft.Web/serverfarms@2024-04-01`), sitio `functionApp` (líneas 551 a 640, `Microsoft.Web/sites@2024-04-01`) y su hijo `configuracion` (`config/appsettings`, líneas 603 a 639). El sitio espera (`dependsOn`) a los roles de la identidad sobre el storage host (Blob Data Owner, Queue y Table Data Contributor) y al rol de Key Vault: así el primer arranque ya puede leer el paquete, las colas y las referencias.
 
 | Parámetro | Qué gobierna | Valor recomendado en el Banco |
 | --- | --- | --- |
@@ -52,13 +55,14 @@ Está en `infra/main.bicep`, sección "Function App en Flex Consumption": plan `
 | `instanceMemoryMB` | Memoria por instancia (2048 o 4096) | `2048` (S4: 100 MB en streaming con `-Xmx64m`) |
 | `origenesCors` | `siteConfig.cors.allowedOrigins` | `['*']` (decisión pendiente; ADR-002, "CORS `*`") |
 | `dataverseUrl`, `autorizacionModo`, `bloqueMb`, `requerirSasLigadaAUsuario`, `habilitarDefender`, `brokerClientId`, `brokerTenantId` | App settings (ver tabla abajo) | `docs/guia-montaje-banco.md`, sección 2 |
-| `as400Host`, `as400Usuario`, `as400SqlCliente`, `cmisUrl`, `cmisUsuario`, `cmisRepositorio`, `cmisCarpeta`, `cmisTipo` | Bloques `AS400_*` y `CMIS_*`; vacíos = el bloque no se crea | Valores reales del Banco |
+| `contenedorAlmacenados`, `wormHabilitado`, `wormBloquear`, `observadaDias`, `catalogoCacheMinutos` | `ADJUNTOS_CONTAINER_ALMACENADOS`, `WORM_HABILITADO`, `WORM_BLOQUEAR`, `OBSERVADA_DIAS`, `CATALOGO_CACHE_MINUTOS` | `cmv8-almacenados`; WORM según la decisión del Banco (guía 07); `true`; N días del Banco (30 por defecto); `10` |
+| `as400Host`, `as400Usuario`, `as400SqlCliente`, `as400ConsultasJson`, `cmisUrl`, `cmisUsuario`, `cmisRepositorio`, `cmisCarpeta`, `cmisTipo` | Bloques `AS400_*` y `CMIS_*`; vacíos = el bloque no se crea | Valores reales del Banco. `cmisCarpeta` y `cmisTipo` son de v1 (ver nota de la tabla de settings) |
 
 Fijado sin parámetro: `sku: FC1 / FlexConsumption`, `reserved: true`, `kind: functionapp,linux`, identidad `UserAssigned`, `httpsOnly: true`, `keyVaultReferenceIdentity` = la identidad, `minTlsVersion: 1.2`, `http20Enabled: true`, `cors.supportCredentials: false`, paquete en `blobContainer` del storage host autenticado con `UserAssignedIdentity`.
 
 **Importante:** `config/appsettings` en Bicep **reemplaza** todos los app settings en cada despliegue. Cualquier setting agregado a mano (portal o CLI) desaparece en el próximo `infra/desplegar.sh`. Todo cambio de configuración va al Bicep o al `.bicepparam`.
 
-### App settings (líneas 489 a 511)
+### App settings (líneas 608 a 638)
 
 | Setting | Valor | Para qué |
 | --- | --- | --- |
@@ -70,31 +74,57 @@ Fijado sin parámetro: `sku: FC1 / FlexConsumption`, `reserved: true`, `kind: fu
 | `AZURE_CLIENT_ID` | Client id de la identidad | `DefaultAzureCredential` / `ManagedIdentityCredential` de azure-identity eligen esa identidad (Storage, Dataverse, OBO) |
 | `ADJUNTOS_STORAGE_ACCOUNT` | Nombre de la cuenta de adjuntos | Cuenta sobre la que se pide la clave de delegación |
 | `ADJUNTOS_BLOB_ENDPOINT` | `https://<cuenta>.blob.core.windows.net/` | Base de las URLs de SAS y de lectura del worker |
-| `ADJUNTOS_CONTAINER` | `cmv8-ingesta` | Contenedor de la solución; el worker ignora eventos de otros contenedores |
+| `ADJUNTOS_CONTAINER` | `cmv8-ingesta` | Contenedor de ingesta (en vuelo); el worker ignora eventos de otros contenedores |
+| `ADJUNTOS_CONTAINER_ALMACENADOS` | `cmv8-almacenados` | Contenedor de lo que se queda: retenidos, Solo Blob, diferidos |
+| `ADJUNTOS_TABLE_ENDPOINT` | `https://<cuenta>.table.core.windows.net/` | Endpoint de las Azure Tables del estado operativo |
+| `TABLA_INGESTA` / `TABLA_DEPURACION` | `ingesta` / `depuracion` | Registro operativo de cada adjunto / agenda de retención (guía 07) |
+| `OBSERVADA_DIAS` | `30` (`observadaDias`) | Días para corregir una Observada antes de pasar a Rechazado. Decisión del Banco |
+| `WORM_HABILITADO` / `WORM_BLOQUEAR` | `false` / `true` (`wormHabilitado` / `wormBloquear`) | Inmutabilidad por tipo; exige versionado e inmutabilidad en el contenedor (guía 07). Con `WORM_BLOQUEAR=true` la política queda bloqueada |
+| `CATALOGO_CACHE_MINUTOS` | `10` (`catalogoCacheMinutos`) | Caché del catálogo en memoria: cero requests a Dataverse por archivo |
 | `DATAVERSE_URL` | `https://<org>.crm.dynamics.com` | Entorno donde se verifica acceso y se actualiza la fila |
 | `SAS_UPLOAD_MINUTOS` | `15` | Vigencia de la SAS de subida |
 | `SAS_READ_MINUTOS` | `5` | Vigencia de la SAS de lectura |
 | `COLA_INGESTA` | `ingesta-pendiente` | Nombre de la cola (`%COLA_INGESTA%` en los bindings); la poison queue es `ingesta-pendiente-poison` |
-| `AUTORIZACION_MODO` | `dataverse` | Verificar acceso a la fila por suplantación. `ninguna` solo en spikes |
+| `AUTORIZACION_MODO` | `dataverse` | Setting de v1 que el Bicep todavía fija; `function/README.md` (v2) no lo lista |
 | `SAS_LIGADA_USUARIO` | `true` / `false` según `requerirSasLigadaAUsuario` | Firmar la SAS con `sduoid` y devolver el token OBO de Storage |
 | `ESCANEO_REQUERIDO` | `true` / `false` según `habilitarDefender` | Con `true` el disparador esperado es `OnScanResult` (guía 12) |
-| `ESTANCADA_MINUTOS` | `15` | Minutos en Subido a partir de los cuales el Watchdog reencola |
+| `ESTANCADA_MINUTOS` | `15` | Minutos a partir de los cuales el Watchdog considera estancado un adjunto (lo lee de la Azure Table) |
 | `SAS_BLOQUE_MB` | `4` (`bloqueMb`) | Tamaño de bloque que el broker recomienda al PCF |
 | `BROKER_CLIENT_ID` | `$BROKER_APP_ID` | App registration del broker: cliente del OBO |
 | `BROKER_TENANT_ID` | `$TENANT_ID` | Autoridad del OBO |
 | `AS400_HOST` | Host del IBM i | Conexión jt400 (solo si `as400Host` no está vacío) |
 | `AS400_USER` | Perfil de servicio | Usuario jt400 |
 | `AS400_SECURE` | `true` | jt400 por TLS |
-| `AS400_SQL_CLIENTE` | Consulta con un solo `?` | Devuelve IDCLIENTE, IDCLIENTE2, NOMBRE, AFILIADOPADRE, IDDUENO |
+| `AS400_SQL_CLIENTE` | Consulta con un solo `?` | v1. Si `AS400_CONSULTAS_JSON` está vacío, la Function la usa como consulta `cliente` con parámetro `idcliente` |
+| `AS400_CONSULTAS_JSON` | `{"nombre": "SELECT ... WHERE A = :parametro"}` (`as400ConsultasJson`) | Consultas con nombre que referencia el catálogo (origen "consulta AS400"). Los parámetros se llaman como las columnas lógicas de la tabla de adjuntos. El SQL vive solo acá, nunca en Dataverse |
 | `AS400_PASSWORD` | `@Microsoft.KeyVault(VaultName=<vault>;SecretName=as400-password)` | Contraseña resuelta desde Key Vault (guía 09) |
 | `CMIS_URL` | URL del Browser binding de CM | Cliente OpenCMIS (solo si `cmisUrl` no está vacío) |
 | `CMIS_USER` | Usuario de servicio de CM | Usuario CMIS |
 | `CMIS_REPOSITORY_ID` | Id del repositorio | Repositorio destino |
-| `CMIS_FOLDER_PATH` | Ruta de carpeta | Carpeta destino |
-| `CMIS_TYPE_ID` | Tipo de documento | Tipo con los metadatos del Banco |
+| `CMIS_FOLDER_PATH` | Ruta de carpeta | v1. En v2 la carpeta sale del catálogo (`cmv8_tipodocumento`); el README v2 no lo lista |
+| `CMIS_TYPE_ID` | Tipo de documento | v1. En v2 el tipo sale del catálogo; el README v2 no lo lista |
 | `CMIS_PASSWORD` | `@Microsoft.KeyVault(VaultName=<vault>;SecretName=cmis-password)` | Contraseña resuelta desde Key Vault |
 
 No hay `BROKER_CLIENT_SECRET`: el OBO usa la identidad como credencial federada (guía 14). El secreto solo existe en `function/local.settings.json` para desarrollo local.
+
+**Settings que el código v2 lee y el Bicep no define** (toman el valor por defecto de `function/README.md`; si el Banco necesita otro valor, hay que agregarlos al Bicep, porque `config/appsettings` reemplaza todo):
+
+| Setting | Defecto | Uso |
+| --- | --- | --- |
+| `SAS_LOTE_MAXIMO` | `20` | Máximo de adjuntos por llamada a `POST /api/sas/lote` |
+| `TAMANO_MAXIMO_BYTES` | 1 GB | Límite de tamaño declarado |
+| `CMIS_PREFIJO_PROPIEDADES` / `CMIS_PROPIEDAD_ID_CORTO` / `CMIS_CARPETA_PLANTILLA` | — / — / `/{localName}` | Reglas de `DescubrirTipos`: nombre canónico de las propiedades, propiedad del ID corto, carpeta derivada. Dependen de cómo publique CM V8 sus tipos (a verificar, ADR-003 §13) |
+| `AS400_POOL_MAX` / `AS400_POOL_VIDA_MAX_MINUTOS` | — | Pool de conexiones jt400 |
+
+## Timers
+
+Los tres viven en `function/src/main/java/com/banco/cmv8/adapters/in/Temporizadores.java` y usan los leases del storage host (guía 06). No necesitan settings de horario: la expresión está en el código.
+
+| Timer | Expresión (NCRONTAB, UTC) | Qué hace | Requests a Dataverse |
+| --- | --- | --- | --- |
+| `Watchdog` | `0 */15 * * * *` (cada 15 min) | Lee la Azure Table `ingesta`: reencola lo estancado más de `ESTANCADA_MINUTOS` y detecta SAS emitidas y nunca subidas. Reintenta los Error hasta `maxDequeueCount` | 0 salvo escrituras de resultado |
+| `VigilarCatalogo` | `0 5 * * * *` (cada hora, al minuto 5) | Compara la definición viva de cada tipo en uso en CM contra el catálogo; registra conflictos nuevos en `cmv8_conflicto`. Detecta, no decide: nunca corre `ActualizarTipos` | 0 salvo escrituras de conflictos |
+| `Depurar` | `0 30 2 * * *` (diario, 02:30) | Lee la agenda `depuracion` de hoy y de los días pendientes. Si hay humano pendiente (Observada vigente, Detenida, Procesando) no borra y corre la fecha siete días; si no, borra el blob y actualiza Dataverse (Archivado → vacía `rutablob`; Almacenado → Depurado; Observada vencida → Rechazado). Un WORM no vencido lo rechaza Storage: se reprograma | 1 por vencimiento |
 
 ## Con Azure CLI
 
@@ -207,6 +237,14 @@ az functionapp config appsettings set -g "$RG" -n "$FUNCTION_NAME" -o none --set
   "ADJUNTOS_STORAGE_ACCOUNT=$STORAGE_ADJ" \
   "ADJUNTOS_BLOB_ENDPOINT=https://$STORAGE_ADJ.blob.core.windows.net/" \
   "ADJUNTOS_CONTAINER=cmv8-ingesta" \
+  "ADJUNTOS_CONTAINER_ALMACENADOS=cmv8-almacenados" \
+  "ADJUNTOS_TABLE_ENDPOINT=https://$STORAGE_ADJ.table.core.windows.net/" \
+  "TABLA_INGESTA=ingesta" \
+  "TABLA_DEPURACION=depuracion" \
+  "OBSERVADA_DIAS=${OBSERVADA_DIAS:-30}" \
+  "WORM_HABILITADO=${WORM_HABILITADO:-false}" \
+  "WORM_BLOQUEAR=${WORM_BLOQUEAR:-true}" \
+  "CATALOGO_CACHE_MINUTOS=10" \
   "DATAVERSE_URL=$DATAVERSE_URL" \
   "SAS_UPLOAD_MINUTOS=15" \
   "SAS_READ_MINUTOS=5" \
@@ -223,16 +261,16 @@ az functionapp config appsettings set -g "$RG" -n "$FUNCTION_NAME" -o none --set
 az functionapp config appsettings set -g "$RG" -n "$FUNCTION_NAME" -o none --settings \
   "AS400_HOST=$AS400_HOST" "AS400_USER=$AS400_USER" "AS400_SECURE=true" \
   "AS400_SQL_CLIENTE=$AS400_SQL" \
+  "AS400_CONSULTAS_JSON=$AS400_CONSULTAS_JSON" \
   "AS400_PASSWORD=@Microsoft.KeyVault(VaultName=$KV_NAME;SecretName=as400-password)"
 
-# Content Manager (solo si se configura)
+# Content Manager (solo si se configura). La carpeta y el tipo salen del catálogo (v2).
 az functionapp config appsettings set -g "$RG" -n "$FUNCTION_NAME" -o none --settings \
   "CMIS_URL=$CMIS_URL" "CMIS_USER=$CMIS_USER" "CMIS_REPOSITORY_ID=$CMIS_REPO" \
-  "CMIS_FOLDER_PATH=$CMIS_CARPETA" "CMIS_TYPE_ID=$CMIS_TIPO" \
   "CMIS_PASSWORD=@Microsoft.KeyVault(VaultName=$KV_NAME;SecretName=cmis-password)"
 ```
 
-`AS400_SQL` lleva espacios y comillas: definirlo en el cuaderno entre comillas simples. Si alguna vez se despliega el Bicep sobre un sitio armado así, el Bicep impone su lista y elimina lo que no esté en él.
+`AS400_SQL` y `AS400_CONSULTAS_JSON` llevan espacios y comillas: definirlos en el cuaderno entre comillas simples. Si alguna vez se despliega el Bicep sobre un sitio armado así, el Bicep impone su lista y elimina lo que no esté en él.
 
 ## Con el portal
 
@@ -290,7 +328,7 @@ En az CLI 2.91, `az functionapp show` devuelve las propiedades del sitio **anida
 
 Estado real del sandbox (`cmv8-func-supfcopn`, 2026-10-14): `Running`, HTTPS only, `keyVaultReferenceIdentity` = `cmv8-mi-supfcopn`, paquete en `https://cmv8hostsupfcopn.blob.core.windows.net/app-package-supfcopn` con `UserAssignedIdentity`, 100 instancias de 2048 MB, Java 21, TLS 1.2, HTTP/2, CORS `*` sin credenciales, `siteUpdateStrategy: Recreate` (default de la plataforma, no lo fija el Bicep), plan FC1 `reserved: true`, 25 app settings (sin bloque CMIS porque el spike no lo configura).
 
-Después de publicar el código (guía 16): `az functionapp function list -g "$RG" -n "$FUNCTION_NAME" --query '[].name' -o tsv` debe listar, entre otras, `OnBlobCreated`, `OnScanResult`, `ProcesarIngesta` y `Watchdog`.
+Después de publicar el código (guía 16): `az functionapp function list -g "$RG" -n "$FUNCTION_NAME" --query '[].name' -o tsv` debe listar, entre otras, `SasLote`, `OnBlobCreated`, `OnScanResult`, `ProcesarIngesta` y los tres timers `Watchdog`, `VigilarCatalogo` y `Depurar`.
 
 ## Errores que ya vimos
 
@@ -303,4 +341,6 @@ Después de publicar el código (guía 16): `az functionapp function list -g "$R
 | `az functionapp create` falla con "Key based authentication is not permitted" (anticipado) | Storage host con Shared Key deshabilitado | Camino A (ARM) |
 | `func azure functionapp publish` falla o deja la app vacía | En Flex se publica con el plugin de Maven | `mvn clean package azure-functions:deploy` (guía 16) |
 | 502 o 500 del broker al pedir SAS con `AS400_PASSWORD` vacío (anticipado) | Referencia de Key Vault no resuelta | Guía 09, "Verificación" |
+| `SasLote` o el worker fallan con 403 contra `*.table.core.windows.net` (anticipado) | Falta Table Data Contributor de la identidad sobre las tablas, o `ADJUNTOS_TABLE_ENDPOINT` vacío | Guía 07, "Roles v2"; revisar el setting |
+| `Depurar` no borra lo vencido (anticipado) | Por diseño, si el adjunto tiene humano pendiente (Observada vigente, Detenida, Procesando) o un WORM no vencido: reprograma | Guía 23, "Retención" |
 | Region no aparece en el portal o el create falla por runtime (anticipado) | La región no soporta Flex o no tiene Java 21 | `az functionapp list-flexconsumption-runtimes --location "$REGION" --runtime java` |

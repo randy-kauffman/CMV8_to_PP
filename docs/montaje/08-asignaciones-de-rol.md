@@ -190,3 +190,5 @@ En el portal: la identidad `cmv8-mi-<sufijo>` → **Azure role assignments** mue
 | `RoleAssignmentExists` al desplegar el Bicep (anticipado) | Asignaciones creadas a mano con otro nombre para el mismo rol, principal y alcance | Borrar las manuales (`az role assignment delete --ids …`) y redeployar |
 | `UnmatchedPrincipalType` en `rolKeyVaultAdministrador` (anticipado) | `oidOperadorKeyVault` es un service principal (pipeline) y el Bicep fija `principalType: 'User'` | Usar el object id de una persona, o ajustar el Bicep para recibir el tipo como parámetro |
 | `AuthorizationFailed` al crear asignaciones (anticipado) | Quien opera es Contributor, no Owner | Owner o Role Based Access Control Administrator sobre el grupo (guía 03) |
+
+> **v2 (ADR-003)**: a las asignaciones de esta guía se suman Blob Data Contributor sobre `cmv8-almacenados` (o Blob Data Owner acotado a ese contenedor con `wormHabilitado`) y Table Data Contributor acotado a las tablas `ingesta` y `depuracion`. Los comandos están en la guía 07.

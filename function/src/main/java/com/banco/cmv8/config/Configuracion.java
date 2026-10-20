@@ -284,8 +284,4 @@ public final class Configuracion {
         return conDefecto("CMIS_CARPETA_PLANTILLA", "/{localName}");
     }
 
-    /** Minutos de antigüedad para que VigilarCatalogo considere vencida su última corrida (evita solapes). */
-    public Duration vigilanciaCatalogo() {
-        return minutos("VIGILAR_CATALOGO_MINUTOS", 60);
-    }
 }

@@ -60,6 +60,7 @@ src/main/java/com/banco/cmv8/
 | `ValidarTipo` | `GET /api/catalogo/validar?tipo={id}` | 200 `{criticos, avisos, hallazgos:[{nivel, tipo, propiedad, mensaje}]}` |
 | `ValidarTabla` | `GET /api/catalogo/validar-tabla/{tabla}?tipo={id}` | 200 `{tabla, prefijo, ok, faltantes, avisos}` |
 | `ReanudarConflicto` | `POST /api/catalogo/conflictos/{id}/reanudar` | 200 `{reencolados}` |
+| `ConsultarAs400` | `POST /api/as400/consultas/{nombre}` `{parametro: valor}` | 200 primera fila (columnas en mayúsculas); 404 sin datos; solo consultas declaradas |
 | `Salud` | `GET /api/salud` | `{estado:"ok", version}` |
 | `OnScanResult` / `OnBlobCreated` | Event Grid | encola o rechaza |
 | `ProcesarIngesta` | cola `%COLA_INGESTA%` | worker |
@@ -77,7 +78,7 @@ suplantada de `cmv8_conflicto`).
 
 ## App settings
 
-Las define `infra/main.bicep`:
+Las define `infra/main.bicep` (las que tienen defecto y no aparecen allí se toman del defecto: `SAS_LOTE_MAXIMO`, `TAMANO_MAXIMO_BYTES`, `AS400_POOL_*`):
 
 | Setting | Defecto | Uso |
 | --- | --- | --- |
@@ -103,7 +104,9 @@ Las define `infra/main.bicep`:
 La tabla `cmv8_solicitudingesta` de los spikes es la primera tabla de adjuntos (ADR-003 §12): sus columnas
 reservadas llevan el prefijo `cmv8_`.
 
-## Qué ejercita cada spike
+## Qué ejercita cada spike (histórico, v1)
+
+Los nombres de esta tabla son los de la v1 (`SasSubida`, `AutorizadorSolicitudDataverse`, `ResolverCliente`); se conserva como registro de lo que probó cada spike.
 
 | Spike | Qué parte del código |
 | --- | --- |

@@ -70,10 +70,6 @@ param crearSuscripcionEventGrid bool = false
 @description('URL del entorno de Dataverse que consumirá la Function (S2, S5, S7).')
 param dataverseUrl string = ''
 
-@description('Modo de autorización del broker de SAS: dataverse (verifica acceso a la fila) o ninguna (solo S1).')
-@allowed(['dataverse', 'ninguna'])
-param autorizacionModo string = 'dataverse'
-
 @description('Tamaño de bloque en MiB que el broker recomienda al PCF. Mayor = menos overhead por bloque, reintentos más caros.')
 @minValue(1)
 @maxValue(100)
@@ -125,12 +121,22 @@ param as400SqlCliente string = ''
 solo acá, nunca en Dataverse. Si está vacío, la Function usa as400SqlCliente como consulta "cliente".''')
 param as400ConsultasJson string = ''
 
+@description('v2: prefijo de wire que se quita del id de propiedad para el nombre canónico (vacío = último punto o dos puntos).')
+param cmisPrefijoPropiedades string = ''
+
+@description('v2: nombre canónico de la propiedad que trae el ID corto del tipo (regla de CMCourier). Vacío = prefijo del nombre visible.')
+param cmisPropiedadIdCorto string = ''
+
+@description('v2: plantilla de la carpeta derivada de un tipo descubierto; {localName} se reemplaza.')
+param cmisCarpetaPlantilla string = '/{localName}'
+
+@description('Correo para la alerta de conflictos de catálogo (M10). Vacío = sin alerta ni grupo de acción.')
+param correoAlertas string = ''
+
 @description('CMIS (Content Manager). Vacío: la Function no recibe configuración CMIS. La contraseña viene de Key Vault.')
 param cmisUrl string = ''
 param cmisUsuario string = ''
 param cmisRepositorio string = ''
-param cmisCarpeta string = ''
-param cmisTipo string = ''
 
 // ---------------------------------------------------------------------------
 // Nombres
@@ -170,8 +176,9 @@ var ajustesCmis = empty(cmisUrl) ? {} : {
   CMIS_URL: cmisUrl
   CMIS_USER: cmisUsuario
   CMIS_REPOSITORY_ID: cmisRepositorio
-  CMIS_FOLDER_PATH: cmisCarpeta
-  CMIS_TYPE_ID: cmisTipo
+  CMIS_PREFIJO_PROPIEDADES: cmisPrefijoPropiedades
+  CMIS_PROPIEDAD_ID_CORTO: cmisPropiedadIdCorto
+  CMIS_CARPETA_PLANTILLA: cmisCarpetaPlantilla
   CMIS_PASSWORD: '@Microsoft.KeyVault(VaultName=${nombreKeyVault};SecretName=cmis-password)'
 }
 
@@ -628,7 +635,6 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       SAS_UPLOAD_MINUTOS: '15'
       SAS_READ_MINUTOS: '5'
       COLA_INGESTA: 'ingesta-pendiente'
-      AUTORIZACION_MODO: autorizacionModo
       SAS_LIGADA_USUARIO: requerirSasLigadaAUsuario ? 'true' : 'false'
       ESCANEO_REQUERIDO: habilitarDefender ? 'true' : 'false'
       ESTANCADA_MINUTOS: '15'
@@ -636,6 +642,55 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       BROKER_CLIENT_ID: brokerClientId
       BROKER_TENANT_ID: brokerTenantId
     }, ajustesAs400, ajustesCmis)
+  }
+}
+
+// M10: los rechazos de Easy Auth y los logs de la Function a Log Analytics (hoy no quedaban en ningún lado nuestro).
+resource diagFunction 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'a-log-analytics'
+  scope: functionApp
+  properties: {
+    workspaceId: logAnalytics.id
+    logs: [
+      { category: 'FunctionAppLogs', enabled: true }
+      { category: 'AppServiceAuthenticationLogs', enabled: true }
+    ]
+  }
+}
+
+// Alerta de conflictos de catálogo (ADR-003 §4.4): el timer VigilarCatalogo y el worker registran cada conflicto nuevo
+// con un WARNING que empieza igual; la regla lo busca cada 15 minutos.
+resource grupoAlertas 'Microsoft.Insights/actionGroups@2023-01-01' = if (!empty(correoAlertas)) {
+  name: '${prefijo}-ag-${take(token, 8)}'
+  location: 'global'
+  properties: {
+    groupShortName: 'cmv8'
+    enabled: true
+    emailReceivers: [ { name: 'administrador-documental', emailAddress: correoAlertas, useCommonAlertSchema: true } ]
+  }
+}
+
+resource alertaConflictos 'Microsoft.Insights/scheduledQueryRules@2023-03-15-preview' = if (!empty(correoAlertas)) {
+  name: '${prefijo}-alerta-conflictos-${take(token, 8)}'
+  location: location
+  properties: {
+    displayName: 'CMV8: conflicto de catálogo nuevo'
+    severity: 2
+    enabled: true
+    evaluationFrequency: 'PT15M'
+    windowSize: 'PT15M'
+    scopes: [ logAnalytics.id ]
+    criteria: {
+      allOf: [
+        {
+          query: 'AppTraces | where Message startswith "Conflicto de catálogo registrado"'
+          timeAggregation: 'Count'
+          operator: 'GreaterThan'
+          threshold: 0
+        }
+      ]
+    }
+    actions: { actionGroups: [ grupoAlertas.id ] }
   }
 }
 

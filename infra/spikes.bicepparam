@@ -10,9 +10,6 @@ param dataverseUrl = 'https://org36e60d9d.crm.dynamics.com'
 // Power Apps corre desde hosts regionales variables (*.island.powerapps.com): no se pueden listar. Ver main.bicep.
 param origenesCors = ['*']
 
-// S1 corrió con 'ninguna'; desde S2 el broker verifica acceso en Dataverse con impersonación.
-param autorizacionModo = 'dataverse'
-
 // Sin firewall IP en el spike S1/S2. Para S1b/S3 agregar la IP pública propia.
 param ipsPermitidas = []
 
@@ -40,7 +37,7 @@ param as400Usuario = readEnvironmentVariable('AS400_USER', '')
 // Consulta de prueba contra el catálogo de PUB400 (la real la define el Banco): resuelve el nombre de una tabla de QSYS2.
 param as400SqlCliente = 'SELECT TABLE_NAME AS IDCLIENTE, TABLE_SCHEMA AS IDCLIENTE2, TABLE_TEXT AS NOMBRE, TABLE_TYPE AS AFILIADOPADRE, SYSTEM_TABLE_NAME AS IDDUENO FROM QSYS2.SYSTABLES WHERE TABLE_SCHEMA = \'QSYS2\' AND TABLE_NAME = ? FETCH FIRST 1 ROWS ONLY'
 
-// v2 (ADR-003). Hasta que la Function v2 tenga el timer Depurar, la red de ingesta queda en 7 días como en v1.
+// v2 (ADR-003). Hasta desplegar la Function v2 (que trae el timer Depurar), la red de ingesta queda en 7 días como en v1.
 param diasRetencionAdjuntos = 7
 // WORM es decisión del Banco y no se puede deshabilitar una vez puesto en el contenedor: en spikes, apagado.
 param wormHabilitado = false
