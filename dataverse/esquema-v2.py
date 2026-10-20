@@ -212,7 +212,7 @@ RELACIONES = [
     relacion(f"{PREFIJO}_propiedadcm_conflicto", f"{PREFIJO}_propiedadcm", f"{PREFIJO}_conflicto",
              f"{PREFIJO}_PropiedadCm", "Propiedad", "Propiedad afectada, si el conflicto es de una propiedad.", borrado="RemoveLink"),
     relacion(f"{PREFIJO}_tipodocumento_solicitudingesta", f"{PREFIJO}_tipodocumento", TABLA_ADJUNTOS_V1,
-             f"{PREFIJO}_TipoDocumento", "Tipo de documento", "Columna reservada v2: tipo de documento del adjunto.", borrado="Restrict"),
+             f"{PREFIJO}_TipoDocumento", "Tipo de documento", "Columna reservada v2: tipo de documento del adjunto.", requerido=True, borrado="Restrict"),
 ]
 
 

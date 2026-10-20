@@ -41,7 +41,7 @@ La v1 (ADR-002) resolvió cómo sube un archivo con seguridad. Al explicarla de 
 - El prefijo del publisher se deriva del nombre lógico de la tabla (`cred_adjuntocredito` → `cred_`). Regla de la guía: las columnas reservadas se crean en la misma solución que la tabla. Cero requests para resolverlo.
 - Los **valores de metadatos** que exige un tipo de documento son columnas reales de esta tabla, con nombre lógico convenido por el catálogo (`<prefijo>_<nombrelogico>`). El maker arma un formulario normal; Dataverse valida obligatorio, tipo y largo; el broker recibe todos los valores en su única lectura.
 - Lookup al registro padre: la define el maker. El broker verifica solo la fila del adjunto; la regla de negocio la ponen los roles del maker sobre esa tabla.
-- Roles en la solución del maker: rol de usuarios (Create/Read/Write/Append/AppendTo con la profundidad que decida, más Read y AppendTo Global sobre `cmv8_tipodocumento` para elegir el tipo) y rol «CMV8 Worker - <solución>» (Read/Write/Append/AppendTo Global, sin Create ni Delete). La asignación del rol Worker al usuario de aplicación es un paso posterior a la importación, no un componente de solución.
+- Roles en la solución del maker: rol de usuarios (Create/Read/Write/Append/AppendTo con la profundidad que decida, más Read y AppendTo Global sobre `cmv8_tipodocumento` para elegir el tipo, salvo que los usuarios ya tengan el rol CMV8 Solicitante de la solución base, que los incluye) y rol «CMV8 Worker - <solución>» (Read/Write/Append/AppendTo Global, sin Create ni Delete). La asignación del rol Worker al usuario de aplicación es un paso posterior a la importación, no un componente de solución.
 - Validación del nombre de tabla que manda el cliente: `^[a-z][a-z0-9_]{1,63}$`. La lista de permitidas son los privilegios de Dataverse: otra tabla, 403.
 
 ### 1.2 Catálogo (solución base `cmv8ingesta`, publisher `banco_cmv8`, prefijo `cmv8`)
@@ -79,7 +79,7 @@ Un **tipo local** lo crea el administrador a mano, sin ItemType ni propiedades, 
 | **Almacenado** | En `cmv8-almacenados`, no en CM | Worker (tipo Solo Blob o diferido) | Nadie, o el negocio cuando ocurre el evento | Procesando (vía `Archivar`); Depurado |
 | **Observada** | En `cmv8-ingesta`, esperando corrección | Worker: falta o es inválido un valor de este archivo | Usuario: corregir y reanudar | Subido (vía `Reanudar`); Rechazado (vencida sin corrección) |
 | **Detenida** | En `cmv8-ingesta`, esperando al administrador | Worker o `VigilarCatalogo`: conflicto de catálogo | Administrador documental | Procesando (vía `ReanudarConflicto`) |
-| **Error** | En `cmv8-ingesta` | Worker: causa técnica (CM caído, AS400 caído, rechazo no previsto) | Operación: reintentar | Procesando (reintento del Watchdog o manual); Rechazado |
+| **Error** | En `cmv8-ingesta` | Worker: causa técnica (CM caído, AS400 caído, rechazo no previsto) | Operación: reintentar (`Reanudar` también vale para Error) | Procesando (reintento del Watchdog o `Reanudar`); Rechazado |
 | **Rechazado** | Borrado | Worker (malware) o timer (Observada vencida) | Nadie | — |
 | **Depurado** | Borrado por retención | Timer `Depurar` | Nadie | — |
 
@@ -134,7 +134,7 @@ Lee la fila de la Azure Table (tipo, solicitante) y el catálogo del caché. Cer
 
 ### 4.6 Model-driven
 
-El mismo PCF, ligado como **control de dataset a la subcuadrícula de adjuntos** del formulario del padre. Adquiere su propio token con MSAL Browser contra la app registration «CMV8 PCF» (cliente público, single tenant, redirect SPA con la URL del entorno, permiso `api://<broker>/user_impersonation`, consentimiento de administrador); silencioso con la sesión de Entra, popup si el navegador bloquea el iframe. Llama al broker directo, recibe las dos llaves, sube; crea y actualiza filas con la Web API del componente con la identidad del usuario. Broker sin cambios. Patrón documentado por Microsoft (arquitectura de referencia Dynamics 365, PCF + MSAL). Alta en la guía 24; creada en desarrollo el 2026-10-20. La URL del broker sale de una variable de entorno de Dataverse. Respaldo si el entorno bloquea popups e iframes: Custom API + plugin con identidad administrada (GA agosto 2025) como segundo llamador del broker; pierde `sduoid`.
+Un segundo control del mismo proyecto, `AdjuntosGrilla`, que comparte el motor de cola y subida con `CargaAdjuntoBlob` y se liga como **control de dataset a la subcuadrícula de adjuntos** del formulario del padre. Adquiere su propio token con MSAL Browser contra la app registration «CMV8 PCF» (cliente público, single tenant, redirect SPA con la URL del entorno, permiso `api://<broker>/user_impersonation`, consentimiento de administrador); silencioso con la sesión de Entra, popup si el navegador bloquea el iframe. Llama al broker directo, recibe las dos llaves, sube; crea y actualiza filas con la Web API del componente con la identidad del usuario. Broker sin cambios. Patrón documentado por Microsoft (arquitectura de referencia Dynamics 365, PCF + MSAL). Alta en la guía 24; creada en desarrollo el 2026-10-20. La URL del broker, el client id del PCF, el tenant y el client id del broker son propiedades del control que el maker configura en la subcuadrícula (pueden venir de variables de entorno de Dataverse en una fórmula). Respaldo si el entorno bloquea popups e iframes: Custom API + plugin con identidad administrada (GA agosto 2025) como segundo llamador del broker; pierde `sduoid`.
 
 ### 4.7 Power Automate
 
@@ -224,4 +224,6 @@ Contenedor `cmv8-almacenados`; Blob Data Contributor de la identidad sobre los d
 - Que un PATCH suplantado con `Prefer: return=representation` cuente como una sola request.
 - Tamaño real que soporta `IngestarArchivo` de punta a punta (acción de flujo, conector, límite HTTP de la Function).
 - Retención legal (legal hold por versión) para tipos inmutables: hoy congelar solo saca el adjunto de la agenda.
+- «Ver» desde una app canvas: la SAS de lectura exige el bearer del usuario junto con la URL y `Launch()` no lo manda; hace falta que el PCF descargue con las dos llaves (como hace `AdjuntosGrilla`). Hasta entonces, «Ver» solo en model-driven.
+- `tipodocumento` obligatoria a nivel de Dataverse: en el entorno de desarrollo la lookup quedó opcional (la exige el broker); `esquema-v2.py` la crea obligatoria en entornos nuevos.
 - Vistas de detenidos y observados para el administrador: la app de administración solo ve la tabla de la solución base; cada solución del maker agrega sus propias vistas sobre su tabla de adjuntos.

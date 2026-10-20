@@ -97,10 +97,12 @@ Riesgos que estiran el esfuerzo: metadatos obligatorios de Content Manager mal d
 
 ## 5b. Ajuste por ADR-002 (Blob Storage para los binarios)
 
-- Blob Storage hot, LRS: ~$0,02 / GB / mes aprox. Con borrado al archivar y 7 días de retención máxima, el escenario mediano mantiene menos de 250 GB en tránsito: menos de $5 / mes. Transacciones despreciables.
+> **v2 (ADR-003 §7):** además del contenedor de ingesta, la v2 suma el contenedor `cmv8-almacenados` con lo que se queda en Blob (retenidos tras archivar, tipos Solo Blob, diferidos en espera), con retención por tipo de documento y niveles por ciclo de vida: Cool a los 30 días, Cold a los 180, nunca Archive. Su costo crece con lo acumulado y depende de los días de retención que fije el Banco por tipo (`diasretencion`, ADR-003 §11), así que no se estima acá. El cálculo de Storage de esta sección es el de la **v1** (todo se borra al archivar).
+
+- (v1) Blob Storage hot, LRS: ~$0,02 / GB / mes aprox. Con borrado al archivar y 7 días de retención máxima, el escenario mediano mantiene menos de 250 GB en tránsito: menos de $5 / mes. Transacciones despreciables.
 - Event Grid: despreciable a este volumen (primeras 100.000 operaciones/mes gratis aprox.).
 - Defender for Storage (verificado 2026-10-14, Azure Retail Prices, eastus2): $0,0134/h por cuenta protegida (≈ $9,78/mes) + $0,15 por GB escaneado + $0,1492 por millón de transacciones. Escenario chico (66 GB/mes) ≈ $20/mes; mediano (660 GB/mes) ≈ $109/mes. Cap mensual de GB configurable. No se probó en el entorno propio por decisión del usuario; ver justificación financiera, sección 8.
-- Dataverse: desaparece el riesgo de capacidad File y el consumo del pool de requests baja a ~3 por documento.
+- Dataverse: desaparece el riesgo de capacidad File y el consumo del pool de requests baja a ~3 por documento (v1; en v2, 2 por archivo en el camino feliz, ADR-003 §8).
 
 ## 6. Costos que NO aparecen en la factura pero existen
 
