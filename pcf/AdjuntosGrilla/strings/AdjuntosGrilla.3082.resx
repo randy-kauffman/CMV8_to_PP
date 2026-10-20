@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GENERADO por herramientas/generar_desde_diseno.py desde textos.es.json y la tabla de propiedades. -->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AdjuntosGrilla_Display" xml:space="preserve"><value>Adjuntos (grilla con carga)</value></data>
+  <data name="AdjuntosGrilla_Desc" xml:space="preserve"><value>Grilla de adjuntos para la subcuadrícula del formulario del registro padre: muestra los diez estados, sube archivos directo a Blob Storage con el broker CMV8 y ejecuta las acciones de cada estado. Identidad propia con MSAL (app registration «CMV8 PCF»).</value></data>
+  <data name="adjuntos_Display" xml:space="preserve"><value>Adjuntos</value></data>
+  <data name="adjuntos_Desc" xml:space="preserve"><value>Subcuadrícula de la tabla de adjuntos de la solución, filtrada por el registro padre.</value></data>
+  <data name="estado_Display" xml:space="preserve"><value>Estado de ingesta</value></data>
+  <data name="estado_Desc" xml:space="preserve"><value>Opcional. Por defecto &lt;prefijo&gt;estadoingesta.</value></data>
+  <data name="tipoDocumento_Display" xml:space="preserve"><value>Tipo de documento</value></data>
+  <data name="tipoDocumento_Desc" xml:space="preserve"><value>Opcional. Por defecto &lt;prefijo&gt;tipodocumento.</value></data>
+  <data name="nombreArchivo_Display" xml:space="preserve"><value>Nombre de archivo</value></data>
+  <data name="nombreArchivo_Desc" xml:space="preserve"><value>Opcional. Por defecto &lt;prefijo&gt;nombrearchivo.</value></data>
+  <data name="tamano_Display" xml:space="preserve"><value>Tamaño (bytes)</value></data>
+  <data name="tamano_Desc" xml:space="preserve"><value>Opcional. Por defecto &lt;prefijo&gt;tamanobytes.</value></data>
+  <data name="mensaje_Display" xml:space="preserve"><value>Mensaje</value></data>
+  <data name="mensaje_Desc" xml:space="preserve"><value>Opcional. Por defecto &lt;prefijo&gt;mensajeerror.</value></data>
+  <data name="rutaBlob_Display" xml:space="preserve"><value>Ruta del blob</value></data>
+  <data name="rutaBlob_Desc" xml:space="preserve"><value>Opcional. Por defecto &lt;prefijo&gt;rutablob.</value></data>
+  <data name="fechaSubida_Display" xml:space="preserve"><value>Fecha de subida</value></data>
+  <data name="fechaSubida_Desc" xml:space="preserve"><value>Opcional. Por defecto modifiedon.</value></data>
+  <data name="subidoPor_Display" xml:space="preserve"><value>Subido por</value></data>
+  <data name="subidoPor_Desc" xml:space="preserve"><value>Opcional. Por defecto createdby.</value></data>
+  <data name="urlBroker_Display" xml:space="preserve"><value>URL del broker</value></data>
+  <data name="urlBroker_Desc" xml:space="preserve"><value>https://&lt;function&gt;.azurewebsites.net, sin /api ni barra final. El dominio tiene que estar también en external-service-usage del manifiesto y el origen del entorno en el CORS de la Function.</value></data>
+  <data name="brokerClientId_Display" xml:space="preserve"><value>Client ID del broker</value></data>
+  <data name="brokerClientId_Desc" xml:space="preserve"><value>Application (client) ID de la app registration del broker (CMV8 Broker). El control pide el scope api://&lt;este id&gt;/user_impersonation.</value></data>
+  <data name="clientIdPcf_Display" xml:space="preserve"><value>Client ID del PCF</value></data>
+  <data name="clientIdPcf_Desc" xml:space="preserve"><value>Application (client) ID de la app registration de cliente público «CMV8 PCF» (guía 24), con redirect SPA = URL del entorno terminada en /.</value></data>
+  <data name="tenantId_Display" xml:space="preserve"><value>Tenant ID</value></data>
+  <data name="tenantId_Desc" xml:space="preserve"><value>Id (GUID) del tenant de Entra.</value></data>
+  <data name="lookupPadre_Display" xml:space="preserve"><value>Lookup al padre (SchemaName)</value></data>
+  <data name="lookupPadre_Desc" xml:space="preserve"><value>Nombre de navegación (SchemaName) de la lookup de la tabla de adjuntos hacia el registro padre, por ejemplo cred_Credito. Distingue mayúsculas: se usa como &lt;lookupPadre&gt;@odata.bind al crear filas.</value></data>
+  <data name="lookupTipoDocumento_Display" xml:space="preserve"><value>Lookup al tipo de documento (SchemaName)</value></data>
+  <data name="lookupTipoDocumento_Desc" xml:space="preserve"><value>SchemaName de la lookup &lt;prefijo&gt;tipodocumento hacia cmv8_tipodocumento. Vacío = &lt;prefijo&gt;TipoDocumento (por ejemplo cred_TipoDocumento).</value></data>
+  <data name="tiposAceptados_Display" xml:space="preserve"><value>Tipos aceptados</value></data>
+  <data name="tiposAceptados_Desc" xml:space="preserve"><value>Lista separada por comas con la sintaxis del atributo accept: extensiones (.pdf), tipos MIME (application/pdf) o comodines (video/*). Vacío acepta todo.</value></data>
+  <data name="tamanoMaximoMB_Display" xml:space="preserve"><value>Tamaño máximo (MB)</value></data>
+  <data name="tamanoMaximoMB_Desc" xml:space="preserve"><value>Tamaño máximo por archivo, en MB (base 1024). Por defecto 250.</value></data>
+  <data name="loteMaximo_Display" xml:space="preserve"><value>Archivos por lote</value></data>
+  <data name="loteMaximo_Desc" xml:space="preserve"><value>Cantidad máxima de archivos en la cola (y por pedido de SAS). Por defecto 20, igual que el broker.</value></data>
+  <data name="paralelismoArchivos_Display" xml:space="preserve"><value>Archivos en paralelo</value></data>
+  <data name="paralelismoArchivos_Desc" xml:space="preserve"><value>Archivos que se suben a la vez. Por defecto 2; entre 1 y 4.</value></data>
+  <data name="paralelismoBloques_Display" xml:space="preserve"><value>Bloques en paralelo</value></data>
+  <data name="paralelismoBloques_Desc" xml:space="preserve"><value>Bloques en vuelo por archivo. Por defecto 4; entre 1 y 8.</value></data>
+  <data name="densidad_Display" xml:space="preserve"><value>Densidad</value></data>
+  <data name="densidad_Desc" xml:space="preserve"><value>Compacta o cómoda (el usuario la puede cambiar en la grilla).</value></data>
+  <data name="densidad_compacta" xml:space="preserve"><value>Compacta</value></data>
+  <data name="densidad_comoda" xml:space="preserve"><value>Cómoda</value></data>
+  <data name="variante_Display" xml:space="preserve"><value>Variante visual</value></data>
+  <data name="variante_Desc" xml:space="preserve"><value>Fluent nativo, institucional sobrio o moderno con tarjetas.</value></data>
+  <data name="variante_fluent" xml:space="preserve"><value>Fluent nativo</value></data>
+  <data name="variante_institucional" xml:space="preserve"><value>Institucional sobrio</value></data>
+  <data name="variante_moderno" xml:space="preserve"><value>Moderno con tarjetas</value></data>
+  <data name="modo_Display" xml:space="preserve"><value>Modo de color</value></data>
+  <data name="modo_Desc" xml:space="preserve"><value>Claro, oscuro o automático (sigue la preferencia del sistema operativo).</value></data>
+  <data name="modo_claro" xml:space="preserve"><value>Claro</value></data>
+  <data name="modo_oscuro" xml:space="preserve"><value>Oscuro</value></data>
+  <data name="modo_auto" xml:space="preserve"><value>Automático</value></data>
+  <data name="PrimaryColor_Display" xml:space="preserve"><value>Color primario</value></data>
+  <data name="PrimaryColor_Desc" xml:space="preserve"><value>Color de marca: botón principal, barra de progreso, foco de selección. Vacío = valor de la variante.</value></data>
+  <data name="PrimaryHoverColor_Display" xml:space="preserve"><value>Color primario al pasar el puntero</value></data>
+  <data name="PrimaryHoverColor_Desc" xml:space="preserve"><value>Primario al pasar el puntero. Si el maker no lo define: color-mix(in oklch, primario 85%, black). Vacío = valor de la variante.</value></data>
+  <data name="OnPrimaryColor_Display" xml:space="preserve"><value>Color de texto sobre primario</value></data>
+  <data name="OnPrimaryColor_Desc" xml:space="preserve"><value>Texto e íconos sobre fondo primario (≥4.5:1). Vacío = valor de la variante.</value></data>
+  <data name="BackgroundColor_Display" xml:space="preserve"><value>Color de fondo</value></data>
+  <data name="BackgroundColor_Desc" xml:space="preserve"><value>Fondo del control (detrás de superficies). Vacío = valor de la variante.</value></data>
+  <data name="SurfaceColor_Display" xml:space="preserve"><value>Color de superficie</value></data>
+  <data name="SurfaceColor_Desc" xml:space="preserve"><value>Superficie de filas, tarjetas, panel y zona de carga. Vacío = valor de la variante.</value></data>
+  <data name="BorderColor_Display" xml:space="preserve"><value>Color de borde</value></data>
+  <data name="BorderColor_Desc" xml:space="preserve"><value>Bordes y divisores de baja jerarquía (decorativos). Vacío = valor de la variante.</value></data>
+  <data name="TextColor_Display" xml:space="preserve"><value>Color de texto</value></data>
+  <data name="TextColor_Desc" xml:space="preserve"><value>Texto principal. Vacío = valor de la variante.</value></data>
+  <data name="TextSecondaryColor_Display" xml:space="preserve"><value>Color de texto secundario</value></data>
+  <data name="TextSecondaryColor_Desc" xml:space="preserve"><value>Texto secundario: metadatos, ayudas (≥4.5:1 sobre surface y bg). Vacío = valor de la variante.</value></data>
+  <data name="SuccessColor_Display" xml:space="preserve"><value>Color de éxito</value></data>
+  <data name="SuccessColor_Desc" xml:space="preserve"><value>Texto/ícono. Éxito: Subido, Archivado, Almacenado. Vacío = valor de la variante.</value></data>
+  <data name="WarningColor_Display" xml:space="preserve"><value>Color de advertencia</value></data>
+  <data name="WarningColor_Desc" xml:space="preserve"><value>Texto/ícono. Advertencia: Observada (requiere acción del usuario). Vacío = valor de la variante.</value></data>
+  <data name="InfoColor_Display" xml:space="preserve"><value>Color de información</value></data>
+  <data name="InfoColor_Desc" xml:space="preserve"><value>Texto/ícono. Información: Subido (ciclo de vida), Procesando, Detenida. Vacío = valor de la variante.</value></data>
+  <data name="DangerColor_Display" xml:space="preserve"><value>Color de error</value></data>
+  <data name="DangerColor_Desc" xml:space="preserve"><value>Texto/ícono. Error: fallo técnico, rechazo de validación, error de subida. Vacío = valor de la variante.</value></data>
+  <data name="NeutralColor_Display" xml:space="preserve"><value>Color neutro</value></data>
+  <data name="NeutralColor_Desc" xml:space="preserve"><value>Texto/ícono. Neutro: En cola, Cancelado, Creada, Rechazado, Depurado. Vacío = valor de la variante.</value></data>
+  <data name="FontFamily_Display" xml:space="preserve"><value>Familia tipográfica</value></data>
+  <data name="FontFamily_Desc" xml:space="preserve"><value>Familia tipográfica de todo el control. Vacío = valor de la variante.</value></data>
+  <data name="FontSize_Display" xml:space="preserve"><value>Tamaño de texto (px)</value></data>
+  <data name="FontSize_Desc" xml:space="preserve"><value>Tamaño de texto de cuerpo. Vacío = valor de la variante.</value></data>
+  <data name="FontScale_Display" xml:space="preserve"><value>Escala tipográfica</value></data>
+  <data name="FontScale_Desc" xml:space="preserve"><value>Razón de la escala tipográfica. caption = base/scale; subtitle = base×scale; title = base×scale². Vacío = valor de la variante.</value></data>
+  <data name="BorderRadius_Display" xml:space="preserve"><value>Radio de borde (px)</value></data>
+  <data name="BorderRadius_Desc" xml:space="preserve"><value>Radio de botones, campos, filas seleccionables. Vacío = valor de la variante.</value></data>
+  <data name="BorderWidth_Display" xml:space="preserve"><value>Grosor de borde (px)</value></data>
+  <data name="BorderWidth_Desc" xml:space="preserve"><value>Grosor de bordes y divisores. Vacío = valor de la variante.</value></data>
+  <data name="dropzone.title" xml:space="preserve"><value>Arrastra archivos aquí</value><comment>Título de la zona de carga en reposo.</comment></data>
+  <data name="dropzone.or" xml:space="preserve"><value>o</value><comment>Separador entre título y botón.</comment></data>
+  <data name="dropzone.browse" xml:space="preserve"><value>Seleccionar archivos</value><comment>Botón que abre el selector del sistema.</comment></data>
+  <data name="dropzone.hint" xml:space="preserve"><value>{types} · hasta {maxSize} por archivo · máximo {maxFiles} archivos</value><comment>Restricciones configuradas por el maker.</comment></data>
+  <data name="dropzone.dragActive" xml:space="preserve"><value>Suelta para agregar</value><comment>Mientras se arrastra encima.</comment></data>
+  <data name="dropzone.disabled" xml:space="preserve"><value>No tienes permiso para adjuntar archivos a este registro.</value><comment>Zona deshabilitada.</comment></data>
+  <data name="dropzone.full" xml:space="preserve"><value>Lote completo ({maxFiles} archivos). Sube o quita archivos para agregar más.</value><comment>Cola llena.</comment></data>
+  <data name="dropzone.aria" xml:space="preserve"><value>Zona de carga de archivos. {types}, hasta {maxSize} por archivo. Presiona Enter para seleccionar archivos.</value><comment>aria-label del área.</comment></data>
+  <data name="queue.title" xml:space="preserve"><value>Archivos ({count})</value><comment>Encabezado de la cola.</comment></data>
+  <data name="queue.aria" xml:space="preserve"><value>Archivos para subir</value><comment>aria-label de la lista.</comment></data>
+  <data name="queue.summary.ready" xml:space="preserve"><value>{count} listos para subir</value></data>
+  <data name="queue.summary.uploading" xml:space="preserve"><value>Subiendo {done} de {total}</value></data>
+  <data name="queue.summary.done" xml:space="preserve"><value>{count} subidos</value></data>
+  <data name="queue.summary.mixed" xml:space="preserve"><value>{ok} subidos · {failed} con error</value></data>
+  <data name="queue.summary.needsDocType" xml:space="preserve"><value>Elige el tipo de documento de {count} archivos para poder subirlos.</value><comment>Solo model-driven.</comment></data>
+  <data name="action.uploadAll" xml:space="preserve"><value>Subir todo</value><comment>Botón principal de la cola.</comment></data>
+  <data name="action.clearDone" xml:space="preserve"><value>Limpiar terminados</value><comment>Quita Subidos y Cancelados de la cola.</comment></data>
+  <data name="action.remove" xml:space="preserve"><value>Quitar</value></data>
+  <data name="action.cancel" xml:space="preserve"><value>Cancelar</value><comment>Cancela una subida en curso.</comment></data>
+  <data name="action.retry" xml:space="preserve"><value>Reintentar</value></data>
+  <data name="action.retryFailed" xml:space="preserve"><value>Reintentar fallidos</value></data>
+  <data name="action.upload" xml:space="preserve"><value>Subir</value><comment>Ciclo de vida: Creada.</comment></data>
+  <data name="action.view" xml:space="preserve"><value>Ver</value><comment>Abre el documento en el visor del Banco.</comment></data>
+  <data name="action.archiveNow" xml:space="preserve"><value>Archivar ahora</value><comment>Ciclo de vida: Almacenado.</comment></data>
+  <data name="action.fix" xml:space="preserve"><value>Corregir y reanudar</value><comment>Ciclo de vida: Observada.</comment></data>
+  <data name="action.more" xml:space="preserve"><value>Más acciones</value><comment>Menú de fila.</comment></data>
+  <data name="action.details" xml:space="preserve"><value>Ver detalle</value><comment>Abre el panel lateral.</comment></data>
+  <data name="tooltip.remove" xml:space="preserve"><value>Quitar de la lista</value></data>
+  <data name="tooltip.cancel" xml:space="preserve"><value>Cancelar la subida</value></data>
+  <data name="tooltip.retry" xml:space="preserve"><value>Volver a intentar la subida</value></data>
+  <data name="tooltip.speed" xml:space="preserve"><value>Velocidad actual de subida</value></data>
+  <data name="tooltip.docTypeRequired" xml:space="preserve"><value>Obligatorio para subir</value></data>
+  <data name="file.docType.label" xml:space="preserve"><value>Tipo de documento</value></data>
+  <data name="file.docType.placeholder" xml:space="preserve"><value>Elegir tipo</value></data>
+  <data name="file.docType.required" xml:space="preserve"><value>Elige el tipo de documento.</value><comment>Error en línea si se intenta subir sin tipo.</comment></data>
+  <data name="upload.queued" xml:space="preserve"><value>En cola</value><comment>Estado 1.</comment></data>
+  <data name="upload.authorizing" xml:space="preserve"><value>Solicitando permiso…</value><comment>Estado 2. Sin porcentaje.</comment></data>
+  <data name="upload.uploading" xml:space="preserve"><value>Subiendo</value><comment>Estado 3.</comment></data>
+  <data name="upload.uploading.detail" xml:space="preserve"><value>{sent} de {total} · {speed} · {eta}</value><comment>Línea de detalle; el porcentaje va aparte.</comment></data>
+  <data name="upload.eta.seconds" xml:space="preserve"><value>{n} s restantes</value></data>
+  <data name="upload.eta.minutes" xml:space="preserve"><value>{n} min restantes</value></data>
+  <data name="upload.eta.calculating" xml:space="preserve"><value>Calculando tiempo…</value><comment>Primeros 3 s.</comment></data>
+  <data name="upload.verifying" xml:space="preserve"><value>Verificando…</value><comment>Estado 4. Sin porcentaje.</comment></data>
+  <data name="upload.uploaded" xml:space="preserve"><value>Subido</value><comment>Estado 5.</comment></data>
+  <data name="upload.error" xml:space="preserve"><value>Error</value><comment>Estado 6, etiqueta corta.</comment></data>
+  <data name="upload.canceled" xml:space="preserve"><value>Cancelado</value><comment>Estado 7.</comment></data>
+  <data name="upload.rejected" xml:space="preserve"><value>No se agregó</value><comment>Rechazo de validación previa.</comment></data>
+  <data name="error.permissionDenied" xml:space="preserve"><value>No tienes permiso para adjuntar archivos a este registro. Pide acceso al responsable.</value><comment>Sin Reintentar.</comment></data>
+  <data name="error.passExpired" xml:space="preserve"><value>La subida tardó más de 15 minutos y se interrumpió. Vuelve a intentarlo.</value></data>
+  <data name="error.network" xml:space="preserve"><value>Se perdió la conexión. Revisa tu red y vuelve a intentarlo.</value></data>
+  <data name="error.fileChanged" xml:space="preserve"><value>El archivo cambió mientras se subía. Vuelve a intentarlo con la versión actual.</value></data>
+  <data name="error.generic" xml:space="preserve"><value>No se pudo subir el archivo. Vuelve a intentarlo.</value><comment>Fallback.</comment></data>
+  <data name="validation.type" xml:space="preserve"><value>Tipo no permitido. Se aceptan {types}.</value></data>
+  <data name="validation.size" xml:space="preserve"><value>Pesa {size}; el máximo es {maxSize}.</value></data>
+  <data name="validation.duplicate" xml:space="preserve"><value>Ya está en la lista.</value><comment>Mismo nombre y tamaño.</comment></data>
+  <data name="validation.batchFull" xml:space="preserve"><value>El lote admite {maxFiles} archivos.</value></data>
+  <data name="validation.empty" xml:space="preserve"><value>El archivo está vacío.</value></data>
+  <data name="a11y.added" xml:space="preserve"><value>{count} archivos agregados.</value><comment>aria-live polite.</comment></data>
+  <data name="a11y.rejected" xml:space="preserve"><value>{count} archivos no se agregaron. Revisa los motivos en la lista.</value><comment>aria-live polite.</comment></data>
+  <data name="a11y.status" xml:space="preserve"><value>{name}: {status}.</value><comment>Cada cambio de estado.</comment></data>
+  <data name="a11y.progress" xml:space="preserve"><value>{name}: {percent} por ciento.</value><comment>Cada 25 %.</comment></data>
+  <data name="a11y.done" xml:space="preserve"><value>Subida terminada: {ok} subidos, {failed} con error.</value></data>
+  <data name="a11y.error" xml:space="preserve"><value>{name}: {message}</value><comment>aria-live assertive.</comment></data>
+  <data name="grid.title" xml:space="preserve"><value>Adjuntos</value></data>
+  <data name="grid.count" xml:space="preserve"><value>{count} adjuntos</value></data>
+  <data name="grid.aria" xml:space="preserve"><value>Adjuntos del registro</value><comment>aria-label de la grilla.</comment></data>
+  <data name="grid.empty.title" xml:space="preserve"><value>Todavía no hay adjuntos</value></data>
+  <data name="grid.empty.body" xml:space="preserve"><value>Arrastra archivos a la zona de arriba o usa Seleccionar archivos.</value></data>
+  <data name="grid.filterEmpty" xml:space="preserve"><value>Ningún adjunto coincide con el filtro.</value></data>
+  <data name="grid.clearFilter" xml:space="preserve"><value>Quitar filtro</value></data>
+  <data name="grid.col.name" xml:space="preserve"><value>Nombre</value></data>
+  <data name="grid.col.docType" xml:space="preserve"><value>Tipo de documento</value></data>
+  <data name="grid.col.status" xml:space="preserve"><value>Estado</value></data>
+  <data name="grid.col.size" xml:space="preserve"><value>Tamaño</value></data>
+  <data name="grid.col.date" xml:space="preserve"><value>Fecha de subida</value></data>
+  <data name="grid.col.user" xml:space="preserve"><value>Subido por</value></data>
+  <data name="grid.col.actions" xml:space="preserve"><value>Acciones</value><comment>Solo lectores de pantalla.</comment></data>
+  <data name="grid.sort.label" xml:space="preserve"><value>Ordenar</value></data>
+  <data name="grid.sort.dateDesc" xml:space="preserve"><value>Más recientes primero</value><comment>Por defecto.</comment></data>
+  <data name="grid.sort.dateAsc" xml:space="preserve"><value>Más antiguos primero</value></data>
+  <data name="grid.sort.status" xml:space="preserve"><value>Por estado (requieren acción primero)</value></data>
+  <data name="grid.filter.label" xml:space="preserve"><value>Filtrar por estado</value></data>
+  <data name="grid.filter.all" xml:space="preserve"><value>Todos</value></data>
+  <data name="grid.filter.action" xml:space="preserve"><value>Requieren acción</value><comment>Observada, Error, Creada.</comment></data>
+  <data name="grid.filter.inProgress" xml:space="preserve"><value>En proceso</value><comment>Subido, Procesando, Detenida.</comment></data>
+  <data name="grid.filter.saved" xml:space="preserve"><value>Guardados</value><comment>Archivado, Almacenado.</comment></data>
+  <data name="grid.filter.closed" xml:space="preserve"><value>Cerrados</value><comment>Rechazado, Depurado.</comment></data>
+  <data name="grid.density.label" xml:space="preserve"><value>Densidad</value></data>
+  <data name="grid.density.compact" xml:space="preserve"><value>Compacta</value></data>
+  <data name="grid.density.comfortable" xml:space="preserve"><value>Cómoda</value></data>
+  <data name="lifecycle.created" xml:space="preserve"><value>Creada</value><comment>Registro creado; falta subir el archivo.</comment></data>
+  <data name="lifecycle.uploaded" xml:space="preserve"><value>Subido</value><comment>En el depósito, esperando proceso.</comment></data>
+  <data name="lifecycle.processing" xml:space="preserve"><value>Procesando</value><comment>Se está archivando.</comment></data>
+  <data name="lifecycle.archived" xml:space="preserve"><value>Archivado</value><comment>En el gestor documental.</comment></data>
+  <data name="lifecycle.stored" xml:space="preserve"><value>Almacenado</value><comment>En el depósito; no en el gestor documental.</comment></data>
+  <data name="lifecycle.observed" xml:space="preserve"><value>Observada</value><comment>Requiere corrección del usuario.</comment></data>
+  <data name="lifecycle.held" xml:space="preserve"><value>Detenida</value><comment>Espera a un administrador.</comment></data>
+  <data name="lifecycle.error" xml:space="preserve"><value>Error</value><comment>Falla técnica.</comment></data>
+  <data name="lifecycle.rejected" xml:space="preserve"><value>Rechazado</value><comment>Definitivo.</comment></data>
+  <data name="lifecycle.purged" xml:space="preserve"><value>Depurado</value><comment>Eliminado por retención.</comment></data>
+  <data name="lifecycle.created.desc" xml:space="preserve"><value>Falta subir el archivo.</value><comment>Tooltip del chip.</comment></data>
+  <data name="lifecycle.uploaded.desc" xml:space="preserve"><value>Recibido. Espera su turno para archivarse.</value></data>
+  <data name="lifecycle.processing.desc" xml:space="preserve"><value>Se está guardando en el gestor documental.</value></data>
+  <data name="lifecycle.archived.desc" xml:space="preserve"><value>Guardado en el gestor documental.</value></data>
+  <data name="lifecycle.stored.desc" xml:space="preserve"><value>Guardado, pero todavía no está en el gestor documental.</value></data>
+  <data name="lifecycle.observed.desc" xml:space="preserve"><value>Necesita una corrección tuya para continuar.</value></data>
+  <data name="lifecycle.held.desc" xml:space="preserve"><value>Espera a un administrador. No necesitas hacer nada.</value></data>
+  <data name="lifecycle.error.desc" xml:space="preserve"><value>Falló por un problema técnico. Puedes reintentar.</value></data>
+  <data name="lifecycle.rejected.desc" xml:space="preserve"><value>Rechazado de forma definitiva.</value></data>
+  <data name="lifecycle.purged.desc" xml:space="preserve"><value>Eliminado por la política de retención.</value></data>
+  <data name="detail.observed.missingField" xml:space="preserve"><value>Falta la fecha de vencimiento del documento.</value><comment>Ejemplo.</comment></data>
+  <data name="detail.observed.invalidDocType" xml:space="preserve"><value>El tipo de documento no coincide con el contenido. Elige el tipo correcto.</value><comment>Ejemplo.</comment></data>
+  <data name="detail.held.config" xml:space="preserve"><value>Falta configurar el destino para este tipo de documento. Ya avisamos al administrador; no necesitas hacer nada.</value><comment>Ejemplo.</comment></data>
+  <data name="detail.error.technical" xml:space="preserve"><value>No se pudo conectar con el gestor documental. Reintenta en unos minutos.</value><comment>Ejemplo.</comment></data>
+  <data name="detail.rejected.malware" xml:space="preserve"><value>Se detectó contenido malicioso. El archivo se bloqueó.</value><comment>Ejemplo.</comment></data>
+  <data name="detail.rejected.expired" xml:space="preserve"><value>Venció el plazo para corregir los datos. Sube el documento de nuevo.</value><comment>Ejemplo.</comment></data>
+  <data name="detail.purged.retention" xml:space="preserve"><value>Se eliminó el {date} según la política de retención.</value></data>
+  <data name="panel.close" xml:space="preserve"><value>Cerrar</value></data>
+  <data name="panel.section.status" xml:space="preserve"><value>Estado</value></data>
+  <data name="panel.section.data" xml:space="preserve"><value>Datos</value></data>
+  <data name="panel.section.fix" xml:space="preserve"><value>Corregir datos</value></data>
+  <data name="panel.section.history" xml:space="preserve"><value>Historial</value></data>
+  <data name="panel.field.expiry" xml:space="preserve"><value>Fecha de vencimiento</value></data>
+  <data name="panel.field.size" xml:space="preserve"><value>Tamaño</value></data>
+  <data name="panel.field.date" xml:space="preserve"><value>Fecha de subida</value></data>
+  <data name="panel.field.user" xml:space="preserve"><value>Subido por</value></data>
+  <data name="panel.save" xml:space="preserve"><value>Guardar y reanudar</value></data>
+  <data name="panel.cancel" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="panel.fieldRequired" xml:space="preserve"><value>Campo obligatorio.</value></data>
+  <data name="unit.kb" xml:space="preserve"><value>{n} KB</value><comment>Base 1024, 0 decimales.</comment></data>
+  <data name="unit.mb" xml:space="preserve"><value>{n} MB</value><comment>1 decimal bajo 100 MB, 0 decimales encima.</comment></data>
+  <data name="unit.gb" xml:space="preserve"><value>{n} GB</value></data>
+  <data name="unit.mbps" xml:space="preserve"><value>{n} Mbps</value><comment>1 decimal; media móvil de 5 s.</comment></data>
+  <data name="unit.percent" xml:space="preserve"><value>{n} %</value><comment>Espacio fino antes de %.</comment></data>
+  <data name="dropzone.compact" xml:space="preserve"><value>Arrastra o selecciona más archivos</value><comment>Zona reducida cuando ya hay archivos en la cola.</comment></data>
+  <data name="dropzone.compactCount" xml:space="preserve"><value>{count} de {maxFiles}</value><comment>Archivos en el lote.</comment></data>
+  <data name="auth.reauth" xml:space="preserve"><value>Tu sesión necesita confirmarse. Vuelve a iniciar sesión para continuar.</value><comment>El broker pidió reautenticar (acceso condicional) o el token no se pudo obtener en silencio.</comment></data>
+  <data name="auth.popupBlocked" xml:space="preserve"><value>El navegador bloqueó la ventana para iniciar sesión. Permite las ventanas emergentes de este sitio y vuelve a intentarlo.</value></data>
+  <data name="auth.signIn" xml:space="preserve"><value>Iniciar sesión</value><comment>Botón del aviso de sesión.</comment></data>
+  <data name="config.missing" xml:space="preserve"><value>El control de adjuntos no está configurado. Pide al administrador que revise sus propiedades.</value><comment>Falta urlBroker, brokerClientId, clientIdPcf, tenantId o lookupPadre, o la tabla no es válida.</comment></data>
+  <data name="config.noParent" xml:space="preserve"><value>Guarda el registro para poder adjuntar archivos.</value><comment>Formulario de creación (sin id).</comment></data>
+  <data name="grid.loading" xml:space="preserve"><value>Cargando adjuntos…</value></data>
+  <data name="grid.loadError" xml:space="preserve"><value>No se pudieron cargar los adjuntos. Vuelve a intentarlo.</value><comment>dataset.error.</comment></data>
+  <data name="grid.loadMore" xml:space="preserve"><value>Cargar más</value><comment>Más de 100 adjuntos (Anatomia.md §7).</comment></data>
+  <data name="grid.refresh" xml:space="preserve"><value>Actualizar</value></data>
+  <data name="docType.loadError" xml:space="preserve"><value>No se pudieron cargar los tipos de documento. Vuelve a intentarlo.</value></data>
+  <data name="docType.empty" xml:space="preserve"><value>No hay tipos de documento en uso. Pide al administrador que habilite alguno.</value></data>
+  <data name="docType.hint" xml:space="preserve"><value>Se aplica a los archivos de la cola que todavía no se subieron.</value><comment>Selector único por lote.</comment></data>
+  <data name="action.busy" xml:space="preserve"><value>En curso…</value><comment>Botón de acción mientras espera al broker.</comment></data>
+  <data name="action.done.archive" xml:space="preserve"><value>{name}: se pidió el archivado.</value><comment>aria-live polite.</comment></data>
+  <data name="action.done.resume" xml:space="preserve"><value>{name}: se reanudó el proceso.</value><comment>aria-live polite.</comment></data>
+  <data name="action.fix.hint" xml:space="preserve"><value>Corrige los datos en el formulario del adjunto y guarda. Al volver aquí, el proceso se reanuda solo.</value><comment>Detalle de Observada.</comment></data>
+  <data name="action.error.view" xml:space="preserve"><value>No se pudo abrir el documento. Vuelve a intentarlo.</value></data>
+  <data name="action.error.notAvailable" xml:space="preserve"><value>El documento ya no está disponible para verlo aquí.</value><comment>409/404 de sas/lectura.</comment></data>
+  <data name="action.error.archive" xml:space="preserve"><value>No se pudo pedir el archivado. Vuelve a intentarlo.</value></data>
+  <data name="action.error.resume" xml:space="preserve"><value>No se pudo reanudar. Vuelve a intentarlo.</value></data>
+  <data name="action.error.missingFile" xml:space="preserve"><value>No se encontró el archivo. Súbelo de nuevo.</value><comment>404 de reanudar: ofrece Subir.</comment></data>
+  <data name="action.error.forbidden" xml:space="preserve"><value>No tienes permiso para hacer esto con este adjunto.</value><comment>403 del broker.</comment></data>
+  <data name="action.error.state" xml:space="preserve"><value>El adjunto cambió de estado. Actualiza la lista.</value><comment>409 del broker.</comment></data>
+</root>

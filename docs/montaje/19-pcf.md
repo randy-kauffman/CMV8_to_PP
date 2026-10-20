@@ -2,6 +2,9 @@
 
 > Rol que lo ejecuta: Power Platform (desarrollador con administrador del entorno). Depende de: 18 (característica de componentes de código para canvas habilitada, publisher `cmv8`), salida del Bicep `storageAdjuntosName` (guías 03 a 13) para el dominio del manifiesto; para model-driven, además, 24 (app registration «CMV8 PCF»). Lo necesitan: 21 (la app canvas inserta `CargaAdjuntoBlob`) y los formularios model-driven de cada solución del maker (`AdjuntosGrilla`). Costo: sin costo propio; los componentes declaran `external-service-usage`, lo que los vuelve **premium** (licencia Power Apps Premium por usuario, ya confirmada).
 
+
+> **Empaquetado con dos controles (2026-10-20)**: `pac pcf push` rechaza un proyecto con más de un manifiesto ("Found more than one project source file named ControlManifest.Input.xml"). Desde que existe `AdjuntosGrilla`, los dos controles se publican como solución: `pcf/cmv8controles/` es un proyecto de solución (`pac solution init --publisher-name banco_cmv8 --publisher-prefix cmv8` + `pac solution add-reference --path ..`); `dotnet build` en esa carpeta genera `bin/Debug/cmv8controles.zip` con los dos controles y `pac solution import --path bin/Debug/cmv8controles.zip --publish-changes` los deja en el entorno (`cmv8_Banco.CargaAdjuntoBlob` y `cmv8_Banco.AdjuntosGrilla`, verificado en desarrollo). En el Banco, ese zip es el artefacto que viaja por el pipeline.
+
 ## Qué es y qué hace en esta solución
 
 ### `CargaAdjuntoBlob` 1.0.0 (canvas)

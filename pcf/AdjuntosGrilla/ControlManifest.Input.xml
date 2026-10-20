@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- GENERADO por CargaAdjuntoBlob/herramientas/generar_desde_diseno.py. Cambiar las propiedades allí y regenerar. -->
+<manifest>
+  <control namespace="Banco" constructor="AdjuntosGrilla" version="1.0.0" display-name-key="AdjuntosGrilla_Display" description-key="AdjuntosGrilla_Desc" control-type="standard">
+    <!-- ADR-003 §4.6: el control llama al broker con su propio token (MSAL) y sube directo a Blob Storage.
+         external-service-usage es licenciamiento (componente premium). Ajustar los dominios reales al desplegar. -->
+    <external-service-usage enabled="true">
+      <domain>cmv8adjsupfcopn.blob.core.windows.net</domain>
+      <domain>cmv8-func-supfcopn.azurewebsites.net</domain>
+      <domain>login.microsoftonline.com</domain>
+    </external-service-usage>
+
+    <data-set name="adjuntos" display-name-key="adjuntos_Display" description-key="adjuntos_Desc">
+      <property-set name="estado" display-name-key="estado_Display" description-key="estado_Desc" of-type="OptionSet" usage="bound" required="false" />
+      <property-set name="tipoDocumento" display-name-key="tipoDocumento_Display" description-key="tipoDocumento_Desc" of-type="Lookup.Simple" usage="bound" required="false" />
+      <property-set name="nombreArchivo" display-name-key="nombreArchivo_Display" description-key="nombreArchivo_Desc" of-type="SingleLine.Text" usage="bound" required="false" />
+      <property-set name="tamano" display-name-key="tamano_Display" description-key="tamano_Desc" of-type="Whole.None" usage="bound" required="false" />
+      <property-set name="mensaje" display-name-key="mensaje_Display" description-key="mensaje_Desc" of-type="Multiple" usage="bound" required="false" />
+      <property-set name="rutaBlob" display-name-key="rutaBlob_Display" description-key="rutaBlob_Desc" of-type="SingleLine.Text" usage="bound" required="false" />
+      <property-set name="fechaSubida" display-name-key="fechaSubida_Display" description-key="fechaSubida_Desc" of-type="DateAndTime.DateAndTime" usage="bound" required="false" />
+      <property-set name="subidoPor" display-name-key="subidoPor_Display" description-key="subidoPor_Desc" of-type="Lookup.Simple" usage="bound" required="false" />
+    </data-set>
+
+    <!-- Entradas -->
+    <property name="urlBroker" display-name-key="urlBroker_Display" description-key="urlBroker_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="brokerClientId" display-name-key="brokerClientId_Display" description-key="brokerClientId_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="clientIdPcf" display-name-key="clientIdPcf_Display" description-key="clientIdPcf_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="tenantId" display-name-key="tenantId_Display" description-key="tenantId_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="lookupPadre" display-name-key="lookupPadre_Display" description-key="lookupPadre_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="lookupTipoDocumento" display-name-key="lookupTipoDocumento_Display" description-key="lookupTipoDocumento_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="tiposAceptados" display-name-key="tiposAceptados_Display" description-key="tiposAceptados_Desc" of-type="SingleLine.Text" usage="input" required="false" default-value="video/*,application/pdf" />
+    <property name="tamanoMaximoMB" display-name-key="tamanoMaximoMB_Display" description-key="tamanoMaximoMB_Desc" of-type="Whole.None" usage="input" required="false" default-value="250" />
+    <property name="loteMaximo" display-name-key="loteMaximo_Display" description-key="loteMaximo_Desc" of-type="Whole.None" usage="input" required="false" default-value="20" />
+    <property name="paralelismoArchivos" display-name-key="paralelismoArchivos_Display" description-key="paralelismoArchivos_Desc" of-type="Whole.None" usage="input" required="false" default-value="2" />
+    <property name="paralelismoBloques" display-name-key="paralelismoBloques_Display" description-key="paralelismoBloques_Desc" of-type="Whole.None" usage="input" required="false" default-value="4" />
+    <property name="densidad" display-name-key="densidad_Display" description-key="densidad_Desc" of-type="Enum" usage="input" required="false" default-value="comoda">
+      <value name="compacta" display-name-key="densidad_compacta">compacta</value>
+      <value name="comoda" display-name-key="densidad_comoda">comoda</value>
+    </property>
+    <property name="variante" display-name-key="variante_Display" description-key="variante_Desc" of-type="Enum" usage="input" required="false" default-value="fluent">
+      <value name="fluent" display-name-key="variante_fluent">fluent</value>
+      <value name="institucional" display-name-key="variante_institucional">institucional</value>
+      <value name="moderno" display-name-key="variante_moderno">moderno</value>
+    </property>
+    <property name="modo" display-name-key="modo_Display" description-key="modo_Desc" of-type="Enum" usage="input" required="false" default-value="claro">
+      <value name="claro" display-name-key="modo_claro">claro</value>
+      <value name="oscuro" display-name-key="modo_oscuro">oscuro</value>
+      <value name="auto" display-name-key="modo_auto">auto</value>
+    </property>
+
+    <!-- Tokens del maker (tokens.json, campo "maker"). Vacío = valor de la variante y modo. -->
+    <property name="PrimaryColor" display-name-key="PrimaryColor_Display" description-key="PrimaryColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="PrimaryHoverColor" display-name-key="PrimaryHoverColor_Display" description-key="PrimaryHoverColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="OnPrimaryColor" display-name-key="OnPrimaryColor_Display" description-key="OnPrimaryColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="BackgroundColor" display-name-key="BackgroundColor_Display" description-key="BackgroundColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="SurfaceColor" display-name-key="SurfaceColor_Display" description-key="SurfaceColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="BorderColor" display-name-key="BorderColor_Display" description-key="BorderColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="TextColor" display-name-key="TextColor_Display" description-key="TextColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="TextSecondaryColor" display-name-key="TextSecondaryColor_Display" description-key="TextSecondaryColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="SuccessColor" display-name-key="SuccessColor_Display" description-key="SuccessColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="WarningColor" display-name-key="WarningColor_Display" description-key="WarningColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="InfoColor" display-name-key="InfoColor_Display" description-key="InfoColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="DangerColor" display-name-key="DangerColor_Display" description-key="DangerColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="NeutralColor" display-name-key="NeutralColor_Display" description-key="NeutralColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="FontFamily" display-name-key="FontFamily_Display" description-key="FontFamily_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="FontSize" display-name-key="FontSize_Display" description-key="FontSize_Desc" of-type="Whole.None" usage="input" required="false" />
+    <property name="FontScale" display-name-key="FontScale_Display" description-key="FontScale_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="BorderRadius" display-name-key="BorderRadius_Display" description-key="BorderRadius_Desc" of-type="Whole.None" usage="input" required="false" />
+    <property name="BorderWidth" display-name-key="BorderWidth_Display" description-key="BorderWidth_Desc" of-type="Whole.None" usage="input" required="false" />
+
+    <resources>
+      <code path="index.ts" order="1" />
+      <css path="css/base.generado.css" order="1" />
+      <css path="css/AdjuntosGrilla.css" order="2" />
+      <resx path="strings/AdjuntosGrilla.1033.resx" version="1.0.0" />
+      <resx path="strings/AdjuntosGrilla.3082.resx" version="1.0.0" />
+    </resources>
+
+    <feature-usage>
+      <uses-feature name="WebAPI" required="true" />
+      <uses-feature name="Utility" required="false" />
+    </feature-usage>
+  </control>
+</manifest>

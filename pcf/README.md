@@ -1,3 +1,5 @@
+> **Dos controles** (2026-10-20): `CargaAdjuntoBlob` (canvas) y `AdjuntosGrilla` (model-driven, control de dataset con identidad MSAL propia, ADR-003 §4.6; ver `AdjuntosGrilla/README.md`). Comparten `package.json`, `pcf.pcfproj` y el código de cola, motor y vista de carga; `npm run build` compila los dos.
+
 > **v2 (ADR-003, 2026-10-19)**: el control pasó a 1.0.0 con lotes de archivos, tokens de diseño como propiedades y textos desde `docs/diseno`. El protocolo con la app está en `CargaAdjuntoBlob/README.md`. Lo que sigue describe la v0.0.5 y se conserva como registro de los spikes.
 
 # CargaAdjuntoBlob (PCF para canvas apps)
