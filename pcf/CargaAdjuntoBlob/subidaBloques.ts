@@ -1,5 +1,7 @@
 // Subida por bloques a Azure Blob Storage (Put Block + Put Block List) con fetch, sin SDK.
 // Logica pura: no toca el DOM ni el contexto PCF, para poder probarla aparte.
+// v2: el motor (motor.ts) la llama una vez por archivo, con la SAS de ese archivo y el tokenStorage del lote
+// (las dos llaves de ADR-002/ADR-003 §4.1). La firma no cambio; se agrego contentType a las opciones.
 
 export const VERSION_SERVICIO_DEFECTO = "2025-07-05";
 export const BLOQUE_BYTES_DEFECTO = 4 * 1024 * 1024;
@@ -17,6 +19,11 @@ export interface OpcionesSubida {
      * Put Block List: la SAS ligada (sduoid) exige un bearer cuyo oid coincida. Nunca se registra.
      */
     tokenStorage?: string;
+    /**
+     * Content-Type que queda en el blob (x-ms-blob-content-type). Por defecto el type del File o
+     * application/octet-stream. Debe coincidir con el que la app mando al broker en el pedido.
+     */
+    contentType?: string;
 }
 
 export type CausaError = "sas" | "red" | "servidor" | "cancelado";
@@ -85,11 +92,12 @@ async function putConReintentos(
         try {
             const resp = await fetch(url, { ...init, method: "PUT", signal });
             if (resp.ok) return;
-            if (resp.status === 403) {
+            if (resp.status === 403 || resp.status === 401) {
+                // 401 aparece con un bearer vencido o invalido; se trata igual que 403: no se reintenta.
                 throw new ErrorSubida(
-                    "Storage rechazo la SAS (403): vencio, no corresponde al blob o falta el token del usuario.",
+                    "Storage rechazo la SAS o el token del usuario: vencio, no corresponde al blob o falta el token.",
                     "sas",
-                    403
+                    resp.status
                 );
             }
             if (resp.status >= 500 || resp.status === 429) {
@@ -196,7 +204,8 @@ export async function subirEnBloques(
                 headers: {
                     "x-ms-version": version,
                     ...autorizacion,
-                    "x-ms-blob-content-type": (file as File).type || "application/octet-stream",
+                    "x-ms-blob-content-type":
+                        opciones.contentType || (file as File).type || "application/octet-stream",
                     "Content-Type": "application/xml",
                 },
                 body: construirBlockListXml(ids),

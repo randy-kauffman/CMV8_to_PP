@@ -1,66 +1,92 @@
+// CargaAdjuntoBlob v2 — ciclo de vida del PCF (ADR-003 §4.1, modo canvas: «solo sube; el estado lo muestra la app»).
+//
+// Protocolo con la app (detalle y Power Fx en README.md):
+//   1. El usuario agrega archivos; se validan al instante (tipo, tamaño, vacío, duplicado, lote lleno).
+//   2. «Subir todo» publica un pedido en `pendientes` (estado listo-para-sas, `numeroPedido` nuevo).
+//   3. La app crea las filas que falten, llama EmitirSasLote en el mismo orden y deja JSON(respuesta) en varLote,
+//      que entra por `lote`.
+//   4. El control empareja, sube con las dos llaves (SAS + tokenStorage) y publica `resultados` por archivo.
+// Este archivo solo conecta PCF ↔ motor ↔ vista: la lógica vive en cola.ts, lote.ts, motor.ts y vista/.
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
-import { solicitarSasSubida, ErrorBroker, RespuestaSas } from "./brokerSas";
-import { subirEnBloques, ErrorSubida } from "./subidaBloques";
+import {
+    AccionFila,
+    ArchivoEnCola,
+    contar,
+    estadoControl,
+    parsearAceptados,
+    progresoGlobal,
+    ReglasValidacion,
+    resumenCola,
+} from "./cola";
+import { calcularMbps, etiquetarTipos, formatearTamano } from "./formato";
+import { FuenteSasApp } from "./fuenteSas";
+import { ConfiguracionMotor, ESTADOS_RESULTADO, EventoMotor, MotorSubida, TipoCambio } from "./motor";
+import { crearTraductor, Traductor } from "./textos";
+import { calcularVariables, Densidad, ModoColor, ValoresMaker, Variante } from "./tokens";
+import { NOMBRES_MAKER } from "./tokens.generado";
+import { etiquetaEstado, textoError } from "./vista/filaArchivo";
+import { VistaControl } from "./vista/vistaControl";
 
-/** Ruta relativa al contenedor a partir de una URL de blob con SAS: /contenedor/a/b.bin?sas → a/b.bin */
-function rutaDesdeUploadUrl(url: string): string {
-    try {
-        const partes = new URL(url).pathname.split("/").filter((s) => s.length > 0);
-        return decodeURIComponent(partes.slice(1).join("/"));
-    } catch {
-        return "";
-    }
+const MIB = 1024 * 1024;
+/** Mismo patrón que valida el broker (ADR-003 §1.1). */
+const TABLA_VALIDA = /^[a-z][a-z0-9_]{1,63}$/;
+/** Cada notificación dispara el OnChange de la app: el progreso se publica como mucho dos veces por segundo. */
+const INTERVALO_NOTIFICACION_MS = 500;
+/** Refresco de velocidad y tiempo restante entre bloques. */
+const INTERVALO_RELOJ_MS = 1000;
+
+const VARIANTES: readonly Variante[] = ["fluent", "institucional", "moderno"];
+
+function elegir<T extends string>(valor: unknown, opciones: readonly T[], defecto: T): T {
+    return typeof valor === "string" && (opciones as readonly string[]).includes(valor) ? (valor as T) : defecto;
 }
 
-type Estado =
-    | "inactivo"
-    | "solicitandoSas"
-    | "subiendo"
-    | "confirmando"
-    | "completado"
-    | "error";
+function acotar(valor: number | null | undefined, defecto: number, min: number, max: number): number {
+    if (valor === null || valor === undefined || !Number.isFinite(valor)) return defecto;
+    return Math.min(max, Math.max(min, Math.floor(valor)));
+}
 
-const REGEX_GUID = /^\{?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\}?$/i;
-
-const TEXTO_ESTADO: Record<Estado, string> = {
-    inactivo: "Elegí un archivo y presioná Subir.",
-    solicitandoSas: "Solicitando autorización de subida...",
-    subiendo: "Subiendo archivo...",
-    confirmando: "Confirmando la subida...",
-    completado: "Subida completada.",
-    error: "Error en la subida.",
-};
+/** Fila de la salida `resultados`. Nunca lleva uploadUrl ni tokenStorage. */
+interface ResultadoSalida {
+    id: string;
+    estado: string;
+    rutaBlob: string;
+    nombreArchivo: string;
+    tamanoBytes: number;
+    contentType: string;
+    mensajeError: string;
+    duracionMs: number;
+    velocidadMbps: number;
+}
 
 export class CargaAdjuntoBlob implements ComponentFramework.StandardControl<IInputs, IOutputs> {
-    private _notificar: () => void = () => undefined;
-    private _contexto?: ComponentFramework.Context<IInputs>;
+    private contexto: ComponentFramework.Context<IInputs>;
+    private notificar: () => void = () => undefined;
+    private t: Traductor;
+    private readonly fuente = new FuenteSasApp();
+    private motor: MotorSubida;
+    private vista: VistaControl;
 
-    // DOM
-    private _inputArchivo!: HTMLInputElement;
-    private _boton!: HTMLButtonElement;
-    private _barra!: HTMLDivElement;
-    private _relleno!: HTMLDivElement;
-    private _linea!: HTMLDivElement;
+    private reglas: ReglasValidacion = { aceptados: [], tamanoMaximoBytes: 250 * MIB, loteMaximo: 20 };
+    private tiposEtiqueta = "";
+    private tamanoMaximoEtiqueta = "";
+    private varianteActual: Variante = "fluent";
+    private claveTema = "";
+    private consultaOscuro: MediaQueryList | null = null;
+    private ultimoDisparador: number | null = null;
 
-    // Estado / salidas
-    private _estado: Estado = "inactivo";
-    private _progreso = 0;
-    private _rutaBlob = "";
-    private _nombreArchivo = "";
-    private _tamanoBytes = 0;
-    private _contentType = "";
-    private _mensajeError = "";
-    private _duracionMs = 0;
-    private _velocidadMbps = 0;
-    private _velocidadPromedioMbps = 0;
+    private salidas: IOutputs = {};
+    private salidasPendientes: IOutputs | null = null;
+    private firmaSalidas = "";
+    private ultimaNotificacion = 0;
+    private temporizadorNotificacion: number | undefined;
+    private cuadroPintado: number | undefined;
+    private reloj: number | undefined;
+    private destruido = false;
 
-    // Muestras (instante, bytes confirmados) para la velocidad instantánea en ventana de 3 s.
-    private _muestras: { t: number; bytes: number }[] = [];
-
-    private _inicioMs = 0;
-    private _abort?: AbortController;
-    private _ultimoDisparador: number | null | undefined;
-    private _primerUpdate = true;
+    private readonly alCambiarEsquema = (): void => {
+        if (this.contexto.parameters.modo.raw === "auto") this.aplicarTema(this.contexto);
+    };
 
     public init(
         context: ComponentFramework.Context<IInputs>,
@@ -68,284 +94,278 @@ export class CargaAdjuntoBlob implements ComponentFramework.StandardControl<IInp
         _state: ComponentFramework.Dictionary,
         container: HTMLDivElement
     ): void {
-        this._notificar = notifyOutputChanged;
-        this._contexto = context;
+        this.contexto = context;
+        this.notificar = notifyOutputChanged;
+        this.t = crearTraductor(context.resources);
+        context.mode.trackContainerResize(true);
 
-        const raiz = document.createElement("div");
-        raiz.className = "banco-carga";
-
-        this._inputArchivo = document.createElement("input");
-        this._inputArchivo.type = "file";
-        this._inputArchivo.className = "banco-carga__archivo";
-        this._inputArchivo.setAttribute("aria-label", "Archivo a subir");
-
-        this._boton = document.createElement("button");
-        this._boton.type = "button";
-        this._boton.className = "banco-carga__boton";
-        this._boton.textContent = "Subir";
-        this._boton.addEventListener("click", () => {
-            void this.iniciarSubida();
+        this.motor = new MotorSubida(
+            this.fuente,
+            {
+                cambio: (tipo: TipoCambio) => this.alCambiar(tipo),
+                evento: (e: EventoMotor) => this.alEvento(e),
+            },
+            this.configuracionMotor(context)
+        );
+        this.vista = new VistaControl(container, this.t, {
+            agregar: (archivos) => this.agregar(archivos),
+            subirTodo: () => this.motor.subirTodo(),
+            limpiarTerminados: () => this.motor.limpiarTerminados(),
+            reintentarFallidos: () => this.motor.reintentarFallidos(),
+            accionFila: (accion, indice) => this.accionFila(accion, indice),
         });
 
-        this._barra = document.createElement("div");
-        this._barra.className = "banco-carga__barra";
-        this._barra.setAttribute("role", "progressbar");
-        this._barra.setAttribute("aria-valuemin", "0");
-        this._barra.setAttribute("aria-valuemax", "100");
-        this._relleno = document.createElement("div");
-        this._relleno.className = "banco-carga__relleno";
-        this._barra.appendChild(this._relleno);
+        if (typeof window.matchMedia === "function") {
+            this.consultaOscuro = window.matchMedia("(prefers-color-scheme: dark)");
+            this.consultaOscuro.addEventListener("change", this.alCambiarEsquema);
+        }
 
-        this._linea = document.createElement("div");
-        this._linea.className = "banco-carga__estado";
-        this._linea.setAttribute("role", "status");
-        this._linea.setAttribute("aria-live", "polite");
-
-        raiz.append(this._inputArchivo, this._boton, this._barra, this._linea);
-        container.appendChild(raiz);
-
+        this.ultimoDisparador = context.parameters.disparadorReinicio.raw;
+        // Un lote presente al cargar (varLote sin limpiar al volver a la pantalla) se marca visto y no se usa:
+        // no hay pedido en curso al que pertenezca.
+        this.fuente.recibirEntrada(context.parameters.lote.raw);
+        this.leerEntradas(context);
         this.pintar();
+        this.recalcularSalidas(true);
     }
 
     public updateView(context: ComponentFramework.Context<IInputs>): void {
-        this._contexto = context;
+        this.contexto = context;
 
-        // Reinicio: se dispara al cambiar el valor (no en la primera lectura).
         const disparador = context.parameters.disparadorReinicio.raw;
-        if (this._primerUpdate) {
-            this._ultimoDisparador = disparador;
-            this._primerUpdate = false;
-        } else if (disparador !== this._ultimoDisparador) {
-            this._ultimoDisparador = disparador;
-            this.reiniciar();
+        if (disparador !== this.ultimoDisparador) {
+            this.ultimoDisparador = disparador;
+            this.vista.anunciador.limpiar();
+            this.motor.reiniciar();
         }
 
-        this._inputArchivo.accept = context.parameters.tiposAceptados.raw ?? "video/*,application/pdf";
-        this.pintar();
+        this.leerEntradas(context);
+        if (context.mode.allocatedWidth > 0) this.vista.ponerAncho(context.mode.allocatedWidth);
+        // El lote se parsea, se reparte al motor y se suelta en esta misma llamada: no queda en ningún campo.
+        this.fuente.recibirEntrada(context.parameters.lote.raw);
+        this.programarPintado();
     }
 
     public getOutputs(): IOutputs {
-        return {
-            estado: this._estado,
-            progreso: this._progreso,
-            rutaBlob: this._rutaBlob,
-            nombreArchivo: this._nombreArchivo,
-            tamanoBytes: this._tamanoBytes,
-            contentType: this._contentType,
-            mensajeError: this._mensajeError,
-            duracionMs: this._duracionMs,
-            velocidadMbps: this._velocidadMbps,
-            velocidadPromedioMbps: this._velocidadPromedioMbps,
-        };
-    }
-
-    /** Actualiza velocidad instantánea (ventana 3 s) y promedio a partir de los bytes confirmados. */
-    private medirVelocidad(bytesConfirmados: number): void {
-        const ahora = Date.now();
-        this._muestras.push({ t: ahora, bytes: bytesConfirmados });
-        const limite = ahora - 3000;
-        while (this._muestras.length > 1 && this._muestras[0].t < limite) this._muestras.shift();
-        const primera = this._muestras[0];
-        const dtInst = (ahora - primera.t) / 1000;
-        const dtTotal = (ahora - this._inicioMs) / 1000;
-        const aMbps = (bytes: number, seg: number): number =>
-            seg > 0 ? Math.round(((bytes * 8) / 1_000_000 / seg) * 10) / 10 : 0;
-        this._velocidadMbps = aMbps(bytesConfirmados - primera.bytes, dtInst);
-        this._velocidadPromedioMbps = aMbps(bytesConfirmados, dtTotal);
+        return this.salidas;
     }
 
     public destroy(): void {
-        // Cancela cualquier subida en curso al destruir el control.
-        this._abort?.abort();
+        this.destruido = true;
+        this.motor.destruir();
+        this.vista.destruir();
+        this.consultaOscuro?.removeEventListener("change", this.alCambiarEsquema);
+        window.clearTimeout(this.temporizadorNotificacion);
+        window.clearInterval(this.reloj);
+        if (this.cuadroPintado !== undefined) window.cancelAnimationFrame(this.cuadroPintado);
     }
 
-    // ---------- Logica ----------
+    // ------------------------------------------------------------ entradas
 
-    private ocupado(): boolean {
-        return (
-            this._estado === "solicitandoSas" ||
-            this._estado === "subiendo" ||
-            this._estado === "confirmando"
-        );
+    private configuracionMotor(context: ComponentFramework.Context<IInputs>): ConfiguracionMotor {
+        const p = context.parameters;
+        const tabla = (p.tabla.raw ?? "").trim();
+        return {
+            paralelismoArchivos: acotar(p.paralelismoArchivos.raw, 2, 1, 4),
+            paralelismoBloques: acotar(p.paralelismoBloques.raw, 4, 1, 8),
+            loteMaximo: acotar(p.loteMaximo.raw, 20, 1, 100),
+            tabla: TABLA_VALIDA.test(tabla) ? tabla : "",
+        };
     }
 
-    private reiniciar(): void {
-        this._abort?.abort();
-        this._abort = undefined;
-        this._inputArchivo.value = "";
-        this._progreso = 0;
-        this._rutaBlob = "";
-        this._nombreArchivo = "";
-        this._tamanoBytes = 0;
-        this._contentType = "";
-        this._mensajeError = "";
-        this._duracionMs = 0;
-        this._velocidadMbps = 0;
-        this._velocidadPromedioMbps = 0;
-        this._muestras = [];
-        this.cambiarEstado("inactivo");
+    private leerEntradas(context: ComponentFramework.Context<IInputs>): void {
+        const p = context.parameters;
+        const aceptados = parsearAceptados(p.tiposAceptados.raw);
+        const maximoMB = acotar(p.tamanoMaximoMB.raw, 250, 1, 1024 * 1024);
+        const config = this.configuracionMotor(context);
+        this.reglas = { aceptados, tamanoMaximoBytes: maximoMB * MIB, loteMaximo: config.loteMaximo };
+        this.tiposEtiqueta = etiquetarTipos(aceptados);
+        this.tamanoMaximoEtiqueta = formatearTamano(maximoMB * MIB, this.t);
+        this.motor.configurar(config);
+        this.aplicarTema(context);
     }
 
-    private cambiarEstado(estado: Estado): void {
-        this._estado = estado;
-        this.pintar();
-        this._notificar();
+    private aplicarTema(context: ComponentFramework.Context<IInputs>): void {
+        const p = context.parameters;
+        const variante = elegir<Variante>(p.variante.raw, VARIANTES, "fluent");
+        const densidad: Densidad = p.densidad.raw === "compacta" ? "compact" : "comfortable";
+        const modoEntrada = elegir(p.modo.raw, ["claro", "oscuro", "auto"] as const, "claro");
+        const modo: ModoColor =
+            modoEntrada === "oscuro" || (modoEntrada === "auto" && this.consultaOscuro?.matches === true)
+                ? "dark"
+                : "light";
+        const maker: ValoresMaker = {};
+        for (const nombre of NOMBRES_MAKER) {
+            const v = p[nombre].raw;
+            if (v !== null && v !== undefined && v !== "") maker[nombre] = v;
+        }
+
+        const clave = JSON.stringify([variante, densidad, modo, maker]);
+        if (clave === this.claveTema) return;
+        this.claveTema = clave;
+        this.varianteActual = variante;
+        const variables = calcularVariables({
+            variante,
+            modo,
+            densidad,
+            maker,
+            esValorCss: (propiedad, valor) => typeof CSS !== "undefined" && CSS.supports(propiedad, valor),
+        });
+        this.vista.aplicarTema(variables, {
+            variante,
+            densidad: densidad === "compact" ? "compacta" : "comoda",
+            modo,
+        });
     }
 
-    private fallar(mensaje: string): void {
-        this._mensajeError = mensaje;
-        this._duracionMs = Date.now() - this._inicioMs;
-        this.cambiarEstado("error");
+    // ------------------------------------------------------------ acciones
+
+    private agregar(archivos: File[]): void {
+        const r = this.motor.agregar(archivos, this.reglas);
+        const partes: string[] = [];
+        if (r.agregados > 0) partes.push(this.t("a11y.added", { count: r.agregados }));
+        if (r.rechazados > 0) partes.push(this.t("a11y.rejected", { count: r.rechazados }));
+        this.vista.anunciador.anunciar(partes.join(" "), "control");
     }
 
-    private async iniciarSubida(): Promise<void> {
-        const contexto = this._contexto;
-        if (!contexto || this.ocupado()) return;
+    private accionFila(accion: AccionFila, indice: number): void {
+        if (accion === "quitar") this.motor.quitar(indice);
+        else if (accion === "cancelar") this.motor.cancelar(indice);
+        else this.motor.reintentar(indice);
+    }
 
-        const p = contexto.parameters;
-        const archivo = this._inputArchivo.files?.[0];
-        this._inicioMs = Date.now();
-        this._mensajeError = "";
-        this._rutaBlob = "";
-        this._progreso = 0;
-        this._duracionMs = 0;
-        this._velocidadMbps = 0;
-        this._velocidadPromedioMbps = 0;
-        this._muestras = [];
+    // ------------------------------------------------------------ cambios del motor
 
-        // Validaciones previas, antes de pedir la SAS.
-        const solicitudId = (p.solicitudId.raw ?? "").trim();
-        const urlBroker = (p.urlBroker.raw ?? "").trim();
-        if (!archivo) {
-            this.fallar("Elegí un archivo antes de subir.");
-            return;
+    private alCambiar(tipo: TipoCambio): void {
+        if (this.destruido) return;
+        this.programarPintado();
+        this.recalcularSalidas(tipo === "estructura");
+        const subiendo = this.motor.cola.todos().some((a) => a.estado === "subiendo");
+        if (subiendo && this.reloj === undefined) {
+            this.reloj = window.setInterval(() => this.programarPintado(), INTERVALO_RELOJ_MS);
+        } else if (!subiendo && this.reloj !== undefined) {
+            window.clearInterval(this.reloj);
+            this.reloj = undefined;
         }
-        this._nombreArchivo = archivo.name;
-        this._tamanoBytes = archivo.size;
-        this._contentType = archivo.type || "application/octet-stream";
+    }
 
-        if (!REGEX_GUID.test(solicitudId)) {
-            this.fallar("El id de la solicitud no es un GUID válido.");
-            return;
-        }
-        // Camino preferido: la app ya obtuvo la SAS por el conector (autenticado con Entra) y la pasa acá.
-        const uploadUrlEntrada = (p.uploadUrl.raw ?? "").trim();
-        if (!uploadUrlEntrada && !urlBroker) {
-            this.fallar("Falta la URL de subida (SAS) o la URL del broker.");
-            return;
-        }
-        if (uploadUrlEntrada && !/^https:\/\//i.test(uploadUrlEntrada)) {
-            this.fallar("La URL de subida debe ser HTTPS.");
-            return;
-        }
-        const maxMB = p.tamanoMaximoMB.raw ?? 250;
-        if (archivo.size > maxMB * 1024 * 1024) {
-            this.fallar(`El archivo supera el máximo de ${maxMB} MB.`);
-            return;
-        }
-        if (archivo.size === 0) {
-            this.fallar("El archivo está vacío.");
-            return;
-        }
-
-        const abort = new AbortController();
-        this._abort = abort;
-
-        try {
-            let sas: RespuestaSas;
-            if (uploadUrlEntrada) {
-                sas = {
-                    uploadUrl: uploadUrlEntrada,
-                    rutaBlob: rutaDesdeUploadUrl(uploadUrlEntrada),
-                    bloqueBytes: p.bloqueBytes.raw ?? undefined,
-                    tokenStorage: (p.tokenStorage.raw ?? "").trim() || undefined,
-                };
+    /** Anuncios de Anatomia.md §9. Nunca incluyen ids, rutas ni URLs: solo nombre de archivo y estado. */
+    private alEvento(e: EventoMotor): void {
+        const t = this.t;
+        const anunciador = this.vista.anunciador;
+        if (e.tipo === "estado") {
+            const a = e.archivo;
+            const clave = String(a.indice);
+            if (a.estado === "error") {
+                anunciador.anunciar(t("a11y.error", { name: a.nombre, message: textoError(a.codigoError, t) }), clave, true);
             } else {
-                this.cambiarEstado("solicitandoSas");
-                sas = await solicitarSasSubida(
-                    urlBroker,
-                    p.tokenBroker.raw,
-                    {
-                        solicitudId: solicitudId.replace(/[{}]/g, ""),
-                        nombreArchivo: archivo.name,
-                        tamanoBytes: archivo.size,
-                        contentType: this._contentType,
-                    },
-                    abort.signal
-                );
+                anunciador.anunciar(t("a11y.status", { name: a.nombre, status: etiquetaEstado(a.estado, t) }), clave);
             }
-            this._rutaBlob = sas.rutaBlob;
-
-            this.cambiarEstado("subiendo");
-            this._muestras = [{ t: Date.now(), bytes: 0 }];
-            let ultimoPct = -1;
-            await subirEnBloques(
-                archivo,
-                sas.uploadUrl,
-                {
-                    bloqueBytes: sas.bloqueBytes,
-                    paralelismo: Math.min(Math.max(p.paralelismo.raw ?? 4, 1), 8),
-                    versionServicio: sas.versionServicio,
-                    // S1b: entrada tokenStorage (camino conector) o el que devolvió el broker (camino directo).
-                    tokenStorage: sas.tokenStorage ?? ((p.tokenStorage.raw ?? "").trim() || undefined),
-                },
-                (hecho, total) => {
-                    this.medirVelocidad(hecho);
-                    // Se notifica solo cuando cambia el porcentaje entero.
-                    const pct = Math.floor((hecho / total) * 100);
-                    if (pct !== ultimoPct) {
-                        ultimoPct = pct;
-                        this._progreso = pct;
-                        this.pintar();
-                        this._notificar();
-                    }
-                },
-                abort.signal
+        } else if (e.tipo === "progreso") {
+            anunciador.anunciar(
+                t("a11y.progress", { name: e.archivo.nombre, percent: e.porcentaje }),
+                String(e.archivo.indice)
             );
-
-            this.cambiarEstado("confirmando");
-            this._progreso = 100;
-            this._duracionMs = Date.now() - this._inicioMs;
-            this.medirVelocidad(archivo.size);
-            this._velocidadMbps = this._velocidadPromedioMbps;
-            this.cambiarEstado("completado");
-        } catch (e) {
-            if (e instanceof ErrorSubida && e.causa === "cancelado") {
-                // Cancelacion por destroy/reinicio: no se publica como error.
-                return;
-            }
-            if (e instanceof ErrorBroker || e instanceof ErrorSubida) {
-                this.fallar(e.message);
-            } else {
-                this.fallar("Error inesperado durante la subida.");
-            }
-        } finally {
-            if (this._abort === abort) this._abort = undefined;
+        } else {
+            anunciador.anunciar(t("a11y.done", { ok: e.subidos, failed: e.fallidos }), "control");
         }
     }
 
-    // ---------- Presentacion ----------
+    // ------------------------------------------------------------ pintado
+
+    private programarPintado(): void {
+        if (this.cuadroPintado !== undefined || this.destruido) return;
+        this.cuadroPintado = window.requestAnimationFrame(() => {
+            this.cuadroPintado = undefined;
+            if (!this.destruido) this.pintar();
+        });
+    }
 
     private pintar(): void {
-        const ocupado = this.ocupado();
-        const deshabilitado = this._contexto?.mode.isControlDisabled ?? false;
-        this._inputArchivo.disabled = ocupado || deshabilitado;
-        this._boton.disabled = ocupado || deshabilitado;
+        const items = this.motor.cola.todos();
+        this.vista.pintar({
+            items,
+            conteos: contar(items),
+            variante: this.varianteActual,
+            accept: this.reglas.aceptados.join(","),
+            tipos: this.tiposEtiqueta,
+            tamanoMaximo: this.tamanoMaximoEtiqueta,
+            maximoArchivos: this.reglas.loteMaximo,
+            deshabilitada: this.contexto.mode.isControlDisabled,
+        });
+    }
 
-        this._relleno.style.width = `${this._progreso}%`;
-        this._barra.setAttribute("aria-valuenow", String(this._progreso));
-        this._barra.dataset.estado = this._estado;
+    // ------------------------------------------------------------ salidas
 
-        let texto = TEXTO_ESTADO[this._estado];
-        if (this._estado === "subiendo") {
-            texto = `${texto} ${this._progreso}% · ${this._velocidadMbps} Mbps (promedio ${this._velocidadPromedioMbps})`;
+    private recalcularSalidas(inmediata: boolean): void {
+        const items = this.motor.cola.todos();
+        const c = contar(items);
+        const pedido = this.motor.pedidoEnCurso();
+        const resumen = resumenCola(c);
+        const salidas: IOutputs = {
+            pendientes: JSON.stringify(
+                pedido
+                    ? pedido.items.map((i) => ({
+                          indice: i.indice,
+                          id: i.id,
+                          nombreArchivo: i.nombreArchivo,
+                          tamanoBytes: i.tamanoBytes,
+                          contentType: i.contentType,
+                      }))
+                    : []
+            ),
+            numeroPedido: this.motor.ultimoNumeroPedido,
+            resultados: JSON.stringify(this.resultados(items)),
+            resumen: c.total === 0 ? "" : this.t(resumen.clave, resumen.valores),
+            progreso: progresoGlobal(items),
+            estado: estadoControl(c, pedido !== null),
+            cantidadEnCola: c.enCola + c.solicitando + c.esperando,
+            cantidadSubidos: c.subidos,
+            cantidadConError: c.conError,
+        };
+        const firma = JSON.stringify(salidas);
+        if (firma === this.firmaSalidas) return;
+        this.firmaSalidas = firma;
+        this.salidasPendientes = salidas;
+
+        const espera = this.ultimaNotificacion + INTERVALO_NOTIFICACION_MS - Date.now();
+        if (inmediata || espera <= 0) {
+            this.emitirSalidas();
+        } else if (this.temporizadorNotificacion === undefined) {
+            this.temporizadorNotificacion = window.setTimeout(() => this.emitirSalidas(), espera);
         }
-        if (this._estado === "completado") {
-            const seg = Math.round(this._duracionMs / 100) / 10;
-            texto = `${texto} en ${seg} s · promedio ${this._velocidadPromedioMbps} Mbps`;
+    }
+
+    private emitirSalidas(): void {
+        window.clearTimeout(this.temporizadorNotificacion);
+        this.temporizadorNotificacion = undefined;
+        if (this.salidasPendientes === null || this.destruido) return;
+        this.salidas = this.salidasPendientes;
+        this.salidasPendientes = null;
+        this.ultimaNotificacion = Date.now();
+        this.notificar();
+    }
+
+    private resultados(items: readonly ArchivoEnCola[]): ResultadoSalida[] {
+        const salida: ResultadoSalida[] = [];
+        for (const a of items) {
+            if (a.id === undefined || !ESTADOS_RESULTADO.includes(a.estado)) continue;
+            const duracionMs = a.inicioMs !== undefined && a.finMs !== undefined ? a.finMs - a.inicioMs : 0;
+            const subido = a.estado === "subido";
+            salida.push({
+                id: a.id,
+                estado: a.estado,
+                rutaBlob: subido ? a.rutaBlob ?? "" : "",
+                nombreArchivo: a.nombre,
+                tamanoBytes: a.tamano,
+                contentType: a.contentType,
+                // El texto del broker es más específico (por ejemplo, falta el tipo de documento); si no hay, el
+                // mensaje de error.* que ve el usuario.
+                mensajeError: a.estado === "error" ? a.mensajeServidor ?? textoError(a.codigoError, this.t) : "",
+                duracionMs,
+                velocidadMbps: subido ? Math.round(calcularMbps(a.tamano, duracionMs) * 10) / 10 : 0,
+            });
         }
-        if (this._estado === "error" && this._mensajeError) texto = this._mensajeError;
-        this._linea.textContent = texto;
-        this._linea.dataset.estado = this._estado;
+        return salida;
     }
 }

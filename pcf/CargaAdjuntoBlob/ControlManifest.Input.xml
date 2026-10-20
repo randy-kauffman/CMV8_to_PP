@@ -1,37 +1,68 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!-- GENERADO por herramientas/generar_desde_diseno.py. Cambiar las propiedades allí y regenerar. -->
 <manifest>
-  <control namespace="Banco" constructor="CargaAdjuntoBlob" version="0.0.5" display-name-key="CargaAdjuntoBlob_Display" description-key="CargaAdjuntoBlob_Desc" control-type="standard">
-    <!-- El control llama por fetch al broker (Function) y a Blob Storage: se declara servicio externo.
-         Ojo: esto lo clasifica como componente premium (licenciamiento). Ajustar los dominios reales al desplegar. -->
+  <control namespace="Banco" constructor="CargaAdjuntoBlob" version="1.0.0" display-name-key="CargaAdjuntoBlob_Display" description-key="CargaAdjuntoBlob_Desc" control-type="standard">
+    <!-- v2 (ADR-003 §4.1): el control solo habla con Blob Storage (Put Block / Put Block List). El broker lo
+         llama la app por el conector. external-service-usage es solo licenciamiento (componente premium).
+         Ajustar el dominio real del Storage al desplegar. -->
     <external-service-usage enabled="true">
-      <domain>cmv8-func-supfcopn.azurewebsites.net</domain>
       <domain>cmv8adjsupfcopn.blob.core.windows.net</domain>
     </external-service-usage>
 
     <!-- Entradas -->
-    <property name="uploadUrl" display-name-key="uploadUrl_Display" description-key="uploadUrl_Desc" of-type="SingleLine.Text" usage="input" required="false" />
-    <!-- S1b: token Entra de Storage del usuario (OBO en el broker). Se envía como Authorization: Bearer en cada PUT. -->
-    <property name="tokenStorage" display-name-key="tokenStorage_Display" description-key="tokenStorage_Desc" of-type="SingleLine.Text" usage="input" required="false" />
-    <property name="bloqueBytes" display-name-key="bloqueBytes_Display" description-key="bloqueBytes_Desc" of-type="Whole.None" usage="input" required="false" />
-    <property name="urlBroker" display-name-key="urlBroker_Display" description-key="urlBroker_Desc" of-type="SingleLine.Text" usage="input" required="false" />
-    <property name="tokenBroker" display-name-key="tokenBroker_Display" description-key="tokenBroker_Desc" of-type="SingleLine.Text" usage="input" required="false" />
-    <property name="solicitudId" display-name-key="solicitudId_Display" description-key="solicitudId_Desc" of-type="SingleLine.Text" usage="input" required="true" />
+    <property name="lote" display-name-key="lote_Display" description-key="lote_Desc" of-type="Multiple.Lines" usage="input" required="false" />
+    <property name="tabla" display-name-key="tabla_Display" description-key="tabla_Desc" of-type="SingleLine.Text" usage="input" required="false" />
     <property name="tiposAceptados" display-name-key="tiposAceptados_Display" description-key="tiposAceptados_Desc" of-type="SingleLine.Text" usage="input" required="false" default-value="video/*,application/pdf" />
     <property name="tamanoMaximoMB" display-name-key="tamanoMaximoMB_Display" description-key="tamanoMaximoMB_Desc" of-type="Whole.None" usage="input" required="false" default-value="250" />
-    <property name="paralelismo" display-name-key="paralelismo_Display" description-key="paralelismo_Desc" of-type="Whole.None" usage="input" required="false" default-value="4" />
+    <property name="loteMaximo" display-name-key="loteMaximo_Display" description-key="loteMaximo_Desc" of-type="Whole.None" usage="input" required="false" default-value="20" />
+    <property name="paralelismoArchivos" display-name-key="paralelismoArchivos_Display" description-key="paralelismoArchivos_Desc" of-type="Whole.None" usage="input" required="false" default-value="2" />
+    <property name="paralelismoBloques" display-name-key="paralelismoBloques_Display" description-key="paralelismoBloques_Desc" of-type="Whole.None" usage="input" required="false" default-value="4" />
     <property name="disparadorReinicio" display-name-key="disparadorReinicio_Display" description-key="disparadorReinicio_Desc" of-type="Whole.None" usage="input" required="false" />
+    <property name="densidad" display-name-key="densidad_Display" description-key="densidad_Desc" of-type="Enum" usage="input" required="false" default-value="comoda">
+      <value name="compacta" display-name-key="densidad_compacta">compacta</value>
+      <value name="comoda" display-name-key="densidad_comoda">comoda</value>
+    </property>
+    <property name="variante" display-name-key="variante_Display" description-key="variante_Desc" of-type="Enum" usage="input" required="false" default-value="fluent">
+      <value name="fluent" display-name-key="variante_fluent">fluent</value>
+      <value name="institucional" display-name-key="variante_institucional">institucional</value>
+      <value name="moderno" display-name-key="variante_moderno">moderno</value>
+    </property>
+    <property name="modo" display-name-key="modo_Display" description-key="modo_Desc" of-type="Enum" usage="input" required="false" default-value="claro">
+      <value name="claro" display-name-key="modo_claro">claro</value>
+      <value name="oscuro" display-name-key="modo_oscuro">oscuro</value>
+      <value name="auto" display-name-key="modo_auto">auto</value>
+    </property>
+
+    <!-- Tokens del maker (tokens.json, campo "maker"). Vacío = valor de la variante y modo. -->
+    <property name="PrimaryColor" display-name-key="PrimaryColor_Display" description-key="PrimaryColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="PrimaryHoverColor" display-name-key="PrimaryHoverColor_Display" description-key="PrimaryHoverColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="OnPrimaryColor" display-name-key="OnPrimaryColor_Display" description-key="OnPrimaryColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="BackgroundColor" display-name-key="BackgroundColor_Display" description-key="BackgroundColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="SurfaceColor" display-name-key="SurfaceColor_Display" description-key="SurfaceColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="BorderColor" display-name-key="BorderColor_Display" description-key="BorderColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="TextColor" display-name-key="TextColor_Display" description-key="TextColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="TextSecondaryColor" display-name-key="TextSecondaryColor_Display" description-key="TextSecondaryColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="SuccessColor" display-name-key="SuccessColor_Display" description-key="SuccessColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="WarningColor" display-name-key="WarningColor_Display" description-key="WarningColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="InfoColor" display-name-key="InfoColor_Display" description-key="InfoColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="DangerColor" display-name-key="DangerColor_Display" description-key="DangerColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="NeutralColor" display-name-key="NeutralColor_Display" description-key="NeutralColor_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="FontFamily" display-name-key="FontFamily_Display" description-key="FontFamily_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="FontSize" display-name-key="FontSize_Display" description-key="FontSize_Desc" of-type="Whole.None" usage="input" required="false" />
+    <property name="FontScale" display-name-key="FontScale_Display" description-key="FontScale_Desc" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="BorderRadius" display-name-key="BorderRadius_Display" description-key="BorderRadius_Desc" of-type="Whole.None" usage="input" required="false" />
+    <property name="BorderWidth" display-name-key="BorderWidth_Display" description-key="BorderWidth_Desc" of-type="Whole.None" usage="input" required="false" />
 
     <!-- Salidas -->
-    <property name="estado" display-name-key="estado_Display" description-key="estado_Desc" of-type="SingleLine.Text" usage="output" />
+    <property name="pendientes" display-name-key="pendientes_Display" description-key="pendientes_Desc" of-type="Multiple.Lines" usage="output" />
+    <property name="numeroPedido" display-name-key="numeroPedido_Display" description-key="numeroPedido_Desc" of-type="Whole.None" usage="output" />
+    <property name="resultados" display-name-key="resultados_Display" description-key="resultados_Desc" of-type="Multiple.Lines" usage="output" />
+    <property name="resumen" display-name-key="resumen_Display" description-key="resumen_Desc" of-type="SingleLine.Text" usage="output" />
     <property name="progreso" display-name-key="progreso_Display" description-key="progreso_Desc" of-type="Whole.None" usage="output" />
-    <property name="rutaBlob" display-name-key="rutaBlob_Display" description-key="rutaBlob_Desc" of-type="SingleLine.Text" usage="output" />
-    <property name="nombreArchivo" display-name-key="nombreArchivo_Display" description-key="nombreArchivo_Desc" of-type="SingleLine.Text" usage="output" />
-    <property name="tamanoBytes" display-name-key="tamanoBytes_Display" description-key="tamanoBytes_Desc" of-type="Whole.None" usage="output" />
-    <property name="contentType" display-name-key="contentType_Display" description-key="contentType_Desc" of-type="SingleLine.Text" usage="output" />
-    <property name="mensajeError" display-name-key="mensajeError_Display" description-key="mensajeError_Desc" of-type="SingleLine.Text" usage="output" />
-    <property name="duracionMs" display-name-key="duracionMs_Display" description-key="duracionMs_Desc" of-type="Whole.None" usage="output" />
-    <property name="velocidadMbps" display-name-key="velocidadMbps_Display" description-key="velocidadMbps_Desc" of-type="Decimal" usage="output" />
-    <property name="velocidadPromedioMbps" display-name-key="velocidadPromedioMbps_Display" description-key="velocidadPromedioMbps_Desc" of-type="Decimal" usage="output" />
+    <property name="estado" display-name-key="estado_Display" description-key="estado_Desc" of-type="SingleLine.Text" usage="output" />
+    <property name="cantidadEnCola" display-name-key="cantidadEnCola_Display" description-key="cantidadEnCola_Desc" of-type="Whole.None" usage="output" />
+    <property name="cantidadSubidos" display-name-key="cantidadSubidos_Display" description-key="cantidadSubidos_Desc" of-type="Whole.None" usage="output" />
+    <property name="cantidadConError" display-name-key="cantidadConError_Display" description-key="cantidadConError_Desc" of-type="Whole.None" usage="output" />
 
     <resources>
       <code path="index.ts" order="1" />

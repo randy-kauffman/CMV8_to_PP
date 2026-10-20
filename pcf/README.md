@@ -1,3 +1,5 @@
+> **v2 (ADR-003, 2026-10-19)**: el control pasó a 1.0.0 con lotes de archivos, tokens de diseño como propiedades y textos desde `docs/diseno`. El protocolo con la app está en `CargaAdjuntoBlob/README.md`. Lo que sigue describe la v0.0.5 y se conserva como registro de los spikes.
+
 # CargaAdjuntoBlob (PCF para canvas apps)
 
 Componente PCF (namespace `Banco`, versión 0.0.5) que sube un archivo (videos de hasta 250 MB) directo desde el navegador a Azure Blob Storage, sin Power Automate ni conectores. Spikes S1 / S1b del plan (ver `docs/decisiones/ADR-002-blob-storage-para-binarios.md`).
