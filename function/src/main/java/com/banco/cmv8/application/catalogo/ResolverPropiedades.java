@@ -89,10 +89,12 @@ public final class ResolverPropiedades {
                         "La propiedad " + p.nombre() + " está marcada Usar y no tiene origen del valor"));
                 continue;
             }
+            int conflictosAntes = conflictos.size();
             Optional<Object> crudo = valorCrudo(p, tipo, clave, valores, sistema, columnasTabla, consultas, conflictos,
                     observaciones);
             if (crudo.isEmpty()) {
-                if (enCm.get().obligatoriaSinDefault() || p.obligatoria()) {
+                // Si el origen falló por catálogo (columna o consulta inexistente) no es culpa del usuario: sin observación.
+                if (conflictos.size() == conflictosAntes && (enCm.get().obligatoriaSinDefault() || p.obligatoria())) {
                     observaciones.add("Falta el valor de " + p.nombre());
                 }
                 continue;
@@ -141,7 +143,7 @@ public final class ResolverPropiedades {
                                         List<Conflicto> conflictos, List<String> observaciones) {
         switch (p.origen()) {
             case LITERAL -> {
-                return Optional.ofNullable(p.literal()).filter(s -> !s.isBlank());
+                return Optional.ofNullable(p.literal()).filter(s -> !s.isBlank()).map(s -> (Object) s);
             }
             case SISTEMA -> {
                 String nombre = p.nombreLogico() == null ? "" : p.nombreLogico().toLowerCase(Locale.ROOT);

@@ -100,8 +100,9 @@ public class ProcesarIngesta {
             return Desenlace.OMITIDO;
         }
         RegistroIngesta registro = encontrado.get();
-        if (registro.estado().esFinal()) {
-            log.info(() -> "Adjunto en estado final " + registro.estado() + "; se omite. adjunto=" + clave);
+        final EstadoIngesta estadoInicial = registro.estado();
+        if (estadoInicial.esFinal()) {
+            log.info(() -> "Adjunto en estado final " + estadoInicial + "; se omite. adjunto=" + clave);
             if (registro.estado() == EstadoIngesta.ARCHIVADO) {
                 borrarSinFallar(mensaje.contenedor(), mensaje.rutaBlob(), log);
                 return Desenlace.YA_ARCHIVADO;
