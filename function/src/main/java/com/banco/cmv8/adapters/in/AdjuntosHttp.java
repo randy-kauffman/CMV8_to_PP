@@ -76,14 +76,14 @@ public class AdjuntosHttp {
     }
 
     /**
-     * POST /api/adjuntos/{tabla}/{id}/ingestar con el archivo crudo en el cuerpo, {@code Content-Type} del archivo
-     * y el nombre en {@code X-Nombre-Archivo} (URL-encoded). Para Power Automate (ADR-003 §4.7); tope de 100 MB
+     * POST /api/adjuntos/{tabla}/{id}/ingestar con el archivo crudo en el cuerpo como {@code application/octet-stream},
+     * el MIME real en {@code X-Content-Type} y el nombre en {@code X-Nombre-Archivo} (URL-encoded). Para Power Automate (ADR-003 §4.7); tope de 100 MB
      * por acción de flujo.
      */
     @FunctionName("Ingestar")
     public HttpResponseMessage ingestar(
             @HttpTrigger(name = "req", methods = {HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS,
-                    route = "adjuntos/{tabla}/{id}/ingestar") HttpRequestMessage<Optional<byte[]>> req,
+                    route = "adjuntos/{tabla}/{id}/ingestar", dataType = "binary") HttpRequestMessage<byte[]> req,
             @BindingName("tabla") String tabla, @BindingName("id") String id,
             @QueueOutput(name = "salida", queueName = "%COLA_INGESTA%", connection = "AzureWebJobsStorage")
             OutputBinding<List<String>> salida,
@@ -91,11 +91,17 @@ public class AdjuntosHttp {
         Logger log = ctx.getLogger();
         try {
             ClaveAdjunto clave = ClaveAdjunto.de(tabla, id);
-            byte[] contenido = req.getBody().orElse(new byte[0]);
+            // El worker de Java entrega el cuerpo binario como byte[] (no como Optional<byte[]>): verificado en Azure.
+            byte[] contenido = req.getBody() == null ? new byte[0] : req.getBody();
             String nombre = LectorLlamador.encabezado(req.getHeaders(), "X-Nombre-Archivo")
                     .map(v -> URLDecoder.decode(v, StandardCharsets.UTF_8))
                     .orElseThrow(() -> new ValidacionException("Falta el encabezado X-Nombre-Archivo"));
-            String contentType = LectorLlamador.encabezado(req.getHeaders(), "Content-Type").orElse(null);
+            // El cuerpo viaja como application/octet-stream (el worker de Java solo entrega bytes con ese tipo);
+            // el MIME real del archivo va en X-Content-Type.
+            String contentType = LectorLlamador.encabezado(req.getHeaders(), "X-Content-Type")
+                    .or(() -> LectorLlamador.encabezado(req.getHeaders(), "Content-Type")
+                            .filter(v -> !v.toLowerCase(java.util.Locale.ROOT).startsWith("application/octet-stream")))
+                    .orElse(null);
             ColaIngestaSalida cola = new ColaIngestaSalida();
             String ruta = Fabrica.get().ingestarArchivo().ejecutar(clave, nombre, contentType, contenido.length,
                     new ByteArrayInputStream(contenido), LectorLlamador.desde(req.getHeaders()), cola, log);

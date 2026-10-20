@@ -54,7 +54,7 @@ src/main/java/com/banco/cmv8/
 | `SasLectura` | `GET /api/sas/lectura/{tabla}/{id}` | 200 `{downloadUrl, expiraUtc, tokenStorage…}`; 403; 404; 409 si ya está solo en CM |
 | `Archivar` | `POST /api/adjuntos/{tabla}/{id}/archivar` | 202; 409 si no está Almacenado o el tipo no va a CM |
 | `Reanudar` | `POST /api/adjuntos/{tabla}/{id}/reanudar` | 202; 409 si no está Observada ni en Error |
-| `Ingestar` | `POST /api/adjuntos/{tabla}/{id}/ingestar` (cuerpo = archivo; `Content-Type`; `X-Nombre-Archivo`) | 202 `{rutaBlob}`; para Power Automate, tope 100 MB |
+| `Ingestar` | `POST /api/adjuntos/{tabla}/{id}/ingestar` (cuerpo = archivo como `application/octet-stream`; `X-Content-Type` = MIME real; `X-Nombre-Archivo`) | 202 `{rutaBlob}`; para Power Automate, tope 100 MB |
 | `ExtenderRetencion` | `POST /api/adjuntos/{tabla}/{id}/retencion` `{fecha}` (nula = congelar) | 200 |
 | `DescubrirTipos` / `ActualizarTipos` | `POST /api/catalogo/descubrir` / `POST /api/catalogo/actualizar` | 200 `{nuevos, actualizados, sinCambios, ausentes, avisos}`; 403 sin rol de administrador documental |
 | `ValidarTipo` | `GET /api/catalogo/validar?tipo={id}` | 200 `{criticos, avisos, hallazgos:[{nivel, tipo, propiedad, mensaje}]}` |

@@ -373,7 +373,7 @@
       "post": {
         "operationId": "IngestarArchivo",
         "summary": "Ingestar un archivo desde un flujo",
-        "description": "Para Power Automate: el flujo creó la fila y manda el contenido. Tope de 100 MB por acción. La identidad es la de la conexión.",
+        "description": "Para Power Automate: el flujo creó la fila y manda el contenido como application/octet-stream, con el MIME real en X-Content-Type. Tope de 100 MB por acción. La identidad es la de la conexión.",
         "x-ms-visibility": "important",
         "consumes": [
           "application/octet-stream"
@@ -408,12 +408,12 @@
             "x-ms-summary": "Nombre de archivo"
           },
           {
-            "name": "Content-Type",
+            "name": "X-Content-Type",
             "in": "header",
             "required": false,
             "type": "string",
-            "description": "MIME del archivo",
-            "x-ms-summary": "Content-Type"
+            "description": "MIME real del archivo (el cuerpo viaja como application/octet-stream)",
+            "x-ms-summary": "Tipo de contenido"
           },
           {
             "name": "archivo",
