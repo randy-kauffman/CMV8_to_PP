@@ -161,16 +161,20 @@ public final class Fabrica {
         emisorSas = new Perezoso<>(() -> new EmisorSasBlob(servicioBlob.get(), config.blobEndpoint(), politica.get(),
                 config.sasLigadaUsuario()));
         almacen = new Perezoso<>(() -> new AlmacenAdjuntosBlob(servicioBlob.get()));
-        archivo = new Perezoso<>(() -> new ArchivoDocumentalCmis(new ArchivoDocumentalCmis.ParametrosCmis(
-                config.cmisUrl(), config.cmisUsuario(), config.cmisClave(), config.cmisRepositorio())));
+        // Diferidos: la configuración de CMIS y AS400 se exige en la primera llamada real, no al armar los casos de uso.
+        Perezoso<ArchivoDocumental> archivoReal = new Perezoso<>(() -> new ArchivoDocumentalCmis(
+                new ArchivoDocumentalCmis.ParametrosCmis(config.cmisUrl(), config.cmisUsuario(), config.cmisClave(),
+                        config.cmisRepositorio())));
+        archivo = new Perezoso<>(() -> Diferidos.archivo(archivoReal::get));
         // Un pool por proceso: el arranque en frío paga una conexión; las invocaciones calientes, ~120 ms por consulta.
-        as400 = new Perezoso<>(() -> new ResolutorAs400Jt400(
+        Perezoso<ResolutorAs400> as400Real = new Perezoso<>(() -> new ResolutorAs400Jt400(
                 FuenteConexionesAs400.crear(
                         new FuenteConexionesAs400.ParametrosAs400(config.as400Host(), config.as400Usuario(),
                                 config.as400Clave(), config.as400Seguro()),
                         new FuenteConexionesAs400.ParametrosPool(config.as400PoolMaximo(), 1,
                                 config.as400PoolVidaMaxima())),
                 ConsultasAs400.parsear(config.as400ConsultasJson(), config.as400SqlCliente())));
+        as400 = new Perezoso<>(() -> Diferidos.as400(as400Real::get));
         vinculoUsuario = new Perezoso<>(this::crearVinculoUsuario);
 
         cache = new Perezoso<>(() -> new CatalogoEnCache(catalogo.get(), config.catalogoCache(), reloj));

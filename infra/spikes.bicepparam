@@ -26,7 +26,7 @@ param brokerTenantId = '7bcfee03-896e-4ad3-947b-8a2d9ce17974'
 param habilitarDefender = false
 
 // Pasar a true SOLO después de desplegar el código de la Function (la suscripción valida el endpoint).
-param crearSuscripcionEventGrid = false
+param crearSuscripcionEventGrid = true // 2026-10-19: código v2 desplegado; la suscripción valida el endpoint OnBlobCreated
 
 // Hallazgo 6b: contraseñas en Key Vault. El usuario de AS400 se toma del entorno (desplegar.sh lo exporta desde
 // function/local.settings.json) para no dejarlo en el repo; la contraseña NUNCA pasa por acá: infra/cargar-secretos.sh.

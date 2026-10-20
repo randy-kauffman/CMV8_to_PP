@@ -6,8 +6,8 @@
 # Requiere: az login con un administrador del entorno.
 #
 # Roles:
-#   CMV8 Worker      → la Function. Lee/escribe toda la tabla (Global), puede actuar en nombre de
-#                      otro usuario (impersonación) y leer usuarios/unidades para RetrievePrincipalAccess.
+#   CMV8 Worker      → la Function. Lee/escribe las tablas de adjuntos y el catálogo (Global), actúa en nombre de
+#                      otro usuario (impersonación) y lee metadata (entity set, columnas) para cualquier tabla de adjuntos.
 #   CMV8 Solicitante → usuarios de la app. Crea/lee/escribe SUS propias solicitudes (Basic).
 #   CMV8 Administrador documental → revisa el catálogo de tipos y propiedades, resuelve conflictos,
 #                      ve los adjuntos detenidos (ADR-003). v2: Worker y Solicitante suman el catálogo.
@@ -71,6 +71,7 @@ ROL_WORKER=$(crear_rol "CMV8 Worker")
 agregar_privilegios "$ROL_WORKER" \
   "prvRead${TABLA}:Global" "prvWrite${TABLA}:Global" "prvAppend${TABLA}:Global" "prvAppendTo${TABLA}:Global" \
   "prvActOnBehalfOfAnotherUser:Global" \
+  "prvReadEntity:Global" "prvReadAttribute:Global" "prvReadRelationship:Global" "prvReadOptionSet:Global" \
   "prvCreate${TIPO}:Global" "prvRead${TIPO}:Global" "prvWrite${TIPO}:Global" "prvAppend${TIPO}:Global" "prvAppendTo${TIPO}:Global" \
   "prvCreate${PROP}:Global" "prvRead${PROP}:Global" "prvWrite${PROP}:Global" "prvAppend${PROP}:Global" "prvAppendTo${PROP}:Global" \
   "prvCreate${CONF}:Global" "prvRead${CONF}:Global" "prvWrite${CONF}:Global" "prvAppend${CONF}:Global" "prvAppendTo${CONF}:Global" \

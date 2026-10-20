@@ -32,8 +32,20 @@ public final class CatalogoEnCache {
         this.reloj = reloj;
     }
 
+    /** Margen mínimo entre recargas por fallo de búsqueda, para que un id inexistente no dispare una lectura por archivo. */
+    private static final Duration MARGEN_RECARGA = Duration.ofSeconds(30);
+
     public Optional<TipoDocumento> tipo(UUID id) {
-        return id == null ? Optional.empty() : Optional.ofNullable(vigente().get(id));
+        if (id == null) {
+            return Optional.empty();
+        }
+        TipoDocumento t = vigente().get(id);
+        if (t == null && cargadoEn != null && cargadoEn.plus(MARGEN_RECARGA).isBefore(reloj.instant())) {
+            // Un tipo recién creado o puesto en uso no debería esperar al vencimiento del caché: una recarga acotada.
+            invalidar();
+            t = vigente().get(id);
+        }
+        return Optional.ofNullable(t);
     }
 
     public List<TipoDocumento> tipos() {
