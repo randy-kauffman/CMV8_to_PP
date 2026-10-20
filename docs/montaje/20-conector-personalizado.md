@@ -31,7 +31,7 @@ Al crear la conexión, el usuario inicia sesión con Entra; el conector pide un 
 
 `EmitirSasSubida` y `ResolverCliente` de v1 ya no existen (`EmitirSasSubida` es `EmitirSasLote` de un elemento, ADR-003 §5). Todas pasan por Easy Auth y se autorizan en Dataverse suplantando al usuario; las de administración exigen además el rol CMV8 Administrador documental. `EmitirSasLote` sigue prohibida desde flujos (ADR-003 §4.7): un flujo usa `IngestarArchivo`.
 
-**`uploadUrl` y `tokenStorage` son internos.** En la respuesta de `EmitirSasLote`, los dos campos llevan `x-ms-visibility: internal` (descripción: "nunca persistir ni mostrar"): son detalle de plomería entre el broker y el PCF, no datos para el usuario ni para un flujo. La app los pasa al PCF sin mostrarlos ni guardarlos (verificar en la app que Power Fx los siga exponiendo para pasarlos al componente). En `EmitirSasLectura`, `tokenStorage` no está marcado como interno.
+**`uploadUrl` y `tokenStorage` son internos.** En la respuesta de `EmitirSasLote`, los dos campos llevan `x-ms-visibility: internal` (descripción: "nunca persistir ni mostrar"): son detalle de plomería entre el broker y el PCF, no datos para el usuario ni para un flujo. La app los pasa al PCF sin mostrarlos ni guardarlos (verificar en la app que Power Fx los siga exponiendo para pasarlos al componente). En `EmitirSasLectura`, `downloadUrl` y `tokenStorage` también son internos.
 
 La **política DLP** del entorno decide con qué otros conectores puede combinarse en una misma app: tiene que quedar en el mismo grupo que Dataverse.
 
