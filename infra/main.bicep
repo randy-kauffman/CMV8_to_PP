@@ -133,6 +133,9 @@ param cmisCarpetaPlantilla string = '/{localName}'
 @description('Correo para la alerta de conflictos de catálogo (M10). Vacío = sin alerta ni grupo de acción.')
 param correoAlertas string = ''
 
+@description('Object id (usuario o grupo) que puede LEER las Azure Tables de estado operativo para diagnóstico. Vacío = nadie además de la Function.')
+param oidOperadorTablas string = ''
+
 @description('CMIS (Content Manager). Vacío: la Function no recibe configuración CMIS. La contraseña viene de Key Vault.')
 param cmisUrl string = ''
 param cmisUsuario string = ''
@@ -472,6 +475,27 @@ resource rolTablaDepuracion 'Microsoft.Authorization/roleAssignments@2022-04-01'
     roleDefinitionId: rolTableDataContributor
     principalId: identidad.properties.principalId
     principalType: 'ServicePrincipal'
+  }
+}
+
+// Lectura de las tablas de estado para un operador (diagnóstico), acotada a cada tabla.
+var rolTableDataReader = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '76199698-9eea-4c19-bc75-cec21354c6b6')
+
+resource rolOperadorTablaIngesta 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(oidOperadorTablas)) {
+  name: guid(storageAdjuntos::tablas::ingesta.id, oidOperadorTablas, rolTableDataReader)
+  scope: storageAdjuntos::tablas::ingesta
+  properties: {
+    roleDefinitionId: rolTableDataReader
+    principalId: oidOperadorTablas
+  }
+}
+
+resource rolOperadorTablaDepuracion 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(oidOperadorTablas)) {
+  name: guid(storageAdjuntos::tablas::depuracion.id, oidOperadorTablas, rolTableDataReader)
+  scope: storageAdjuntos::tablas::depuracion
+  properties: {
+    roleDefinitionId: rolTableDataReader
+    principalId: oidOperadorTablas
   }
 }
 

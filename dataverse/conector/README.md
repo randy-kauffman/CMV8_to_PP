@@ -11,7 +11,9 @@ Conector de Power Platform que llama a la Function `cmv8-func-supfcopn` (broker 
 | `cmv8-broker.swagger.json` | Definición OpenAPI 2.0 v2 (ADR-003 §5): host `cmv8-func-supfcopn.azurewebsites.net`, basePath `/api`. Operaciones: `Salud`, `EmitirSasLote`, `EmitirSasLectura`, `Archivar`, `Reanudar`, `IngestarArchivo` (cuerpo binario, para flujos), `ExtenderRetencion`, `DescubrirTipos`, `ActualizarTipos`, `ValidarTipo`, `ValidarTabla`, `ReanudarConflicto`, `ConsultarAs400`. `uploadUrl` y `tokenStorage` están marcados `x-ms-visibility: internal` para que no se muestren en los diseñadores; igual viven solo en una variable de la app. |
 | `apiProperties.json` | Parámetros de conexión OAuth 2.0 con Entra ID (`identityProvider: aad`). **El secreto NO está acá**: el campo `clientSecret` lleva un marcador. |
 
-## Las dos app registrations (tenant `7bcfee03-896e-4ad3-947b-8a2d9ce17974`)
+## Las app registrations (tenant `7bcfee03-896e-4ad3-947b-8a2d9ce17974`)
+
+Dos para el conector (abajo) y, desde la v2, una tercera de cliente público para el PCF en model-driven: «CMV8 PCF», `880a00aa-dac2-4741-aa76-c1fd9584a870`, sin secreto, listada en `knownClientApplications` del broker. Guía `docs/montaje/24-app-registration-pcf.md`.
 
 ### 1. CMV8 Broker (Function) — el recurso
 
@@ -23,7 +25,7 @@ Conector de Power Platform que llama a la Function `cmv8-func-supfcopn` (broker 
 | Scope expuesto | `user_impersonation` (consienten admins y usuarios) |
 | `requestedAccessTokenVersion` | `2` (tokens v2, consistente con el issuer v2 de Easy Auth) |
 | Clientes pre-autorizados | Azure CLI (`04b07795-8ddb-461a-bbee-02f9e1bf7b46`) para pruebas con `az account get-access-token` |
-| `knownClientApplications` | el app id del conector (`72ec6834-…`) |
+| `knownClientApplications` | el app id del conector (`72ec6834-…`) y el del PCF (`880a00aa-…`) |
 | Credencial | Credencial federada `uami-cmv8-broker`: la app confía en la identidad administrada de la Function (subject = principal id de la UAMI, audiencia `api://AzureADTokenExchange`). Sin secretos. Easy Auth no necesita credencial |
 | Permiso delegado | Azure Storage / `user_impersonation`, con consentimiento de administrador (S1b) |
 

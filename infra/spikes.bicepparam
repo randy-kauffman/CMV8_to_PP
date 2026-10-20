@@ -42,3 +42,5 @@ param diasRetencionAdjuntos = 7
 // WORM es decisión del Banco y no se puede deshabilitar una vez puesto en el contenedor: en spikes, apagado.
 param wormHabilitado = false
 param observadaDias = 30
+// Lectura de las Azure Tables de estado para diagnóstico desde la CLI (mismo operador del Key Vault).
+param oidOperadorTablas = 'eab4619b-d1f6-475c-a392-69aa8cf30e4f'

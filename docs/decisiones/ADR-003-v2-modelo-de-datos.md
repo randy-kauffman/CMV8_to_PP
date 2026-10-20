@@ -134,7 +134,7 @@ Lee la fila de la Azure Table (tipo, solicitante) y el catálogo del caché. Cer
 
 ### 4.6 Model-driven
 
-El mismo PCF, ligado como **control de dataset a la subcuadrícula de adjuntos** del formulario del padre. Adquiere su propio token con MSAL Browser contra la app registration «CMV8 PCF» (cliente público, single tenant, redirect SPA con la URL del entorno, permiso `api://<broker>/user_impersonation`, consentimiento de administrador); silencioso con la sesión de Entra, popup si el navegador bloquea el iframe. Llama al broker directo, recibe las dos llaves, sube; crea y actualiza filas con la Web API del componente con la identidad del usuario. Broker sin cambios. Patrón documentado por Microsoft (arquitectura de referencia Dynamics 365, PCF + MSAL). La URL del broker sale de una variable de entorno de Dataverse. Respaldo si el entorno bloquea popups e iframes: Custom API + plugin con identidad administrada (GA agosto 2025) como segundo llamador del broker; pierde `sduoid`.
+El mismo PCF, ligado como **control de dataset a la subcuadrícula de adjuntos** del formulario del padre. Adquiere su propio token con MSAL Browser contra la app registration «CMV8 PCF» (cliente público, single tenant, redirect SPA con la URL del entorno, permiso `api://<broker>/user_impersonation`, consentimiento de administrador); silencioso con la sesión de Entra, popup si el navegador bloquea el iframe. Llama al broker directo, recibe las dos llaves, sube; crea y actualiza filas con la Web API del componente con la identidad del usuario. Broker sin cambios. Patrón documentado por Microsoft (arquitectura de referencia Dynamics 365, PCF + MSAL). Alta en la guía 24; creada en desarrollo el 2026-10-20. La URL del broker sale de una variable de entorno de Dataverse. Respaldo si el entorno bloquea popups e iframes: Custom API + plugin con identidad administrada (GA agosto 2025) como segundo llamador del broker; pierde `sduoid`.
 
 ### 4.7 Power Automate
 
@@ -198,7 +198,7 @@ Desvíos declarados:
 
 ## 10. Cambios de infraestructura (Bicep)
 
-Contenedor `cmv8-almacenados`; Blob Data Contributor de la identidad sobre los dos contenedores; versionado e inmutabilidad a nivel de versión; reglas de ciclo de vida (ingesta 60 días, niveles en almacenados, versiones viejas); tablas `ingesta` y `depuracion` con Table Data Contributor acotado; permiso para políticas de inmutabilidad (a verificar: rol personalizado o Blob Data Owner acotado al contenedor); app settings `AS400_CONSULTAS_JSON`, `OBSERVADA_DIAS`, `WORM_BLOQUEAR`, `CATALOGO_CACHE_MINUTOS`; timers nuevos; alerta de Application Insights para conflictos; app registration «CMV8 PCF» (fuera del Bicep; guía a escribir junto con el modo model-driven del PCF).
+Contenedor `cmv8-almacenados`; Blob Data Contributor de la identidad sobre los dos contenedores; versionado e inmutabilidad a nivel de versión; reglas de ciclo de vida (ingesta 60 días, niveles en almacenados, versiones viejas); tablas `ingesta` y `depuracion` con Table Data Contributor acotado; permiso para políticas de inmutabilidad (a verificar: rol personalizado o Blob Data Owner acotado al contenedor); app settings `AS400_CONSULTAS_JSON`, `OBSERVADA_DIAS`, `WORM_BLOQUEAR`, `CATALOGO_CACHE_MINUTOS`; timers nuevos; alerta de Application Insights para conflictos; app registration «CMV8 PCF» (fuera del Bicep; guía 24).
 
 ## 11. Decisiones que quedan en el Banco
 
