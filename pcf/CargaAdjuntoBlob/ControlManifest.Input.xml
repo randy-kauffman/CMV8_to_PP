@@ -10,7 +10,7 @@
     </external-service-usage>
 
     <!-- Entradas -->
-    <property name="lote" display-name-key="lote_Display" description-key="lote_Desc" of-type="Multiple.Lines" usage="input" required="false" />
+    <property name="lote" display-name-key="lote_Display" description-key="lote_Desc" of-type="Multiple" usage="input" required="false" />
     <property name="tabla" display-name-key="tabla_Display" description-key="tabla_Desc" of-type="SingleLine.Text" usage="input" required="false" />
     <property name="tiposAceptados" display-name-key="tiposAceptados_Display" description-key="tiposAceptados_Desc" of-type="SingleLine.Text" usage="input" required="false" default-value="video/*,application/pdf" />
     <property name="tamanoMaximoMB" display-name-key="tamanoMaximoMB_Display" description-key="tamanoMaximoMB_Desc" of-type="Whole.None" usage="input" required="false" default-value="250" />
@@ -54,9 +54,9 @@
     <property name="BorderWidth" display-name-key="BorderWidth_Display" description-key="BorderWidth_Desc" of-type="Whole.None" usage="input" required="false" />
 
     <!-- Salidas -->
-    <property name="pendientes" display-name-key="pendientes_Display" description-key="pendientes_Desc" of-type="Multiple.Lines" usage="output" />
+    <property name="pendientes" display-name-key="pendientes_Display" description-key="pendientes_Desc" of-type="Multiple" usage="output" />
     <property name="numeroPedido" display-name-key="numeroPedido_Display" description-key="numeroPedido_Desc" of-type="Whole.None" usage="output" />
-    <property name="resultados" display-name-key="resultados_Display" description-key="resultados_Desc" of-type="Multiple.Lines" usage="output" />
+    <property name="resultados" display-name-key="resultados_Display" description-key="resultados_Desc" of-type="Multiple" usage="output" />
     <property name="resumen" display-name-key="resumen_Display" description-key="resumen_Desc" of-type="SingleLine.Text" usage="output" />
     <property name="progreso" display-name-key="progreso_Display" description-key="progreso_Desc" of-type="Whole.None" usage="output" />
     <property name="estado" display-name-key="estado_Display" description-key="estado_Desc" of-type="SingleLine.Text" usage="output" />

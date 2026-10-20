@@ -57,7 +57,7 @@ MAKER_ENTEROS = {"FontSize", "BorderRadius", "BorderWidth"}
 
 # (nombre, tipo, uso, default, nombre visible, descripción, valores de enum o None)
 PROPIEDADES_BASE = [
-    ("lote", "Multiple.Lines", "input", None, "Lote de SAS",
+    ("lote", "Multiple", "input", None, "Lote de SAS",
      "JSON con la respuesta de EmitirSasLote tal cual la devuelve el conector ({items, bloqueBytes, versionServicio, "
      "tokenStorage, tokenStorageExpiraUtc}). Secreto: guardarlo en UNA variable (varLote), nunca en una colección ni "
      "en Dataverse; limpiarlo cuando estado deja de ser listo-para-sas. El control lo consume una vez y no lo guarda.", None),
@@ -88,12 +88,12 @@ PROPIEDADES_BASE = [
 ]
 
 PROPIEDADES_SALIDA = [
-    ("pendientes", "Multiple.Lines", "Pendientes de SAS",
+    ("pendientes", "Multiple", "Pendientes de SAS",
      "JSON [{indice, id, nombreArchivo, tamanoBytes, contentType}] del pedido de SAS en curso. id viene vacío si el "
      "archivo todavía no tiene fila; la app crea la fila, llama EmitirSasLote en el mismo orden y deja la respuesta en varLote."),
     ("numeroPedido", "Whole.None", "Número de pedido",
      "Crece cada vez que el control publica un pedido nuevo en pendientes. La app atiende cada número una sola vez."),
-    ("resultados", "Multiple.Lines", "Resultados",
+    ("resultados", "Multiple", "Resultados",
      "JSON [{id, estado, rutaBlob, nombreArchivo, tamanoBytes, contentType, mensajeError, duracionMs, velocidadMbps}] "
      "de los archivos con fila que terminaron (subido, error o cancelado)."),
     ("resumen", "SingleLine.Text", "Resumen", "Texto del resumen de la cola, el mismo que muestra la barra de cola."),
@@ -262,10 +262,10 @@ escribir(os.path.join(CONTROL, "ControlManifest.Input.xml"), "\n".join(x))
 # ---------------------------------------------------------------- generated/ManifestTypes.d.ts
 TIPOS_TS = {
     "SingleLine.Text": "ComponentFramework.PropertyTypes.StringProperty",
-    "Multiple.Lines": "ComponentFramework.PropertyTypes.StringProperty",
+    "Multiple": "ComponentFramework.PropertyTypes.StringProperty",
     "Whole.None": "ComponentFramework.PropertyTypes.WholeNumberProperty",
 }
-SALIDA_TS = {"SingleLine.Text": "string", "Multiple.Lines": "string", "Whole.None": "number"}
+SALIDA_TS = {"SingleLine.Text": "string", "Multiple": "string", "Whole.None": "number"}
 t = [
     "/*",
     "*This is auto generated from the ControlManifest.Input.xml file",
